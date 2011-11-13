@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="storekeeper" default="run">
+    
+    <description>Builds Storekeeper game</description>
+
+    <property name="main-class" value="org.ezze.games.storekeeper.Desktop" />
+    <property name="src.dir" value="src" />
+    <property name="lib.dir" value="lib" />
+    <property name="build.dir" value="build" />
+    <property name="classes.dir" value="${build.dir}/classes" />
+    <property name="jar.dir" value="${build.dir}/jar" />
+    <property name="javadoc.dir" value="javadoc" />
+    
+    <path id="classpath">
+        <fileset dir="${lib.dir}" includes="**/*.jar" />
+    </path>
+    
+    <patternset id="resources">
+        <include name="org/ezze/games/storekeeper/resources/**" />
+    </patternset>
+    
+    <target name="clean">
+        <delete dir="${build.dir}" />
+    </target>
+        
+    <target name="compile">
+        <mkdir dir="${build.dir}" />
+        <mkdir dir="${classes.dir}" />
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" includeantruntime="false" />
+    </target>
+    
+    <target name="jar" depends="compile">
+        <mkdir dir="${jar.dir}" />
+        <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
+            <fileset dir="${src.dir}">
+                <patternset refid="resources" />
+            </fileset>
+            <zipgroupfileset dir="${lib.dir}" includes="*.jar" />
+            <manifest>
+                <attribute name="Main-Class" value="${main-class}" />
+            </manifest>
+        </jar>
+    </target>
+    
+    <target name="run" depends="jar">
+        <java jar="${jar.dir}/${ant.project.name}.jar" fork="true" />
+    </target>
+    
+    <target name="javadoc">
+        <delete dir="${javadoc.dir}" />
+        <javadoc destdir="${javadoc.dir}" author="yes" version="yes">
+            <packageset dir="${src.dir}" defaultexcludes="yes" />
+            <packageset dir="${src.dir}/../../../lib/ezze-utils/src/" defaultexcludes="yes">
+                <include name="org/ezze/utils/ui/aboutbox" />
+            </packageset>
+        </javadoc>
+    </target>
+ 
+</project>

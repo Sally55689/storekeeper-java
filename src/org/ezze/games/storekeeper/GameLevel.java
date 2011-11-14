@@ -8,19 +8,29 @@ import java.util.HashMap;
  * This class stores an inner representation of storekeeper's level.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class GameLevel {
 
     /**
-     * Maximum count of level items per line.
+     * Default maximal count of level items per line.
      */
-    public static final int LEVEL_WIDTH = 20;
+    public static final int DEFAULT_LEVEL_WIDTH = 20;
     
     /**
-     * Maximum count of level items per column.
+     * Default maximal count of level items per column.
      */
-    public static final int LEVEL_HEIGHT = 20;
+    public static final int DEFAULT_LEVEL_HEIGHT = 20;
+    
+    /**
+     * Minimal value of maximal count of level items per line.
+     */
+    public static final int MINIMAL_LEVEL_WIDTH = 20;
+    
+    /**
+     * Minimal value of maximal count of level items per column.
+     */
+    public static final int MINIMAL_LEVEL_HEIGHT = 20;
     
     public static final Character LEVEL_ITEM_WORKER = '@';
     public static final Character LEVEL_ITEM_WORKER_IN_CELL = '+';
@@ -53,6 +63,8 @@ public class GameLevel {
     private ArrayList<ArrayList<Character>> levelInitial = null;
     private ArrayList<ArrayList<Character>> level = null;
     private HashMap<String, Object> levelInfo = null;
+    private int maximalLevelWidth = DEFAULT_LEVEL_WIDTH;
+    private int maximalLevelHeight = DEFAULT_LEVEL_HEIGHT;
     private int cellsCount = 0;
     private int boxesCount = 0;
     private int boxesInCellsCount = 0;
@@ -62,7 +74,12 @@ public class GameLevel {
     
     public GameLevel(ArrayList<String> levelLines, HashMap<String, Object> levelInfo) {
         
-        if (levelLines == null || levelLines.size() < 1)
+        this(levelLines, levelInfo, DEFAULT_LEVEL_WIDTH, DEFAULT_LEVEL_HEIGHT);
+    }
+    
+    public GameLevel(ArrayList<String> levelLines, HashMap<String, Object> levelInfo, int maximalLevelWidth, int maximalLevelHeight) {
+        
+        if (levelLines == null || levelLines.size() < 1 || maximalLevelWidth < MINIMAL_LEVEL_WIDTH || maximalLevelHeight < MINIMAL_LEVEL_HEIGHT)
             return;
         
         levelInitial = new ArrayList<ArrayList<Character>>();
@@ -85,6 +102,8 @@ public class GameLevel {
         }
         
         this.levelInfo = levelInfo;
+        this.maximalLevelWidth = maximalLevelWidth;
+        this.maximalLevelHeight = maximalLevelHeight;
         
         initialize();
     }
@@ -101,7 +120,7 @@ public class GameLevel {
         workerY = 0;
         movesCount = 0;
 
-        if (levelInitial == null || levelInitial.size() > LEVEL_HEIGHT)
+        if (levelInitial == null || levelInitial.size() > maximalLevelHeight)
             return false;
 
         int maxLineWidth = 0;
@@ -147,12 +166,12 @@ public class GameLevel {
             lineIndex++;
         }
 
-        if (boxesCount != cellsCount || workersCount != 1 || maxLineWidth > LEVEL_WIDTH)
+        if (boxesCount != cellsCount || workersCount != 1 || maxLineWidth > maximalLevelWidth)
             return false;
 
         // GameLevel's vertical normalization
-        int leadingEmptyLinesCount = (int)(Math.floor((double)LEVEL_HEIGHT - (double)levelInitial.size()) / 2);
-        int trailingEmptyLinesCount = LEVEL_HEIGHT - levelInitial.size() - leadingEmptyLinesCount;
+        int leadingEmptyLinesCount = (int)(Math.floor((double)maximalLevelHeight - (double)levelInitial.size()) / 2);
+        int trailingEmptyLinesCount = maximalLevelHeight - levelInitial.size() - leadingEmptyLinesCount;
 
         // Shifting worker's vertical location
         workerY += leadingEmptyLinesCount;
@@ -161,7 +180,7 @@ public class GameLevel {
         while (leadingEmptyLineIndex < leadingEmptyLinesCount) {
 
             ArrayList<Character> emptyLine = new ArrayList<Character>();
-            for (int emptyLineCharacterIndex = 0; emptyLineCharacterIndex < LEVEL_WIDTH; emptyLineCharacterIndex++)
+            for (int emptyLineCharacterIndex = 0; emptyLineCharacterIndex < maximalLevelWidth; emptyLineCharacterIndex++)
                 emptyLine.add(LEVEL_ITEM_SPACE);
             levelInitial.add(0, emptyLine);
             leadingEmptyLineIndex++;
@@ -171,20 +190,20 @@ public class GameLevel {
         while (trailingEmptyLineIndex < trailingEmptyLinesCount) {
 
             ArrayList<Character> emptyLine = new ArrayList<Character>();
-            for (int emptyLineCharacterIndex = 0; emptyLineCharacterIndex < LEVEL_WIDTH; emptyLineCharacterIndex++)
+            for (int emptyLineCharacterIndex = 0; emptyLineCharacterIndex < maximalLevelWidth; emptyLineCharacterIndex++)
                 emptyLine.add(LEVEL_ITEM_SPACE);
             levelInitial.add(emptyLine);
             trailingEmptyLineIndex++;
         }
 
         // GameLevel's horizontal normalization
-        int leadingEmptyCharactersCount = (int)(Math.floor((double)LEVEL_WIDTH - (double)maxLineWidth) / 2);
+        int leadingEmptyCharactersCount = (int)(Math.floor((double)maximalLevelWidth - (double)maxLineWidth) / 2);
 
         // Shifting worker's horizontal location
         workerX += leadingEmptyCharactersCount;
 
         lineIndex = leadingEmptyLinesCount;
-        while (lineIndex < LEVEL_HEIGHT - trailingEmptyLinesCount) {
+        while (lineIndex < maximalLevelHeight - trailingEmptyLinesCount) {
 
             ArrayList<Character> line = levelInitial.get(lineIndex);
             int emptyCharacterIndex = 0;
@@ -194,7 +213,7 @@ public class GameLevel {
                 emptyCharacterIndex++;
             }
 
-            while (line.size() < LEVEL_WIDTH)
+            while (line.size() < maximalLevelWidth)
                 line.add(LEVEL_ITEM_SPACE);
 
             lineIndex++;

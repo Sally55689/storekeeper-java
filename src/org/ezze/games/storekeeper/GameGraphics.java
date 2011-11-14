@@ -8,18 +8,10 @@ import java.awt.Image;
  * Interface required to implement game's visual representation.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.1
+ * @version 0.0.2
  */
 public interface GameGraphics {
 
-    /**
-     * Retrieves game's loop iteration time in milliseconds.
-     * 
-     * @return
-     *      Loop iteration time in milliseconds
-     */
-    public int getGameLoopIterationTime();
-    
     /**
      * Retrieves worker's shift as part of level item per one game's loop iteration.
      * 

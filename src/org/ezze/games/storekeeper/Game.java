@@ -27,7 +27,7 @@ import org.w3c.dom.Element;
  * animation and user actions' handling.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class Game extends JPanel implements Runnable {
 
@@ -111,6 +111,8 @@ public class Game extends JPanel implements Runnable {
          */
         RIGHT
     }
+    
+    private GameConfiguration gameConfiguration = null;
     
     /**
      * A reference to an interface implementing game graphics,
@@ -328,9 +330,9 @@ public class Game extends JPanel implements Runnable {
      * @see #Game(org.ezze.games.storekeeper.GameGraphics, org.ezze.games.storekeeper.GameLevelCompletionListener)
      * @see GameGraphics
      */
-    public Game(GameGraphics gameGraphics) {
+    public Game(GameConfiguration gameConfiguration, GameGraphics gameGraphics) {
         
-        this(gameGraphics, null);
+        this(gameConfiguration, gameGraphics, null);
     }
     
     /**
@@ -344,9 +346,13 @@ public class Game extends JPanel implements Runnable {
      * @see GameGraphics
      * @see GameLevelCompletionListener
      */
-    public Game(GameGraphics gameGraphics, GameLevelCompletionListener gameLevelCompletionListener) {
+    public Game(GameConfiguration gameConfiguration, GameGraphics gameGraphics,
+            GameLevelCompletionListener gameLevelCompletionListener) {
         
         super();
+        
+        // Storing a reference to game configuration instance
+        this.gameConfiguration = gameConfiguration;
         
         // Storing a reference to graphics implementation
         this.gameGraphics = gameGraphics;
@@ -507,6 +513,12 @@ public class Game extends JPanel implements Runnable {
         // This flag will show whether at least one level of the set can't be initialized
         boolean areSomeLevelsNotInitialized = false;
         
+        // Defining level's maximal width and height
+        int maximalLevelWidth = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_WIDTH,
+                GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH);
+        int maximalLevelHeight = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_HEIGHT,
+                GameConfiguration.DEFAULT_OPTION_LEVEL_HEIGHT);
+        
         int levelIndex = 0;
         while (levelIndex < levelsCount) {
             
@@ -539,7 +551,7 @@ public class Game extends JPanel implements Runnable {
                     HashMap<String, Object> levelInfo = new HashMap<String, Object>();
                     levelInfo.put("id", new Integer(levelID));
                     levelInfo.put("name", levelName);
-                    GameLevel gameLevel = new GameLevel(levelLines, levelInfo);
+                    GameLevel gameLevel = new GameLevel(levelLines, levelInfo, maximalLevelWidth, maximalLevelHeight);
                     if (gameLevel.isInitialized()) {
 
                         gameLevels.add(gameLevel);
@@ -721,7 +733,9 @@ public class Game extends JPanel implements Runnable {
             gameLoopThread.interrupt();
             try {
 
-                Thread.sleep(2 * gameGraphics.getGameLoopIterationTime());
+                Integer gameCycleTime = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_GAME_CYCLE_TIME,
+                        GameConfiguration.DEFAULT_OPTION_GAME_CYCLE_TIME);
+                Thread.sleep(2 * gameCycleTime);
             }
             catch (InterruptedException ex) {
 
@@ -932,7 +946,7 @@ public class Game extends JPanel implements Runnable {
         
         if (gameFont == null) {
          
-            int fontSize = (int)(gameGraphics.getSpriteDimension().width * 12 / 32);
+            int fontSize = (int)((double)gameGraphics.getSpriteDimension().width * 12 / 32);
             if (fontSize < 8)
                 fontSize = 8;
             gameFont = new Font("Monospaced", Font.BOLD, fontSize);
@@ -940,9 +954,13 @@ public class Game extends JPanel implements Runnable {
         
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         FontMetrics fontMetrics = g2d.getFontMetrics(gameFont);
-        
+
+        int maximalLevelWidth = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_WIDTH,
+                GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH);
+        int maximalLevelHeight = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_HEIGHT,
+                GameConfiguration.DEFAULT_OPTION_LEVEL_HEIGHT);
         int statusLineHorizontalOffset = fontMetrics.stringWidth(" ");
-        int statusLineTopOffset = gameGraphics.getSpriteDimension().height * (GameLevel.LEVEL_HEIGHT - 1) +
+        int statusLineTopOffset = gameGraphics.getSpriteDimension().height * (maximalLevelHeight - 1) +
                 (gameGraphics.getSpriteDimension().height - fontMetrics.stringWidth(" "));
         
         if (gameState == GameState.INTRODUCTION) {
@@ -969,9 +987,9 @@ public class Game extends JPanel implements Runnable {
             Dimension spriteDimension = gameGraphics.getSpriteDimension();
             
             // Drawing gameLevel's current state
-            for (int lineIndex = 0; lineIndex < GameLevel.LEVEL_HEIGHT; lineIndex++) {
+            for (int lineIndex = 0; lineIndex < maximalLevelHeight; lineIndex++) {
 
-                for (int columnIndex = 0; columnIndex < GameLevel.LEVEL_WIDTH; columnIndex++) {
+                for (int columnIndex = 0; columnIndex < maximalLevelWidth; columnIndex++) {
 
                     Character levelItem = gameLevel.getLevelItemAt(lineIndex, columnIndex);
                     Image levelItemSprite = null;
@@ -1087,7 +1105,7 @@ public class Game extends JPanel implements Runnable {
                 levelTimeString.addAttribute(TextAttribute.FOREGROUND, new Color(240, 240, 240));
                 levelTimeString.addAttribute(TextAttribute.FOREGROUND, new Color(10, 200, 0), 0, levelTimeTitle.length());
                 levelTimeString.addAttribute(TextAttribute.BACKGROUND, gameGraphics.getBackground());
-                int levelTimeStringLeftOffset = gameGraphics.getSpriteDimension().width * GameLevel.LEVEL_WIDTH -
+                int levelTimeStringLeftOffset = gameGraphics.getSpriteDimension().width * maximalLevelWidth -
                         fontMetrics.stringWidth(levelTimeLabel) - statusLineHorizontalOffset;
                 g2d.drawString(levelTimeString.getIterator(), levelTimeStringLeftOffset, statusLineTopOffset);
                 
@@ -1127,11 +1145,15 @@ public class Game extends JPanel implements Runnable {
     @Override
     public void run() {
             
-        long iterationStartTime = 0;
-        long iterationUsefulTime = 0;
-        long iterationSleepTime = 0;
+        long cycleStartTime = 0;
+        long cycleUsefulTime = 0;
+        long cycleSleepTime = 0;
         long levelStartTime = System.currentTimeMillis();
         levelTime = 0;
+        
+        // Retrieving game cycle time
+        Integer gameCycleTime = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_GAME_CYCLE_TIME,
+                GameConfiguration.DEFAULT_OPTION_GAME_CYCLE_TIME);
         
         // Retrieving a reference to current gameLevel
         GameLevel gameLevel = gameLevels.get(currentGameLevelIndex);
@@ -1139,7 +1161,7 @@ public class Game extends JPanel implements Runnable {
         while (gameState == GameState.PLAY && !Thread.interrupted()) {
 
             // Remembering a start time of current iteration
-            iterationStartTime = System.currentTimeMillis();
+            cycleStartTime = System.currentTimeMillis();
 
             // Checking whether user has required worker to move
             if (!isAnimationInProgress) {
@@ -1269,18 +1291,18 @@ public class Game extends JPanel implements Runnable {
             }
                 
             // Determining a time required for step calculations
-            iterationUsefulTime = System.currentTimeMillis() - iterationStartTime;
+            cycleUsefulTime = System.currentTimeMillis() - cycleStartTime;
 
             // Determining a time left to complete iteration step
-            iterationSleepTime = gameGraphics.getGameLoopIterationTime() - iterationUsefulTime;
-            if (iterationSleepTime < 0)
-                iterationSleepTime = 0;
+            cycleSleepTime = gameCycleTime - cycleUsefulTime;
+            if (cycleSleepTime < 0)
+                cycleSleepTime = 0;
 
             // Waiting 'till the end of iteration
             try {
 
-                if (iterationSleepTime > 0)
-                    Thread.sleep(iterationSleepTime);
+                if (cycleSleepTime > 0)
+                    Thread.sleep(cycleSleepTime);
             }
             catch (InterruptedException ex) {
 

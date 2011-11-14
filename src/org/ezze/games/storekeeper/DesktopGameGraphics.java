@@ -6,13 +6,12 @@ import java.awt.Image;
 import java.net.URL;
 import java.util.ArrayList;
 import javax.swing.ImageIcon;
-import javax.swing.SpinnerDateModel;
 
 /**
  * Represents default game graphics implementation.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class DesktopGameGraphics implements GameGraphics {
     
@@ -142,12 +141,6 @@ public class DesktopGameGraphics implements GameGraphics {
             return null;
         
         return imageIcon.getImage();
-    }
-    
-    @Override
-    public int getGameLoopIterationTime() {
-        
-        return 45;
     }
     
     @Override

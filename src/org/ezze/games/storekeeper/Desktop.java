@@ -35,7 +35,7 @@ import org.ezze.utils.ui.aboutbox.AboutBoxInformation;
 
 /**
  * @author Dmitriy Pushkov
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class Desktop extends JFrame {
     
@@ -187,18 +187,29 @@ public class Desktop extends JFrame {
         final URL windowIconURL = DesktopGameGraphics.class.getResource(resourcePathToIcon);
         if (windowIconURL != null)
             setIconImage(new ImageIcon(windowIconURL).getImage());
+        
+        // Reading game's configuration
+        String configurationFileName = String.format("%s/storekeeperConfig.xml", ApplicationPath.getApplicationPath(Desktop.class));
+        GameConfiguration gameConfiguration = new GameConfiguration(configurationFileName);
+        
+        // Retrieving maximal width (columns) and height (rows) of game level field (in level items)
+        int levelFieldColumnsCount = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_WIDTH,
+                GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH);
+        int levelFieldRowsCount = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_HEIGHT,
+                GameConfiguration.DEFAULT_OPTION_LEVEL_HEIGHT);
  
-        // Creating game field
+        // Checking screen resolution
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         Insets dialogInsets = getInsets();
         DesktopGameGraphics.SpriteDimension spriteDimension = DesktopGameGraphics.SpriteDimension.DIMENSION_32X32;
-        if (screenDimension.width - dialogInsets.left - dialogInsets.right < GameLevel.LEVEL_WIDTH * 32
-                || screenDimension.height - dialogInsets.top - dialogInsets.bottom < GameLevel.LEVEL_HEIGHT * 32) {
+        if (screenDimension.width - dialogInsets.left - dialogInsets.right < levelFieldColumnsCount * 32
+                || screenDimension.height - dialogInsets.top - dialogInsets.bottom < levelFieldRowsCount * 32) {
             
             spriteDimension = DesktopGameGraphics.SpriteDimension.DIMENSION_16X16;
         }
-            
-        game = new Game(new DesktopGameGraphics(spriteDimension), new GameLevelCompletionListener() {
+
+        // Creating game instance
+        game = new Game(gameConfiguration, new DesktopGameGraphics(spriteDimension), new GameLevelCompletionListener() {
                 
             @Override
             public void levelCompleted(GameLevel gameLevel) {
@@ -216,9 +227,9 @@ public class Desktop extends JFrame {
         contentLayout.putConstraint(SpringLayout.WEST, game, 0, SpringLayout.WEST, contentPane);
         contentLayout.putConstraint(SpringLayout.NORTH, game, 0, SpringLayout.NORTH, contentPane);
         contentLayout.putConstraint(SpringLayout.EAST, game,
-                game.getGameGraphics().getSpriteDimension().width * GameLevel.LEVEL_WIDTH, SpringLayout.WEST, game);
+                game.getGameGraphics().getSpriteDimension().width * levelFieldColumnsCount, SpringLayout.WEST, game);
         contentLayout.putConstraint(SpringLayout.SOUTH, game,
-                (game.getGameGraphics().getSpriteDimension().height) * GameLevel.LEVEL_HEIGHT, SpringLayout.NORTH, game);
+                (game.getGameGraphics().getSpriteDimension().height) * levelFieldRowsCount, SpringLayout.NORTH, game);
         
         contentLayout.putConstraint(SpringLayout.EAST, contentPane, 0, SpringLayout.EAST, game);
         contentLayout.putConstraint(SpringLayout.SOUTH, contentPane, 0, SpringLayout.SOUTH, game);

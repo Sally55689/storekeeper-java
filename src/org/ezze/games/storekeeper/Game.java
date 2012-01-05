@@ -375,9 +375,21 @@ public class Game extends JPanel implements Runnable {
         // Setting field's background color
         setBackground(gameGraphics.getBackground());
     }
+   
+    /**
+     * Retrieves a reference to game configuration instance.
+     * 
+     * @return
+     *      Game configuration instance
+     * @see #gameConfiguration
+     */
+    public GameConfiguration getGameConfiguration() {
+        
+        return gameConfiguration;
+    }
     
     /**
-     * Retrieves the reference to game graphics implementation.
+     * Retrieves a reference to game graphics implementation.
      * 
      * @return 
      *      Class implementing {@link GameGraphics} interface

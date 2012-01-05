@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<configuration>
+    <gameplay>
+        <game_cycle_time>35</game_cycle_time>
+    </gameplay>
+    <interface>
+        <level_width>24</level_width>
+        <level_height>24</level_height>
+    </interface>
+</configuration>

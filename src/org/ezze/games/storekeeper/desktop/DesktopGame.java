@@ -1,5 +1,6 @@
 package org.ezze.games.storekeeper.desktop;
 
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.KeyEventDispatcher;
@@ -30,6 +31,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileFilter;
 import org.ezze.games.storekeeper.Game;
+import org.ezze.games.storekeeper.Game.LevelResult;
 import org.ezze.games.storekeeper.GameConfiguration;
 import org.ezze.games.storekeeper.GameLevel;
 import org.ezze.games.storekeeper.GameLevelCompletionListener;
@@ -334,15 +336,15 @@ public class DesktopGame extends JFrame {
                     }
                     
                     String levelsSetFileName = selectedFile.getAbsolutePath();
-                    Game.LevelLoadResult loadResult = game.loadLevelsSet(levelsSetFileName);
-                    if (loadResult == Game.LevelLoadResult.ERROR) {
+                    Game.LevelResult loadResult = game.loadLevelsSet(levelsSetFileName);
+                    if (loadResult == Game.LevelResult.ERROR) {
                         
                         JOptionPane.showMessageDialog(null, String.format("Unable to parse \"%s\" as levels set file.", levelsSetFileName),
                                 "Open Error", JOptionPane.ERROR_MESSAGE);
                         updateMenuItems();
                         return;
                     }
-                    else if (loadResult == Game.LevelLoadResult.WARNING) {
+                    else if (loadResult == Game.LevelResult.WARNING) {
                         
                         JOptionPane.showMessageDialog(null, String.format("At least one level of set \"%s\" cannot be initialized.", levelsSetFileName),
                                 "Open Warning", JOptionPane.WARNING_MESSAGE);
@@ -364,7 +366,7 @@ public class DesktopGame extends JFrame {
                 
                 if (game != null) {
                     
-                    if (game.loadDefaultLevelsSet() == Game.LevelLoadResult.ERROR)
+                    if (game.loadDefaultLevelsSet() == Game.LevelResult.ERROR)
                         JOptionPane.showMessageDialog(null, "Unable to load default levels set.", "Open Error", JOptionPane.ERROR_MESSAGE);
                     else
                         game.startLevel(game.getCurrentGameLevelIndex());
@@ -461,8 +463,10 @@ public class DesktopGame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 
-                DesktopOptionsDialog desktopOptionsDialog = new DesktopOptionsDialog(desktopGame);
+                DesktopOptionsDialog desktopOptionsDialog = new DesktopOptionsDialog(desktopGame, desktopGame);
                 desktopOptionsDialog.setVisible(true);
+                if (desktopOptionsDialog.isGameWindowRebuildRequired())
+                    rebuildGameWindow();
             }
         });
         menuItemOptions.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
@@ -563,11 +567,71 @@ public class DesktopGame extends JFrame {
             }
         });
         
-        if (game.loadDefaultLevelsSet() == Game.LevelLoadResult.ERROR)
+        if (game.loadDefaultLevelsSet() == Game.LevelResult.ERROR)
             JOptionPane.showMessageDialog(null, "Unable to load default levels set.", "Open Error", JOptionPane.ERROR_MESSAGE);
         
         updateMenuItems();
         
+        setVisible(true);
+    }
+    
+    public Game getGameInstance() {
+        
+        return game;
+    }
+    
+    /**
+     * Rebuilds game's window according to currently set
+     * level's width and height parameters.
+     */
+    private void rebuildGameWindow() {
+        
+        // Stopping the game if it's required
+        game.stop(false);
+        
+        // Hiding game's window
+        setVisible(false);
+        
+        // Retrieving a reference to game configuration instance
+        GameConfiguration gameConfiguration = game.getGameConfiguration();
+        
+        // Retrieving window's content pane and its layout
+        JPanel contentPane = (JPanel)getContentPane();
+        SpringLayout contentLayout = (SpringLayout)contentPane.getLayout();
+        
+        // Applying actual game field's constraints
+        int levelFieldColumnsCount = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_WIDTH,
+                GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH);
+        int levelFieldRowsCount = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_HEIGHT,
+                GameConfiguration.DEFAULT_OPTION_LEVEL_HEIGHT);
+        contentLayout.putConstraint(SpringLayout.EAST, game,
+                game.getGameGraphics().getSpriteDimension().width * levelFieldColumnsCount, SpringLayout.WEST, game);
+        contentLayout.putConstraint(SpringLayout.SOUTH, game,
+                (game.getGameGraphics().getSpriteDimension().height) * levelFieldRowsCount, SpringLayout.NORTH, game);
+        
+        // Adjusting size of the content pane
+        contentLayout.putConstraint(SpringLayout.EAST, contentPane, 0, SpringLayout.EAST, game);
+        contentLayout.putConstraint(SpringLayout.SOUTH, contentPane, 0, SpringLayout.SOUTH, game);
+        
+        pack();
+        setLocationRelativeTo(null);
+        
+        // Reinitializing the levels
+        LevelResult reinitializationResult = game.reinitializeLevels();
+        if (reinitializationResult == LevelResult.ERROR) {
+            
+            JOptionPane.showMessageDialog(null, "Unable to reinitialize all levels of currently loaded levels set. "
+                    + "Please be sure that selected maximal size of a level is enough to make all levels fit.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        else if (reinitializationResult == LevelResult.WARNING) {
+            
+            JOptionPane.showMessageDialog(null, "At least one level of currently loaded levels set cannot be reinitialized. "
+                    + "Please be sure that selected maximal size of a level is enough to make all levels fit.",
+                    "Warning", JOptionPane.WARNING_MESSAGE);
+        }
+        
+        updateMenuItems();
         setVisible(true);
     }
     

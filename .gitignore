@@ -1,6 +1,7 @@
 .*
 !.gitignore
 build
+javadoc
 levels
 nbproject/private
 storekeeperConfig.xml

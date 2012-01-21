@@ -29,6 +29,7 @@ import javax.swing.filechooser.FileFilter;
 import org.ezze.games.storekeeper.Game;
 import org.ezze.games.storekeeper.Game.LevelResult;
 import org.ezze.games.storekeeper.GameConfiguration;
+import org.ezze.games.storekeeper.GameGraphics;
 import org.ezze.games.storekeeper.GameGraphics.SpriteSize;
 import org.ezze.games.storekeeper.GameLevel;
 import org.ezze.games.storekeeper.GameLevelCompletionListener;
@@ -37,6 +38,8 @@ import org.ezze.utils.ui.aboutbox.AboutBox;
 import org.ezze.utils.ui.aboutbox.AboutBoxInformation;
 
 /**
+ * Desktop version of the game.
+ * 
  * @author Dmitriy Pushkov
  * @version 0.0.2
  */
@@ -210,16 +213,32 @@ public class DesktopGame extends JFrame {
         String configurationFileName = String.format("%s/storekeeperConfig.xml", ApplicationPath.getApplicationPath(DesktopGame.class));
         GameConfiguration gameConfiguration = new GameConfiguration(configurationFileName);
         
+        // Creating game graphics' instance
+        DesktopGameGraphics desktopGameGraphics = new DesktopGameGraphics();
+        
         // Retrieving maximal width (columns) and height (rows) of game level field (in level items)
         int levelFieldColumnsCount = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_WIDTH,
                 GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH);
         int levelFieldRowsCount = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_HEIGHT,
                 GameConfiguration.DEFAULT_OPTION_LEVEL_HEIGHT);
+        
+        // Retrieving sprite size option and determining
+        String spriteSizeOption = (String)gameConfiguration.getOption(GameConfiguration.OPTION_SPRITE_SIZE,
+                GameConfiguration.DEFAULT_OPTION_SPRITE_SIZE);
+        
+        // Determining sprite size
+        SpriteSize spriteSize = null;
+        if (spriteSizeOption.equals(GameConfiguration.OPTION_SPRITE_SIZE_OPTIMAL))
+            spriteSize = desktopGameGraphics.determineOptimalSpriteSize(levelFieldColumnsCount, levelFieldRowsCount);
+        else if (spriteSizeOption.equals(GameConfiguration.OPTION_SPRITE_SIZE_LARGE))
+            spriteSize = SpriteSize.LARGE;
+        else if (spriteSizeOption.equals(GameConfiguration.OPTION_SPRITE_SIZE_MEDIUM))
+            spriteSize = SpriteSize.MEDIUM;
+        else
+            spriteSize = SpriteSize.SMALL;
 
         // Creating game instance
-        DesktopGameGraphics desktopGameGraphics = new DesktopGameGraphics();
-        SpriteSize optimalSpriteSize = desktopGameGraphics.determineOptimalSpriteSize(levelFieldColumnsCount, levelFieldRowsCount);
-        desktopGameGraphics.setSpriteSize(optimalSpriteSize != null ? optimalSpriteSize : SpriteSize.SMALL);
+        desktopGameGraphics.setSpriteSize(spriteSize != null ? spriteSize : SpriteSize.SMALL);
         game = new Game(gameConfiguration, desktopGameGraphics, new GameLevelCompletionListener() {
                 
             @Override
@@ -505,7 +524,7 @@ public class DesktopGame extends JFrame {
         setJMenuBar(menuBar);
         
         pack();
-        setLocationRelativeTo(null);
+        centerTheWindow();
         
         KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         kfm.addKeyEventDispatcher(new KeyEventDispatcher() {
@@ -591,26 +610,79 @@ public class DesktopGame extends JFrame {
         // Retrieving a reference to game configuration instance
         GameConfiguration gameConfiguration = game.getGameConfiguration();
         
+        // Retrieving a reference to game graphics instance
+        GameGraphics gameGraphics = game.getGameGraphics();
+        
         // Retrieving window's content pane and its layout
         JPanel contentPane = (JPanel)getContentPane();
         SpringLayout contentLayout = (SpringLayout)contentPane.getLayout();
         
-        // Applying actual game field's constraints
+        // Retrieving actual game field's parameters
         int levelFieldColumnsCount = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_WIDTH,
                 GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH);
         int levelFieldRowsCount = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_HEIGHT,
                 GameConfiguration.DEFAULT_OPTION_LEVEL_HEIGHT);
+        String spriteSizeOption = (String)gameConfiguration.getOption(GameConfiguration.OPTION_SPRITE_SIZE,
+                GameConfiguration.DEFAULT_OPTION_SPRITE_SIZE);
+        
+        // Determining sprite size
+        SpriteSize optimalSpriteSize = gameGraphics.determineOptimalSpriteSize(levelFieldColumnsCount, levelFieldRowsCount);
+        SpriteSize spriteSize = null;
+        if (!spriteSizeOption.equals(GameConfiguration.OPTION_SPRITE_SIZE_OPTIMAL)) {
+            
+            if (spriteSizeOption.equals(GameConfiguration.OPTION_SPRITE_SIZE_LARGE))
+                spriteSize = SpriteSize.LARGE;
+            else if (spriteSizeOption.equals(GameConfiguration.OPTION_SPRITE_SIZE_MEDIUM))
+                spriteSize = SpriteSize.MEDIUM;
+            else
+                spriteSize = SpriteSize.SMALL;
+            
+            // Checking whether determined size is no more than optimal one
+            SpriteSize[] spriteSizeValues = SpriteSize.values();
+            int optimalSpriteSizeIndex = -1;
+            int selectedSpriteSizeIndex = -1;
+            int spriteSizeIndex = 0;
+            while ((optimalSpriteSizeIndex < 0 || selectedSpriteSizeIndex < 0) && spriteSizeIndex < spriteSizeValues.length) {
+                
+                if (spriteSizeValues[spriteSizeIndex] == optimalSpriteSize)
+                    optimalSpriteSizeIndex = spriteSizeIndex;
+                if (spriteSizeValues[spriteSizeIndex] == spriteSize)
+                    selectedSpriteSizeIndex = spriteSizeIndex;
+                spriteSizeIndex++;
+            }
+            
+            if (selectedSpriteSizeIndex < optimalSpriteSizeIndex) {
+                
+                int spriteSizeConfirmation = JOptionPane.showConfirmDialog(null, "Selected maximal level's width and height and "
+                        + "sprite size cannot provide game's window to be gone in the screen with currently set resolution. Do "
+                        + "you want an optimal sprite size to be applied?", "Sprite size confirmation", JOptionPane.YES_NO_OPTION);
+                if (spriteSizeConfirmation == JOptionPane.YES_OPTION) {
+                    
+                    spriteSize = optimalSpriteSize;
+                    gameConfiguration.setOption(GameConfiguration.OPTION_SPRITE_SIZE, GameConfiguration.OPTION_SPRITE_SIZE_OPTIMAL);
+                }
+            }
+        }
+        else {
+            
+            spriteSize = optimalSpriteSize;
+        }
+        
+        // Applying sprite size
+        gameGraphics.setSpriteSize(spriteSize);
+        
+        // Applying actual game field's constraints
         contentLayout.putConstraint(SpringLayout.EAST, game,
-                game.getGameGraphics().getSpriteDimension().width * levelFieldColumnsCount, SpringLayout.WEST, game);
+                gameGraphics.getSpriteDimension().width * levelFieldColumnsCount, SpringLayout.WEST, game);
         contentLayout.putConstraint(SpringLayout.SOUTH, game,
-                (game.getGameGraphics().getSpriteDimension().height) * levelFieldRowsCount, SpringLayout.NORTH, game);
+                (gameGraphics.getSpriteDimension().height) * levelFieldRowsCount, SpringLayout.NORTH, game);
         
         // Adjusting size of the content pane
         contentLayout.putConstraint(SpringLayout.EAST, contentPane, 0, SpringLayout.EAST, game);
         contentLayout.putConstraint(SpringLayout.SOUTH, contentPane, 0, SpringLayout.SOUTH, game);
         
         pack();
-        setLocationRelativeTo(null);
+        centerTheWindow();
         
         // Reinitializing the levels
         LevelResult reinitializationResult = game.reinitializeLevels();
@@ -652,6 +724,14 @@ public class DesktopGame extends JFrame {
     }
     
     /**
+     * Centers game's window.
+     */
+    private void centerTheWindow() {
+        
+        setLocationRelativeTo(null);
+    }
+    
+    /**
      * Fires application' close event.
      */
     private void closeApplication() {
@@ -680,7 +760,6 @@ public class DesktopGame extends JFrame {
                 
                 game.stop();
             }
-            
         }
         
         // Saving game's current settings

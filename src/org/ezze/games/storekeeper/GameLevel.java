@@ -42,21 +42,44 @@ public class GameLevel {
      */
     public static final int MAXIMAL_LEVEL_HEIGHT = 30;
     
+    /**
+     * Character used to represent worker's item.
+     */
     public static final Character LEVEL_ITEM_WORKER = '@';
+    
+    /**
+     * Character used to represent staying in cell worker's item.
+     */
     public static final Character LEVEL_ITEM_WORKER_IN_CELL = '+';
+    
+    /**
+     * Character used to represent brick's item.
+     */
     public static final Character LEVEL_ITEM_BRICK = '#';
+    
+    /**
+     * Character used to represent cell's item.
+     */
     public static final Character LEVEL_ITEM_CELL = '.';
+    
+    /**
+     * Character used to represent box' item.
+     */
     public static final Character LEVEL_ITEM_BOX = '$';
+    
+    /**
+     * Character used to represent staying in cell box' item.
+     */
     public static final Character LEVEL_ITEM_BOX_IN_CELL = '*';
+    
+    /**
+     * Character used to represent empty space's item.
+     */
     public static final Character LEVEL_ITEM_SPACE = ' ';
     
-    public static enum MoveType {
-
-        NOTHING,
-        WORKER,
-        WORKER_AND_BOX
-    };
-    
+    /**
+     * List of allowed level items.
+     */
     public static final ArrayList<Character> allowedLevelItems = new ArrayList<Character>();
     static {
 
@@ -69,24 +92,118 @@ public class GameLevel {
         allowedLevelItems.add(LEVEL_ITEM_SPACE);
     }
     
+    /**
+     * Represents a result of a move attempted by {@link #move(int, int)} method.
+     */
+    public static enum MoveType {
+
+        /**
+         * Nothing has been changed after the attempt to move.
+         */
+        NOTHING,
+        
+        /**
+         * Worker has moved.
+         */
+        WORKER,
+        
+        /**
+         * Worker has moved with a box.
+         */
+        WORKER_AND_BOX
+    };
+    
+    /**
+     * Shows whether the level is initialized.
+     */
     private boolean isInitialized = false;
+    
+    /**
+     * Stores level's initial state characters.
+     */
     private ArrayList<ArrayList<Character>> levelInitial = null;
+    
+    /**
+     * Stores level's current state with empty lines and columns appended
+     * to make level's size equal to {@link #maximalLevelWidth} and
+     * {@link #maximalLevelHeight}.
+     */
     private ArrayList<ArrayList<Character>> level = null;
+    
+    /**
+     * Keeps level's information.
+     */
     private HashMap<String, Object> levelInfo = null;
+    
+    /**
+     * Restricts level's width (horizontal items' count).
+     */
     private int maximalLevelWidth = DEFAULT_LEVEL_WIDTH;
+    
+    /**
+     * Restricts level's height (vertical items' count).
+     */
     private int maximalLevelHeight = DEFAULT_LEVEL_HEIGHT;
+    
+    /**
+     * Keeps cells count of the level.
+     */
     private int cellsCount = 0;
+    
+    /**
+     * Keeps boxes count of the level.
+     */
     private int boxesCount = 0;
+    
+    /**
+     * Traces boxes count placed in the cells.
+     */
     private int boxesInCellsCount = 0;
+    
+    /**
+     * Keeps current worker position's horizontal index within the range [0; {@link #getMaximalLevelWidth()} - 1].
+     */
     private int workerX = 0;
+    
+    /**
+     * Keeps current worker position's vertical index within the range [0; {@link #getMaximalLevelHeight()} - 1].
+     */
     private int workerY = 0;
+    
+    /**
+     * Traces worker's moves count.
+     */
     private int movesCount = 0;
     
+    /**
+     * Level's default constructor.
+     * 
+     * @param levelLines
+     *      Lines to initialize a level from.
+     * @param levelInfo 
+     *      Level's information.
+     * @see #GameLevel(java.util.ArrayList, java.util.HashMap, int, int)
+     */
     public GameLevel(ArrayList<String> levelLines, HashMap<String, Object> levelInfo) {
         
         this(levelLines, levelInfo, DEFAULT_LEVEL_WIDTH, DEFAULT_LEVEL_HEIGHT);
     }
     
+    /**
+     * Level's advanced constructor.
+     * 
+     * This one creates a level restricted by specified level's maximal size.
+     * 
+     * @param levelLines
+     *      Lines to initialize a level from.
+     * @param levelInfo
+     *      Level's information.
+     * @param maximalLevelWidth
+     *      Level's maximal width in items.
+     * @param maximalLevelHeight 
+     *      Level's maximal height in items.
+     * @see #GameLevel(java.util.ArrayList, java.util.HashMap)
+     */
     public GameLevel(ArrayList<String> levelLines, HashMap<String, Object> levelInfo, int maximalLevelWidth, int maximalLevelHeight) {
         
         // Checking whether level lines are specified
@@ -121,6 +238,20 @@ public class GameLevel {
         initialize();
     }
     
+    /**
+     * Sets level's maximal width in items.
+     * 
+     * Desired value must be no less than {@link #MINIMAL_LEVEL_WIDTH} and
+     * no more than {@link #MAXIMAL_LEVEL_WIDTH}.
+     * 
+     * @param maximalLevelWidth
+     *      Level's desired maximal width in items.
+     * @return 
+     *      {@code true} if desired value has been set, {@code false} otherwise.
+     * @see #setMaximalLevelHeight(int)
+     * @see #setMaximalLevelSize(int, int)
+     * @see #getMaximalLevelWidth()
+     */
     public final boolean setMaximalLevelWidth(int maximalLevelWidth) {
         
         if (maximalLevelWidth < MINIMAL_LEVEL_WIDTH || maximalLevelWidth > MAXIMAL_LEVEL_WIDTH)
@@ -129,6 +260,20 @@ public class GameLevel {
         return true;
     }
     
+    /**
+     * Sets level's maximal height in items.
+     * 
+     * Desired value must be no less than {@link #MINIMAL_LEVEL_HEIGHT} and
+     * no more than {@link #MAXIMAL_LEVEL_HEIGHT}.
+     * 
+     * @param maximalLevelHeight
+     *      Level's desired maximal height in items.
+     * @return 
+     *      {@code true} if desired value has been set, {@code false} otherwise.
+     * @see #setMaximalLevelWidth(int)
+     * @see #setMaximalLevelSize(int, int)
+     * @see #getMaximalLevelHeight()
+     */
     public final boolean setMaximalLevelHeight(int maximalLevelHeight) {
         
         if (maximalLevelHeight < MINIMAL_LEVEL_HEIGHT || maximalLevelHeight > MAXIMAL_LEVEL_HEIGHT)
@@ -137,6 +282,20 @@ public class GameLevel {
         return true;
     }
     
+    /**
+     * Sets level's maximal size in items.
+     * 
+     * @param maximalLevelWidth
+     *      Level's desired maximal width in items.
+     * @param maximalLevelHeight
+     *      Level's desired maximal height in items.
+     * @return 
+     *      {@code true} if desired width and height have been set, {@code false} otherwise.
+     * @see #setMaximalLevelWidth(int)
+     * @see #setMaximalLevelHeight(int)
+     * @see #getMaximalLevelWidth()
+     * @see #getMaximalLevelHeight()
+     */
     public final boolean setMaximalLevelSize(int maximalLevelWidth, int maximalLevelHeight) {
         
         int currentMaximalLevelWidth = this.maximalLevelWidth;
@@ -154,6 +313,44 @@ public class GameLevel {
         return true;
     }
     
+    /**
+     * Retrieves currently set level's maximal width in items.
+     * 
+     * @return
+     *      Level's maximal width in items.
+     * @see #setMaximalLevelWidth(int)
+     * @see #setMaximalLevelSize(int, int)
+     */
+    public int getMaximalLevelWidth() {
+        
+        return maximalLevelWidth;
+    }
+    
+    /**
+     * Retrieves currently set level's maximal height in items.
+     * 
+     * @return 
+     *      Level's maximal height in items.
+     * @see #setMaximalLevelHeight(int)
+     * @see #setMaximalLevelSize(int, int)
+     */
+    public int getMaximalLevelHeight() {
+        
+        return maximalLevelHeight;
+    }
+    
+    /**
+     * Completes level's initialization.
+     * 
+     * This method checks whether level's initial source {@link #levelInitial}
+     * is valid, consists of only one worker and equal count of cells and boxes.
+     * After that it adds additional empty horizontal and vertical lines to
+     * center the level in a box of ({@link #getMaximalLevelWidth()},
+     * {@link #getMaximalLevelHeight()}) size.
+     * 
+     * @return
+     *      {@code true} if level has been successfully initialized, {@code false otherwise}.
+     */
     public final boolean initialize() {
 
         isInitialized = false;
@@ -296,6 +493,12 @@ public class GameLevel {
         return isInitialized;
     }
     
+    /**
+     * Retrieves level's numeric identifier.
+     * 
+     * @return 
+     *      Level's numeric identifier or {@code 0} if it's not determined.
+     */
     public int getLevelID() {
         
         try {
@@ -312,6 +515,12 @@ public class GameLevel {
         return 0;
     }
     
+    /**
+     * Retrieves level's name.
+     * 
+     * @return 
+     *      Level's name or empty string if it's not determined.
+     */
     public String getLevelName() {
         
         try {
@@ -328,6 +537,20 @@ public class GameLevel {
         return "";
     }
     
+    /**
+     * Retrieves current item character at specified position.
+     * 
+     * Look at {@link #allowedLevelItems} for possible character values.
+     * 
+     * @param line
+     *      Level's line index within the range [0; {@link #getMaximalLevelHeight()} - 1].
+     * @param column
+     *      Level's column index within the range [0; {@link #getMaximalLevelWidth()} - 1].
+     * @return 
+     *      Character of the item.
+     * @see #setLevelItemAt(java.lang.Character, int, int)
+     * @see #allowedLevelItems
+     */
     public Character getLevelItemAt(int line, int column) {
 
         if (!isInitialized)
@@ -343,6 +566,22 @@ public class GameLevel {
         return levelLine.get(column);
     }
     
+    /**
+     * Sets specified item character at specified position.
+     * 
+     * Look at {@link #allowedLevelItems} for possible character values.
+     * 
+     * @param levelItem
+     *      Item character to set.
+     * @param line
+     *      Level's line index within the range [0; {@link #getMaximalLevelHeight()} - 1].
+     * @param column
+     *      Level's column index within the range [0; {@link #getMaximalLevelWidth()} - 1].
+     * @return
+     *      {@code true} if character has been set, {@code false} otherwise.
+     * @see #getLevelItemAt(int, int)
+     * @see #allowedLevelItems
+     */
     public boolean setLevelItemAt(Character levelItem, int line, int column) {
 
         if (!isInitialized)
@@ -394,6 +633,12 @@ public class GameLevel {
         return new Point(workerX, workerY);
     }
     
+    /**
+     * Retrieves moves count performed by the worker.
+     * 
+     * @return 
+     *      Moves count.
+     */
     public int getMovesCount() {
 
         return movesCount;

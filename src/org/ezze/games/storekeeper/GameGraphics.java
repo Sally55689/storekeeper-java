@@ -19,13 +19,44 @@ import javax.swing.JFrame;
  */
 abstract public class GameGraphics {
 
+    /**
+     * String identifier for introduction image.
+     */
     public final static String IMAGE_ID_INTRODUCTION = "introduction";
+    
+    /**
+     * String identifier for empty sprite.
+     */
     public final static String SPRITE_ID_EMPTY = "empty";
+    
+    /**
+     * String identifier for left-oriented worker sprite.
+     */
     public final static String SPRITE_ID_WORKER_LEFT = "worker_left";
+    
+    /**
+     * String identifier for right-oriented worker sprite.
+     */
     public final static String SPRITE_ID_WORKER_RIGHT = "worker_right";
+    
+    /**
+     * String identifier for brick sprite.
+     */
     public final static String SPRITE_ID_BRICK = "brick";
+    
+    /**
+     * String identifier for cell sprite.
+     */
     public final static String SPRITE_ID_CELL = "cell";
+    
+    /**
+     * String identifier for box sprite.
+     */
     public final static String SPRITE_ID_BOX = "box";
+    
+    /**
+     * String identifier for box in cell sprite.
+     */
     public final static String SPRITE_ID_BOX_IN_CELL = "box_in_cell";
 
     /**
@@ -87,11 +118,29 @@ abstract public class GameGraphics {
         setSpriteSize(spriteSize);
     }
     
+    /**
+     * Sets sprite's size.
+     * 
+     * @param spriteSize
+     *      Desired sprite's size.
+     * @see #determineOptimalSpriteSize(int, int)
+     * @see #getSpriteSize()
+     */
     public final void setSpriteSize(SpriteSize spriteSize) {
         
         this.spriteSize = spriteSize;
     }
     
+    /**
+     * Retrieves currently set sprite's size.
+     * 
+     * @return
+     *      Currently set sprite's size.
+     * @see #getSpriteDimension()
+     * @see #getSpriteDimension(org.ezze.games.storekeeper.GameGraphics.SpriteSize)
+     * @see #setSpriteSize(org.ezze.games.storekeeper.GameGraphics.SpriteSize)
+     * @see #determineOptimalSpriteSize(int, int)
+     */
     public SpriteSize getSpriteSize() {
         
         return spriteSize;
@@ -108,6 +157,8 @@ abstract public class GameGraphics {
      * @return 
      *      Maximal possible sprite size or {@code null} if convenient
      *      size cannot be determined.
+     * @see #setSpriteSize(org.ezze.games.storekeeper.GameGraphics.SpriteSize)
+     * @see #getSpriteSize()
      */
     public SpriteSize determineOptimalSpriteSize(int levelWidth, int levelHeight) {
         
@@ -146,7 +197,7 @@ abstract public class GameGraphics {
      * Retrieves currently set sprite's dimension in pixels.
      * 
      * @return 
-     *      Sprite dimension
+     *      Sprite dimension.
      */
     public Dimension getSpriteDimension() {
         
@@ -172,11 +223,52 @@ abstract public class GameGraphics {
      */
     abstract public Color getBackground();
     
+    /**
+     * Retrieves static sprite image by its size and string identifier.
+     * 
+     * @param spriteSize
+     *      Desired sprite's size.
+     * @param imageID
+     *      Desired sprite's string identifier.
+     * @return
+     *      Desired sprite image or empty image if desired image is not found.
+     * @see #getSprite(org.ezze.games.storekeeper.GameGraphics.SpriteSize, java.lang.String, int)
+     * @see #getSpriteFromSource(org.ezze.games.storekeeper.GameGraphics.SpriteSize, java.lang.String, int)
+     */
     protected Image getSprite(SpriteSize spriteSize, String imageID) {
         
         return getSprite(spriteSize, imageID, 0);
     }
     
+    /**
+     * Retrieves static or animated sprite image by its size and string identifier.
+     * 
+     * {@link #getSpriteFromSource(org.ezze.games.storekeeper.GameGraphics.SpriteSize, java.lang.String, int)}
+     * method is used to retrieve a sprite. After the sprite will has been retrieved
+     * it will be stored in {@link #spriteImages} and will be retrieved from there
+     * at any further time.
+     * 
+     * @param spriteSize
+     *      Desired sprite's size.
+     * @param imageID
+     *      Desired sprite's string identifier, must be one of the following values:
+     *      <ul>
+     *      <li>{@link #IMAGE_ID_INTRODUCTION} for introduction image;</li>
+     *      <li>{@link #SPRITE_ID_WORKER_LEFT} for left-oriented worker sprite;</li>
+     *      <li>{@link #SPRITE_ID_WORKER_RIGHT} for right-oriented worker sprite;</li>
+     *      <li>{@link #SPRITE_ID_BRICK} for brick sprite;</li>
+     *      <li>{@link #SPRITE_ID_CELL} for cell sprite;</li>
+     *      <li>{@link #SPRITE_ID_BOX} for box sprite;</li>
+     *      <li>{@link #SPRITE_ID_BOX_IN_CELL} for box in cell sprite;</li>
+     *      <li>{@link #SPRITE_ID_EMPTY} for empty sprite.</li>
+     *      </ul>
+     * @param animationIndex
+     *      Animation position for animated sprite or {@code 0} for static sprite.
+     * @return
+     *      Desired sprite image or empty image if desired image is not found.
+     * @see #getSprite(org.ezze.games.storekeeper.GameGraphics.SpriteSize, java.lang.String)
+     * @see #getSpriteFromSource(org.ezze.games.storekeeper.GameGraphics.SpriteSize, java.lang.String, int)
+     */
     protected Image getSprite(SpriteSize spriteSize, String imageID, int animationIndex) {
         
         if (spriteSize == null || imageID == null || animationIndex < 0)
@@ -227,6 +319,32 @@ abstract public class GameGraphics {
         return emptySpritesGroup.get(0);
     }
     
+    /**
+     * Retrieves required sprite image from resources.
+     * 
+     * This method must be implemented in inherited graphics class.
+     * 
+     * @param spriteSize
+     *      Desired sprite's size.
+     * @param imageID
+     *      Desired sprite's string identifier, must be one of the following values:
+     *      <ul>
+     *      <li>{@link #IMAGE_ID_INTRODUCTION} for introduction image;</li>
+     *      <li>{@link #SPRITE_ID_WORKER_LEFT} for left-oriented worker sprite;</li>
+     *      <li>{@link #SPRITE_ID_WORKER_RIGHT} for right-oriented worker sprite;</li>
+     *      <li>{@link #SPRITE_ID_BRICK} for brick sprite;</li>
+     *      <li>{@link #SPRITE_ID_CELL} for cell sprite;</li>
+     *      <li>{@link #SPRITE_ID_BOX} for box sprite;</li>
+     *      <li>{@link #SPRITE_ID_BOX_IN_CELL} for box in cell sprite;</li>
+     *      <li>{@link #SPRITE_ID_EMPTY} for empty sprite.</li>
+     *      </ul>
+     * @param animationIndex
+     *      Animation position for animated sprite or {@code 0} for static sprite.
+     * @return 
+     *      Desired sprite image.
+     * @see #getSprite(org.ezze.games.storekeeper.GameGraphics.SpriteSize, java.lang.String)
+     * @see #getSprite(org.ezze.games.storekeeper.GameGraphics.SpriteSize, java.lang.String, int)
+     */
     abstract protected Image getSpriteFromSource(SpriteSize spriteSize, String imageID, int animationIndex);
     
     /**

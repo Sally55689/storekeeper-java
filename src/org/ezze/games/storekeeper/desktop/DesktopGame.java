@@ -1,11 +1,7 @@
 package org.ezze.games.storekeeper.desktop;
 
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Insets;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
-import java.awt.Toolkit;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.ezze.utils.application.ApplicationPath;
 import java.awt.event.ActionEvent;
@@ -33,6 +29,7 @@ import javax.swing.filechooser.FileFilter;
 import org.ezze.games.storekeeper.Game;
 import org.ezze.games.storekeeper.Game.LevelResult;
 import org.ezze.games.storekeeper.GameConfiguration;
+import org.ezze.games.storekeeper.GameGraphics.SpriteSize;
 import org.ezze.games.storekeeper.GameLevel;
 import org.ezze.games.storekeeper.GameLevelCompletionListener;
 import org.ezze.utils.ui.FileBrowser;
@@ -218,19 +215,12 @@ public class DesktopGame extends JFrame {
                 GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH);
         int levelFieldRowsCount = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_HEIGHT,
                 GameConfiguration.DEFAULT_OPTION_LEVEL_HEIGHT);
- 
-        // Checking screen resolution
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        Insets dialogInsets = getInsets();
-        DesktopGameGraphics.SpriteDimension spriteDimension = DesktopGameGraphics.SpriteDimension.DIMENSION_32X32;
-        if (screenDimension.width - dialogInsets.left - dialogInsets.right < levelFieldColumnsCount * 32
-                || screenDimension.height - dialogInsets.top - dialogInsets.bottom < levelFieldRowsCount * 32) {
-            
-            spriteDimension = DesktopGameGraphics.SpriteDimension.DIMENSION_16X16;
-        }
 
         // Creating game instance
-        game = new Game(gameConfiguration, new DesktopGameGraphics(spriteDimension), new GameLevelCompletionListener() {
+        DesktopGameGraphics desktopGameGraphics = new DesktopGameGraphics();
+        SpriteSize optimalSpriteSize = desktopGameGraphics.determineOptimalSpriteSize(levelFieldColumnsCount, levelFieldRowsCount);
+        desktopGameGraphics.setSpriteSize(optimalSpriteSize != null ? optimalSpriteSize : SpriteSize.SMALL);
+        game = new Game(gameConfiguration, desktopGameGraphics, new GameLevelCompletionListener() {
                 
             @Override
             public void levelCompleted(GameLevel gameLevel) {
@@ -575,6 +565,12 @@ public class DesktopGame extends JFrame {
         setVisible(true);
     }
     
+    /**
+     * Retrieves a reference to game's instance.
+     * 
+     * @return 
+     *      Reference to game's instance.
+     */
     public Game getGameInstance() {
         
         return game;

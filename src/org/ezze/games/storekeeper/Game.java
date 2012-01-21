@@ -326,8 +326,10 @@ public class Game extends JPanel implements Runnable {
     /**
      * Game's simple constructor.
      * 
+     * @param gameConfiguration
+     *      A reference to game configuration.
      * @param gameGraphics 
-     *      A reference to game graphics implementation
+     *      A reference to game graphics implementation.
      * @see #Game(org.ezze.games.storekeeper.GameGraphics, org.ezze.games.storekeeper.GameLevelCompletionListener)
      * @see GameGraphics
      */
@@ -339,10 +341,12 @@ public class Game extends JPanel implements Runnable {
     /**
      * Game's advanced constructor.
      * 
+     * @param gameConfiguration
+     *      A reference to game configuration.
      * @param gameGraphics
-     *      A reference to game graphics implementation
+     *      A reference to game graphics implementation.
      * @param gameLevelCompletionListener 
-     *      A reference to game level's completion listener
+     *      A reference to game level's completion listener.
      * @see #Game(org.ezze.games.storekeeper.GameGraphics)
      * @see GameGraphics
      * @see GameLevelCompletionListener

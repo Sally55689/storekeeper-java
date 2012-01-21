@@ -16,12 +16,14 @@ import org.w3c.dom.Element;
  */
 public class GameConfiguration {
  
+    
     public static final String CONFIGURATION_XML_TAG_ROOT = "configuration";
     public static final String CONFIGURATION_XML_TAG_GAMEPLAY = "gameplay";
     public static final String CONFIGURATION_XML_TAG_GAME_CYCLE_TIME = "game_cycle_time";
     public static final String CONFIGURATION_XML_TAG_INTERFACE = "interface";
     public static final String CONFIGURATION_XML_TAG_LEVEL_WIDTH = "level_width";
     public static final String CONFIGURATION_XML_TAG_LEVEL_HEIGHT = "level_height";
+    public static final String CONFIGURATION_XML_TAG_SPRITE_DIMENSION = "sprite_dimension";
     
     public static final String OPTION_GAME_CYCLE_TIME = String.format("%s.%s",
             CONFIGURATION_XML_TAG_GAMEPLAY, CONFIGURATION_XML_TAG_GAME_CYCLE_TIME);

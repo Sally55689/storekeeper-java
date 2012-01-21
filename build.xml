@@ -3,12 +3,12 @@
     
     <description>Builds Storekeeper game</description>
 
-    <property name="main-class" value="org.ezze.games.storekeeper.desktop.Desktop" />
+    <property name="main-class" value="org.ezze.games.storekeeper.desktop.DesktopGame" />
     <property name="src.dir" value="src" />
     <property name="lib.dir" value="lib" />
     <property name="build.dir" value="build" />
     <property name="classes.dir" value="${build.dir}/classes" />
-    <property name="jar.dir" value="${build.dir}/jar" />
+    <property name="jar.dir" value="jar" />
     <property name="javadoc.dir" value="javadoc" />
     
     <path id="classpath">

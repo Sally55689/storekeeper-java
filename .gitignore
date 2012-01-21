@@ -1,6 +1,6 @@
 .*
 !.gitignore
-build/classes
-nbproject
+build
 levels
+nbproject/private
 storekeeperConfig.xml

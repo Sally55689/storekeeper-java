@@ -29,6 +29,8 @@ import org.ezze.games.storekeeper.Game;
 import org.ezze.games.storekeeper.GameConfiguration;
 
 /**
+ * Options dialog for desktop game.
+ * 
  * @author Dmitriy Pushkov
  * @version 0.0.1
  */
@@ -257,7 +259,6 @@ public class DesktopOptionsDialog extends JDialog {
         // Creating sprite size's label and combobox
         JLabel spriteSizeLabel = new JLabel("Sprite Size");
         spriteSizeComboBox = new JComboBox();
-        spriteSizeComboBox.setRenderer(rightAlignedListCellRenderer);
         spriteSizeComboBox.addItem(new ComboBoxOption(GameConfiguration.OPTION_SPRITE_SIZE_OPTIMAL, OPTION_VALUE_TEXT_OPTIMAL));
         spriteSizeComboBox.addItem(new ComboBoxOption(GameConfiguration.OPTION_SPRITE_SIZE_LARGE, OPTION_VALUE_TEXT_LARGE));
         spriteSizeComboBox.addItem(new ComboBoxOption(GameConfiguration.OPTION_SPRITE_SIZE_MEDIUM, OPTION_VALUE_TEXT_MEDIUM));
@@ -464,7 +465,7 @@ public class DesktopOptionsDialog extends JDialog {
             if (!gameConfiguration.save()) {
 
                 JOptionPane.showMessageDialog(this,
-                        "Unable to save the changes to configuration file", "Warning", JOptionPane.WARNING_MESSAGE);
+                        "Unable to save the changes to configuration file.", "Warning", JOptionPane.WARNING_MESSAGE);
             }
             
             isGameWindowRebuildRequired = !currentLevelWidth.equals(levelWidth)

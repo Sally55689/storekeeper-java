@@ -22,6 +22,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
+import javax.swing.Spring;
 import javax.swing.SpringLayout;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -653,9 +654,10 @@ public class DesktopGame extends JFrame {
             
             if (selectedSpriteSizeIndex < optimalSpriteSizeIndex) {
                 
-                int spriteSizeConfirmation = JOptionPane.showConfirmDialog(null, "Selected maximal level's width and height and "
-                        + "sprite size cannot provide game's window to be gone in the screen with currently set resolution. Do "
-                        + "you want an optimal sprite size to be applied?", "Sprite size confirmation", JOptionPane.YES_NO_OPTION);
+                int spriteSizeConfirmation = JOptionPane.showConfirmDialog(null,
+                        "Selected maximal level's width and height and sprite size cannot provide game's window\n"
+                        + "to be gone in the screen with currently set resolution. Do you want an optimal sprite\n"
+                        + "size to be applied?", "Sprite size confirmation", JOptionPane.YES_NO_OPTION);
                 if (spriteSizeConfirmation == JOptionPane.YES_OPTION) {
                     
                     spriteSize = optimalSpriteSize;
@@ -669,32 +671,45 @@ public class DesktopGame extends JFrame {
         }
         
         // Applying sprite size
-        gameGraphics.setSpriteSize(spriteSize);
-        
+        if (!gameGraphics.getSpriteSize().equals(spriteSize))
+            gameGraphics.setSpriteSize(spriteSize);
+     
         // Applying actual game field's constraints
-        contentLayout.putConstraint(SpringLayout.EAST, game,
-                gameGraphics.getSpriteDimension().width * levelFieldColumnsCount, SpringLayout.WEST, game);
-        contentLayout.putConstraint(SpringLayout.SOUTH, game,
-                (gameGraphics.getSpriteDimension().height) * levelFieldRowsCount, SpringLayout.NORTH, game);
+        boolean isWindowSizeChanged = false;
+        Spring currentEastSpring = contentLayout.getConstraint(SpringLayout.EAST, game);
+        Spring currentSouthSpring = contentLayout.getConstraint(SpringLayout.SOUTH, game);
+        int newGameWidth = gameGraphics.getSpriteDimension().width * levelFieldColumnsCount;
+        int newGameHeight = gameGraphics.getSpriteDimension().height * levelFieldRowsCount;
+        if (currentEastSpring.getValue() != newGameWidth) {
+            
+            contentLayout.putConstraint(SpringLayout.EAST, game, newGameWidth, SpringLayout.WEST, game);
+            contentLayout.putConstraint(SpringLayout.EAST, contentPane, 0, SpringLayout.EAST, game);
+            isWindowSizeChanged = true;
+        }
+        if (currentSouthSpring.getValue() != newGameHeight) {
+            
+            contentLayout.putConstraint(SpringLayout.SOUTH, game, newGameHeight, SpringLayout.NORTH, game);
+            contentLayout.putConstraint(SpringLayout.SOUTH, contentPane, 0, SpringLayout.SOUTH, game);
+            isWindowSizeChanged = true;
+        }
         
-        // Adjusting size of the content pane
-        contentLayout.putConstraint(SpringLayout.EAST, contentPane, 0, SpringLayout.EAST, game);
-        contentLayout.putConstraint(SpringLayout.SOUTH, contentPane, 0, SpringLayout.SOUTH, game);
-        
-        pack();
-        centerTheWindow();
+        if (isWindowSizeChanged) {
+            
+            pack();
+            centerTheWindow();
+        }
         
         // Reinitializing the levels
         LevelResult reinitializationResult = game.reinitializeLevels();
         if (reinitializationResult == LevelResult.ERROR) {
             
-            JOptionPane.showMessageDialog(null, "Unable to reinitialize all levels of currently loaded levels set. "
+            JOptionPane.showMessageDialog(null, "Unable to reinitialize all levels of currently loaded levels set.\n"
                     + "Please be sure that selected maximal size of a level is enough to make all levels fit.",
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
         else if (reinitializationResult == LevelResult.WARNING) {
             
-            JOptionPane.showMessageDialog(null, "At least one level of currently loaded levels set cannot be reinitialized. "
+            JOptionPane.showMessageDialog(null, "At least one level of currently loaded levels set cannot be reinitialized.\n"
                     + "Please be sure that selected maximal size of a level is enough to make all levels fit.",
                     "Warning", JOptionPane.WARNING_MESSAGE);
         }

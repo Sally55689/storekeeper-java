@@ -1,6 +1,6 @@
 STOREKEEPER
 
-  Version: 0.0.1
+  Version: 0.0.2
   Author: Dmitriy Pushkov (ezze@ezze.org)
   Graphics: Marc Russell (http://www.spicypixel.net), Dmitriy Pushkov
   Web-site: http://www.ezze.org
@@ -21,8 +21,8 @@ DESCRIPTION
 HOW TO RUN
   
   In order to run the game one should install JRE6 (Java Runtime Environemt 6)
-  and then execute "build/jar/storekeeper.jar" from the repository. No
-  external libraries are required for this distributable jar.
+  and then execute "jar/storekeeper.jar" from the repository. No external libraries
+  are required for this distributable jar.
 
 
 HOW TO BUILD
@@ -36,7 +36,7 @@ HOW TO BUILD
     - clean (removes "build" directory);
     - compile (compiles source code from "src" directory in "build/classes"
       directory using library "lib" directory as a classpath);
-    - jar (creates single jar executable "build/jar/storekeeper.jar",
+    - jar (creates single jar executable "jar/storekeeper.jar",
       "lib/ezze-utils.jar" is also required to zip the jar);
     - run (starts "build/jar/storekeeper.jar");
     - javadoc (generates project's javadoc in "javadoc" directory; note that

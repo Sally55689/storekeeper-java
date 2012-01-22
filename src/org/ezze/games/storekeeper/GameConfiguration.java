@@ -28,21 +28,21 @@ public class GameConfiguration {
     
     public static final String OPTION_GAME_CYCLE_TIME = String.format("%s.%s",
             CONFIGURATION_XML_TAG_GAMEPLAY, CONFIGURATION_XML_TAG_GAME_CYCLE_TIME);
-    public static final Integer DEFAULT_OPTION_GAME_CYCLE_TIME = new Integer(45);
+    public static final Integer DEFAULT_OPTION_GAME_CYCLE_TIME = new Integer(50);
     public static final Integer MIN_OPTION_GAME_CYCLE_TIME = new Integer(20);
     public static final Integer MAX_OPTION_GAME_CYCLE_TIME = new Integer(80);
     
     public static final String OPTION_LEVEL_WIDTH = String.format("%s.%s",
             CONFIGURATION_XML_TAG_INTERFACE, CONFIGURATION_XML_TAG_LEVEL_WIDTH);
     public static final Integer DEFAULT_OPTION_LEVEL_WIDTH = GameLevel.DEFAULT_LEVEL_WIDTH;
-    public static final Integer MIN_OPTION_LEVEL_WIDTH = new Integer(20);
-    public static final Integer MAX_OPTION_LEVEL_WIDTH = new Integer(30);
+    public static final Integer MIN_OPTION_LEVEL_WIDTH = new Integer(GameLevel.MINIMAL_LEVEL_WIDTH);
+    public static final Integer MAX_OPTION_LEVEL_WIDTH = new Integer(GameLevel.MAXIMAL_LEVEL_WIDTH);
     
     public static final String OPTION_LEVEL_HEIGHT = String.format("%s.%s",
             CONFIGURATION_XML_TAG_INTERFACE, CONFIGURATION_XML_TAG_LEVEL_HEIGHT);
     public static final Integer DEFAULT_OPTION_LEVEL_HEIGHT = GameLevel.DEFAULT_LEVEL_HEIGHT;
-    public static final Integer MIN_OPTION_LEVEL_HEIGHT = new Integer(20);
-    public static final Integer MAX_OPTION_LEVEL_HEIGHT = new Integer(30);
+    public static final Integer MIN_OPTION_LEVEL_HEIGHT = new Integer(GameLevel.MINIMAL_LEVEL_HEIGHT);
+    public static final Integer MAX_OPTION_LEVEL_HEIGHT = new Integer(GameLevel.MAXIMAL_LEVEL_HEIGHT);
     
     public static final String OPTION_SPRITE_SIZE = String.format("%s.%s",
             CONFIGURATION_XML_TAG_INTERFACE, CONFIGURATION_XML_TAG_SPRITE_SIZE);
@@ -51,6 +51,10 @@ public class GameConfiguration {
     public static final String OPTION_SPRITE_SIZE_MEDIUM = "medium";
     public static final String OPTION_SPRITE_SIZE_SMALL = "small";
     public static final String DEFAULT_OPTION_SPRITE_SIZE = OPTION_SPRITE_SIZE_OPTIMAL;
+    
+    /**
+     * Possible selective options of sprite size.
+     */
     public static Set<String> spriteSizes = new HashSet<String>();
     static {
         

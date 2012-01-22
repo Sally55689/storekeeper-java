@@ -35,12 +35,12 @@ public class GameLevel {
     /**
      * Maximal value of maximal count of level items per line.
      */
-    public static final int MAXIMAL_LEVEL_WIDTH = 30;
+    public static final int MAXIMAL_LEVEL_WIDTH = 40;
     
     /**
      * Maximal value of maximal count of level items per column.
      */
-    public static final int MAXIMAL_LEVEL_HEIGHT = 30;
+    public static final int MAXIMAL_LEVEL_HEIGHT = 35;
     
     /**
      * Character used to represent worker's item.

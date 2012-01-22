@@ -143,6 +143,10 @@ public class DesktopGame extends JFrame {
         
         try {
             
+            // Preventing sliders from painting values
+            UIManager.put("Slider.paintValue", false);
+            
+            // Setting operating system's look and feel
             String operatingSystemName = System.getProperty("os.name");
             if (operatingSystemName.matches("^.*Windows.*$"))
                 UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");

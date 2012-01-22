@@ -1,6 +1,6 @@
 package org.ezze.games.storekeeper.desktop;
 
-import java.awt.Component;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -9,18 +9,17 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import javax.swing.BorderFactory;
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.JTextField;
-import javax.swing.ListCellRenderer;
 import javax.swing.SpringLayout;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
@@ -36,17 +35,18 @@ import org.ezze.games.storekeeper.GameConfiguration;
  */
 public class DesktopOptionsDialog extends JDialog {
     
+    private final static int DIALOG_WIDTH = 400;
+    
     private final static int PADDING_HORIZONTAL = 10;
     private final static int PADDING_VERTICAL = 10;
     
-    private final static int GROUP_WIDTH = 300;
     private final static int GROUP_GAP = 8;
     
     private final static int OPTION_PADDING_HORIZONTAL = 8;
     private final static int OPTION_PADDING_VERTICAL = 8;
     private final static int OPTION_GAP = 10;
     
-    private final static int LABEL_WIDTH = 100;
+    private final static int LABEL_WIDTH = 120;
  
     private final static int BUTTON_WIDTH = 80;
     private final static int BUTTON_GAP = 4;
@@ -60,6 +60,11 @@ public class DesktopOptionsDialog extends JDialog {
      * A reference to desktop game's instance.
      */
     private DesktopGame desktopGame = null;
+    
+    /**
+     * Slider to manipulate the game speed.
+     */
+    private JSlider gameCycleTimeSlider = null;
     
     /**
      * Text field to edit level's maximal width.
@@ -182,25 +187,59 @@ public class DesktopOptionsDialog extends JDialog {
         // Creating border instance for group panels
         final Border groupPanelBorder = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
         
-        // Creating right aligned list cell renderer
-        final ListCellRenderer rightAlignedListCellRenderer = new DefaultListCellRenderer() {
-            
-            @Override
-            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            
-                Component renderer = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                
-                if (renderer instanceof JLabel)
-                    ((JLabel)renderer).setHorizontalAlignment(JLabel.RIGHT);
-                
-                return renderer;
-            }
-        };
+        // Defining baselines for different components
+        JLabel baselineLabel = new JLabel(" ");
+        JSlider baselineSlider = new JSlider();
+        JTextField baselineTextField = new JTextField(" ");
+        JComboBox baselineComboBox = new JComboBox();
+        int labelBaseline = baselineLabel.getBaseline(0, baselineLabel.getPreferredSize().height);
+        int textFieldBaseline = baselineTextField.getBaseline(0, baselineTextField.getPreferredSize().height);
+        int comboBoxBaseline = baselineComboBox.getBaseline(0, baselineComboBox.getPreferredSize().height);
         
         // Creating gameplay group
         JPanel gameplayGroupPanel = new JPanel();
-        gameplayGroupPanel.setPreferredSize(new Dimension(GROUP_WIDTH, gameplayGroupPanel.getPreferredSize().height));
+        SpringLayout gameplayGroupLayout = new SpringLayout();
+        gameplayGroupPanel.setLayout(gameplayGroupLayout);
         gameplayGroupPanel.setBorder(new TitledBorder(groupPanelBorder, "Gameplay"));
+        
+        // Creating game cycle time's label and slider
+        JLabel gameCycleTimeLabel = new JLabel("Game Speed");
+        int gameCycleTimeValue = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_GAME_CYCLE_TIME,
+                GameConfiguration.DEFAULT_OPTION_GAME_CYCLE_TIME);
+        int gameCycleTimeSliderInitialValue = GameConfiguration.MIN_OPTION_GAME_CYCLE_TIME +
+                (GameConfiguration.MAX_OPTION_GAME_CYCLE_TIME - gameCycleTimeValue);
+        gameCycleTimeSlider = new JSlider(GameConfiguration.MIN_OPTION_GAME_CYCLE_TIME,
+                GameConfiguration.MAX_OPTION_GAME_CYCLE_TIME, gameCycleTimeSliderInitialValue);
+        gameCycleTimeSlider.setMajorTickSpacing(10);
+        gameCycleTimeSlider.setPaintTicks(true);
+        Hashtable<Integer, JLabel> gameCycleTimeLabelsTable = new Hashtable<Integer, JLabel>();
+        gameCycleTimeLabelsTable.put(new Integer(GameConfiguration.MIN_OPTION_GAME_CYCLE_TIME), new JLabel("Slow"));
+        gameCycleTimeLabelsTable.put(new Integer((GameConfiguration.MAX_OPTION_GAME_CYCLE_TIME +
+                GameConfiguration.MIN_OPTION_GAME_CYCLE_TIME) / 2), new JLabel("Normal"));
+        gameCycleTimeLabelsTable.put(new Integer(GameConfiguration.MAX_OPTION_GAME_CYCLE_TIME), new JLabel("Fast"));
+        gameCycleTimeSlider.setLabelTable(gameCycleTimeLabelsTable);
+        gameCycleTimeSlider.setPaintLabels(true);
+        gameplayGroupPanel.add(gameCycleTimeLabel);
+        gameplayGroupPanel.add(gameCycleTimeSlider);
+        
+        gameplayGroupLayout.putConstraint(SpringLayout.WEST, gameCycleTimeLabel,
+                OPTION_PADDING_HORIZONTAL, SpringLayout.WEST, gameplayGroupPanel);
+        gameplayGroupLayout.putConstraint(SpringLayout.NORTH, gameCycleTimeLabel,
+                (gameCycleTimeSlider.getPreferredSize().height - gameCycleTimeLabel.getPreferredSize().height) / 2,
+                SpringLayout.NORTH, gameCycleTimeSlider);
+        gameplayGroupLayout.putConstraint(SpringLayout.EAST, gameCycleTimeLabel,
+                LABEL_WIDTH, SpringLayout.WEST, gameCycleTimeLabel);
+        
+        gameplayGroupLayout.putConstraint(SpringLayout.WEST, gameCycleTimeSlider,
+                0, SpringLayout.EAST, gameCycleTimeLabel);
+        gameplayGroupLayout.putConstraint(SpringLayout.NORTH, gameCycleTimeSlider,
+                OPTION_PADDING_VERTICAL, SpringLayout.NORTH, gameplayGroupPanel);
+        gameplayGroupLayout.putConstraint(SpringLayout.EAST, gameCycleTimeSlider,
+                -OPTION_PADDING_HORIZONTAL, SpringLayout.EAST, gameplayGroupPanel);
+        
+        // Adjusting gameplay group's vertical size
+        gameplayGroupLayout.putConstraint(SpringLayout.SOUTH, gameplayGroupPanel,
+                OPTION_PADDING_VERTICAL, SpringLayout.SOUTH, gameCycleTimeSlider);
         
         // Adding gameplay group to content pane
         contentPane.add(gameplayGroupPanel);
@@ -218,9 +257,7 @@ public class DesktopOptionsDialog extends JDialog {
         levelWidthTextField = new JTextField();
         levelWidthTextField.setHorizontalAlignment(JTextField.TRAILING);
         levelWidthTextField.setText(gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_WIDTH,
-                GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH).toString());
-        int labelBaseline = levelWidthLabel.getBaseline(0, levelWidthLabel.getPreferredSize().height);
-        int textFieldBaseline = levelWidthTextField.getBaseline(0, levelWidthTextField.getPreferredSize().height);
+                GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH).toString());        
         
         interfaceGroupPanel.add(levelWidthLabel);
         interfaceGroupPanel.add(levelWidthTextField);
@@ -289,7 +326,7 @@ public class DesktopOptionsDialog extends JDialog {
         
         interfaceGroupLayout.putConstraint(SpringLayout.WEST, spriteSizeComboBox, 0, SpringLayout.WEST, levelHeightTextField);
         interfaceGroupLayout.putConstraint(SpringLayout.NORTH, spriteSizeComboBox,
-                labelBaseline - textFieldBaseline, SpringLayout.NORTH, spriteSizeLabel);
+                labelBaseline - comboBoxBaseline, SpringLayout.NORTH, spriteSizeLabel);
         interfaceGroupLayout.putConstraint(SpringLayout.EAST, spriteSizeComboBox, 0, SpringLayout.EAST, levelHeightTextField);
         
         // Adjusting interface group's vertical size
@@ -347,7 +384,9 @@ public class DesktopOptionsDialog extends JDialog {
         // Adjusting dialog's size
         contentLayout.putConstraint(SpringLayout.EAST, contentPane, PADDING_HORIZONTAL, SpringLayout.EAST, buttonsPanel);
         contentLayout.putConstraint(SpringLayout.SOUTH, contentPane, PADDING_VERTICAL, SpringLayout.SOUTH, buttonsPanel);
+        
         pack();
+        setSize(new Dimension(DIALOG_WIDTH, getSize().height));
         
         // Preventing the dialog from being resized
         setResizable(false);
@@ -381,6 +420,8 @@ public class DesktopOptionsDialog extends JDialog {
 
         // Retrieving current configuration
         GameConfiguration gameConfiguration = desktopGame.getGameInstance().getGameConfiguration();
+        Integer currentGameCycleTime = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_GAME_CYCLE_TIME,
+                GameConfiguration.DEFAULT_OPTION_GAME_CYCLE_TIME);
         Integer currentLevelWidth = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_WIDTH,
                 GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH);
         Integer currentLevelHeight = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_HEIGHT,
@@ -389,6 +430,15 @@ public class DesktopOptionsDialog extends JDialog {
                 GameConfiguration.DEFAULT_OPTION_SPRITE_SIZE);
         
         ArrayList<String> errors = new ArrayList<String>();
+        
+        // Validating game cycle time
+        Integer gameCycleTime = GameConfiguration.MAX_OPTION_GAME_CYCLE_TIME -
+                (gameCycleTimeSlider.getValue() - GameConfiguration.MIN_OPTION_GAME_CYCLE_TIME);
+        if (gameCycleTime < GameConfiguration.MIN_OPTION_GAME_CYCLE_TIME ||
+                gameCycleTime > GameConfiguration.MAX_OPTION_GAME_CYCLE_TIME) {
+            
+            errors.add("Game speed is incorrect.");
+        }
         
         // Validating level width
         Integer levelWidth = null;
@@ -450,13 +500,15 @@ public class DesktopOptionsDialog extends JDialog {
         }
         
         // Checking whether changes have been made
-        boolean areChangesMade = !currentLevelWidth.equals(levelWidth)
+        boolean areChangesMade = !currentGameCycleTime.equals(gameCycleTime)
+                || !currentLevelWidth.equals(levelWidth)
                 || !currentLevelHeight.equals(levelHeight)
                 || !currentSpriteSize.equals(spriteSize);
         
         if (areChangesMade) {
             
             // Applying the changes
+            gameConfiguration.setOption(GameConfiguration.OPTION_GAME_CYCLE_TIME, gameCycleTime);
             gameConfiguration.setOption(GameConfiguration.OPTION_LEVEL_WIDTH, levelWidth);
             gameConfiguration.setOption(GameConfiguration.OPTION_LEVEL_HEIGHT, levelHeight);
             gameConfiguration.setOption(GameConfiguration.OPTION_SPRITE_SIZE, spriteSize);

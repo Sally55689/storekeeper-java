@@ -1216,16 +1216,16 @@ public class Game extends JPanel implements Runnable {
         long cycleUsefulTime = 0;
         long cycleSleepTime = 0;
         long levelStartTime = System.currentTimeMillis();
-        levelTime = 0;
-        
-        // Retrieving game cycle time
-        Integer gameCycleTime = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_GAME_CYCLE_TIME,
-                GameConfiguration.DEFAULT_OPTION_GAME_CYCLE_TIME);
+        levelTime = 0;               
         
         // Retrieving a reference to current gameLevel
         GameLevel gameLevel = gameLevels.get(currentGameLevelIndex);
 
         while (gameState == GameState.PLAY && !Thread.interrupted()) {
+            
+            // Retrieving game cycle time
+            Integer gameCycleTime = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_GAME_CYCLE_TIME,
+                    GameConfiguration.DEFAULT_OPTION_GAME_CYCLE_TIME);
 
             // Remembering a start time of current iteration
             cycleStartTime = System.currentTimeMillis();

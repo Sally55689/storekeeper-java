@@ -46,7 +46,7 @@ HOW TO BUILD
       directory using library "lib" directory as a classpath);
     - jar (creates single jar executable "jar/storekeeper.jar",
       "lib/ezze-utils.jar" is also required to zip the jar);
-    - run (starts "build/jar/storekeeper.jar");
+    - run (starts "jar/storekeeper.jar");
     - debug (debugs a project using NetBeans debugger);
     - javadoc (generates project's javadoc in "javadoc" directory; note that
       source code of "ezze-utils" library is required to generate a full

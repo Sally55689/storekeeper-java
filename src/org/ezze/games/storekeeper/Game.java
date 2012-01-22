@@ -27,7 +27,7 @@ import org.w3c.dom.Element;
  * animation and user actions' handling.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.2
+ * @version 0.0.3
  */
 public class Game extends JPanel implements Runnable {
 
@@ -1166,7 +1166,7 @@ public class Game extends JPanel implements Runnable {
                 String levelTimeTitle = "Time: ";
                 int levelTimeSeconds = levelTime % 60;
                 int levelTimeMinutes = ((levelTime - levelTimeSeconds) / 60) % 60;
-                int levelTimeHours = levelTime - levelTimeSeconds - levelTimeMinutes * 60;
+                int levelTimeHours = (levelTime - levelTimeSeconds - levelTimeMinutes * 60) / (60 * 60);
                 String levelTimeText = String.format("%02d:%02d:%02d", levelTimeHours, levelTimeMinutes, levelTimeSeconds);
                 String levelTimeLabel = String.format(" %s%s ", levelTimeTitle, levelTimeText);
                 AttributedString levelTimeString = new AttributedString(levelTimeLabel);

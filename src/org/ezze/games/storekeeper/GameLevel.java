@@ -93,12 +93,14 @@ public class GameLevel {
     }
     
     /**
-     * Represents a result of a move attempted by {@link #move(int, int)} method.
+     * Represents a type of a move attempted by {@link #move(int, int)} method.
      */
     public static enum MoveType {
 
         /**
          * Nothing has been changed after the attempt to move.
+         * 
+         * This value is linked with {@link MoveDirection#NONE}.
          */
         NOTHING,
         
@@ -112,6 +114,105 @@ public class GameLevel {
          */
         WORKER_AND_BOX
     };
+    
+    /**
+     * Represents a direction of a move attempted by {@link #move(int, int)} method.
+     */
+    public static enum MoveDirection {
+        
+        /**
+         * Nothing has been changed after the attempt to move.
+         * 
+         * This value is linked with {@link MoveType#NOTHING}.
+         */
+        NONE,
+        
+        /**
+         * Worker moved up.
+         */
+        UP,
+        
+        /**
+         * Worker moved right.
+         */
+        RIGHT,
+        
+        /**
+         * Worker moved down.
+         */
+        DOWN,
+        
+        /**
+         * Worker moved left.
+         */
+        LEFT
+    }
+    
+    /**
+     * This class accumulates the information about a move
+     * performed by the worker.
+     */
+    public class MoveInformation {
+        
+        /**
+         * Describes performed move's type.
+         */
+        private MoveType moveType = MoveType.NOTHING;
+        
+        /**
+         * Stores performed move's direction.
+         */
+        private MoveDirection moveDirection = MoveDirection.NONE;
+        
+        /**
+         * Creates information of an empty move meaning that the worker didn't move.
+         */
+        public MoveInformation() {
+            
+        }
+        
+        /**
+         * Creates information of a move with specified type and direction.
+         * 
+         * @param moveType
+         *      Performed move's type.
+         * @param moveDirection
+         *      Performed move's direction.
+         */
+        public MoveInformation(MoveType moveType, MoveDirection moveDirection) {
+            
+            if (moveType == null || moveType == MoveType.NOTHING ||
+                    moveDirection == null || moveDirection == MoveDirection.NONE) {
+                
+                return;
+            }
+            
+            this.moveType = moveType;
+            this.moveDirection = moveDirection;
+        }
+        
+        /**
+         * Retrieves performed move's type.
+         * 
+         * @return 
+         *      Move's type.
+         */
+        public MoveType getType() {
+            
+            return moveType;
+        }
+        
+        /**
+         * Retrieves performed move's direction.
+         * 
+         * @return 
+         *      Move's direction.
+         */
+        public MoveDirection getDirection() {
+            
+            return moveDirection;
+        }
+    }
     
     /**
      * Shows whether the level is initialized.
@@ -179,6 +280,11 @@ public class GameLevel {
      * Traces worker's pushes count.
      */
     private int pushesCount = 0;
+    
+    /**
+     * Keeps an information about performed moves.
+     */
+    private ArrayList<MoveInformation> movesHistory = new ArrayList<MoveInformation>();
     
     /**
      * Level's default constructor.
@@ -368,6 +474,7 @@ public class GameLevel {
         workerY = 0;
         movesCount = 0;
         pushesCount = 0;
+        movesHistory = new ArrayList<MoveInformation>();
         
         if (levelInitial == null)
             return false;
@@ -660,6 +767,109 @@ public class GameLevel {
         
         return pushesCount;
     }
+    
+    public int getMovesHistoryCount() {
+        
+        // TODO: make this method thread-safe
+        return movesHistory.size();
+    }
+    
+    public void addMoveToHistory(MoveInformation moveInformation) {
+        
+        // TODO: make this method thread-safe
+        
+        if (moveInformation == null || moveInformation.getType().equals(MoveType.NOTHING) ||
+                moveInformation.getDirection().equals(MoveDirection.NONE)) {
+            
+            return;
+        }
+        
+        while (movesHistory.size() > movesCount)
+            movesHistory.remove(movesHistory.size() - 1);
+        
+        movesCount++;
+        if (moveInformation.getType().equals(MoveType.WORKER_AND_BOX))
+            pushesCount++;
+        
+        movesHistory.add(moveInformation);
+    }
+    
+    public int takeBack() {
+        
+        return takeBack(1);
+    }
+    
+    public int takeBack(int takeBackMovesCount) {
+        
+        // TODO: make this method thread-safe
+        
+        if (!isInitialized || takeBackMovesCount > getMovesCount())
+            return -1;
+        
+        int lastRemovingMoveIndex = getMovesCount() - 1;
+        int firstRemovingMoveIndex = lastRemovingMoveIndex - takeBackMovesCount + 1;
+        int removingMoveIndex = lastRemovingMoveIndex;
+        while (removingMoveIndex >= firstRemovingMoveIndex) {
+            
+            // Retrieving information of a move to be removed
+            MoveInformation moveInformation = movesHistory.get(removingMoveIndex);
+            if (!moveInformation.getType().equals(MoveType.NOTHING)) {
+            
+                MoveDirection moveDirection = moveInformation.getDirection();                                
+                
+                if (moveInformation.getType().equals(MoveType.WORKER_AND_BOX)) {
+                    
+                    // Retrieving box' current coordinates
+                    int boxX = workerX;
+                    int boxY = workerY;
+                    if (moveDirection == MoveDirection.LEFT)
+                        boxX -= 1;
+                    else if (moveDirection == MoveDirection.RIGHT)
+                        boxX += 1;
+                    else if (moveDirection == MoveDirection.UP)
+                        boxY -= 1;
+                    else if (moveDirection == MoveDirection.DOWN)
+                        boxY += 1;
+                    
+                    // Restoring previous item at box' current position
+                    Character levelItem = getLevelItemAt(boxY, boxX);
+                    if (levelItem.equals(LEVEL_ITEM_BOX_IN_CELL))
+                        setLevelItemAt(LEVEL_ITEM_CELL, boxY, boxX);
+                    else if (levelItem.equals(LEVEL_ITEM_BOX))
+                        setLevelItemAt(LEVEL_ITEM_SPACE, boxY, boxX);
+                    
+                    // Retrieving box' previous coordinates (it's where the worker right now)
+                    boxX = workerX;
+                    boxY = workerY;
+                    
+                    // Retrieving box' destination item
+                    levelItem = getLevelItemAt(boxY, boxX);
+                    if (levelItem.equals(LEVEL_ITEM_CELL))
+                        setLevelItemAt(LEVEL_ITEM_BOX_IN_CELL, boxY, boxX);
+                    else if (levelItem.equals(LEVEL_ITEM_SPACE))
+                        setLevelItemAt(LEVEL_ITEM_BOX, boxY, boxX);
+                    
+                    // Decreasing pushes count
+                    pushesCount--;
+                }
+                
+                // Moving worker back
+                if (moveDirection == MoveDirection.LEFT)
+                    workerX += 1;
+                else if (moveDirection == MoveDirection.RIGHT)
+                    workerX -= 1;
+                else if (moveDirection == MoveDirection.UP)
+                    workerY += 1;
+                else if (moveDirection == MoveDirection.DOWN)
+                    workerY -= 1;
+                movesCount--;
+            }
+            
+            removingMoveIndex--;
+        }
+        
+        return movesCount;
+    }
 
     /**
      * Checks whether level is completed.
@@ -682,10 +892,10 @@ public class GameLevel {
      * @return
      *      Completed move's type as number of {@link MoveType} enumeration
      */
-    public MoveType move(int workerDeltaX, int workerDeltaY) {
+    public MoveInformation move(int workerDeltaX, int workerDeltaY) {
 
         if (workerDeltaX == 0 && workerDeltaY == 0)
-            return MoveType.NOTHING;
+            return new MoveInformation(MoveType.NOTHING, MoveDirection.NONE);
 
         // Calculating worker's destination location
         int workerDestinationX = workerX + workerDeltaX;
@@ -694,7 +904,18 @@ public class GameLevel {
         // Checking that worker's destination position is not a wall
         Character workerDestinationLevelItem = getLevelItemAt(workerDestinationY, workerDestinationX);
         if (workerDestinationLevelItem.equals(LEVEL_ITEM_BRICK))
-            return MoveType.NOTHING;
+            return new MoveInformation(MoveType.NOTHING, MoveDirection.NONE);
+        
+        // Defining worker's move direction
+        MoveDirection moveDirection = MoveDirection.NONE;
+        if (workerDeltaX > 0)
+            moveDirection = MoveDirection.RIGHT;
+        else if (workerDeltaX < 0)
+            moveDirection = MoveDirection.LEFT;
+        else if (workerDeltaY > 0)
+            moveDirection = MoveDirection.DOWN;
+        else if (workerDeltaY < 0)
+            moveDirection = MoveDirection.UP;
 
         // Checking whether worker's destination position is a box
         if (workerDestinationLevelItem.equals(LEVEL_ITEM_BOX) || workerDestinationLevelItem.equals(LEVEL_ITEM_BOX_IN_CELL)) {
@@ -707,7 +928,7 @@ public class GameLevel {
             Character boxDestinationLevelItem = getLevelItemAt(boxDestinationY, boxDestinationX);
             if (boxDestinationLevelItem.equals(LEVEL_ITEM_BRICK) || boxDestinationLevelItem.equals(LEVEL_ITEM_BOX)
                     || boxDestinationLevelItem.equals(LEVEL_ITEM_BOX_IN_CELL))
-                return MoveType.NOTHING;
+                return new MoveInformation(MoveType.NOTHING, MoveDirection.NONE);
 
             // Removing the box from old location
             if (workerDestinationLevelItem.equals(LEVEL_ITEM_BOX))
@@ -730,17 +951,20 @@ public class GameLevel {
             workerX = workerDestinationX;
             workerY = workerDestinationY;
 
-            movesCount += 1;
-            pushesCount += 1;
+            // Adding the move to moves' history
+            MoveInformation moveInformation = new MoveInformation(MoveType.WORKER_AND_BOX, moveDirection);
+            addMoveToHistory(moveInformation);
 
-            return MoveType.WORKER_AND_BOX;
+            return moveInformation;
         }
 
         workerX = workerDestinationX;
         workerY = workerDestinationY;
 
-        movesCount += 1;
+        // Adding the move to moves' history
+        MoveInformation moveInformation = new MoveInformation(MoveType.WORKER, moveDirection);
+        addMoveToHistory(moveInformation);
         
-        return MoveType.WORKER;
+        return moveInformation;
     }
 }

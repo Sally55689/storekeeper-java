@@ -114,6 +114,8 @@ public class DesktopGame extends JFrame {
      */
     private JMenuItem menuItemNextLevel = null;
     
+    private JMenuItem menuItemTakeBack = null;
+    
     /**
      * Tools menu instance.
      */
@@ -286,7 +288,7 @@ public class DesktopGame extends JFrame {
                 
                 if (game != null && game.getGameState() != Game.GameState.PLAY && game.getGameState() != Game.GameState.COMPLETED) {
                     
-                    game.startLevel(game.getCurrentGameLevelIndex());
+                    game.startLevel(game.getCurrentLevelIndex());
                     updateMenuItems();
                 }
             }
@@ -364,7 +366,7 @@ public class DesktopGame extends JFrame {
                                 "Open Warning", JOptionPane.WARNING_MESSAGE);
                     }
                     
-                    game.startLevel(game.getCurrentGameLevelIndex());
+                    game.startLevel(game.getCurrentLevelIndex());
                     updateMenuItems();
                 }
             }
@@ -383,7 +385,7 @@ public class DesktopGame extends JFrame {
                     if (game.loadDefaultLevelsSet() == Game.LevelResult.ERROR)
                         JOptionPane.showMessageDialog(null, "Unable to load default levels set.", "Open Error", JOptionPane.ERROR_MESSAGE);
                     else
-                        game.startLevel(game.getCurrentGameLevelIndex());
+                        game.startLevel(game.getCurrentLevelIndex());
                     updateMenuItems();
                 }
             }
@@ -465,6 +467,24 @@ public class DesktopGame extends JFrame {
         });
         menuItemNextLevel.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.ALT_MASK));
         menuAction.add(menuItemNextLevel);
+        
+        menuAction.add(new JSeparator());
+        
+        menuItemTakeBack = new JMenuItem("Take Back");
+        menuItemTakeBack.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+                if (game != null) {
+                    
+                    game.takeBack();
+                    updateMenuItems();
+                }
+            }
+        });
+        menuItemTakeBack.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK));
+        menuAction.add(menuItemTakeBack);
  
         menuBar.add(menuAction);
         
@@ -567,11 +587,13 @@ public class DesktopGame extends JFrame {
                         if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT) {
                             
                             game.forceWorkerToStopHorizontalMovement();
+                            updateMenuItems();
                             return true;
                         }
                         else if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
                             
                             game.forceWorkerToStopVerticalMovement();
+                            updateMenuItems();
                             return true;
                         }
                     }
@@ -732,6 +754,7 @@ public class DesktopGame extends JFrame {
         
         boolean isGameStopped = game.getGameState() == Game.GameState.INTRODUCTION || game.getGameState() == Game.GameState.STOP;
         boolean isLevelsSetLoaded = game.isLevelsSetLoaded();
+        GameLevel currentGameLevel = game.getCurrentLevel();
         
         menuItemStartTheGame.setEnabled(isGameStopped && isLevelsSetLoaded);
         menuItemStopTheGame.setEnabled(!isGameStopped && isLevelsSetLoaded);
@@ -740,6 +763,7 @@ public class DesktopGame extends JFrame {
         menuItemRestartLevel.setEnabled(!isGameStopped && isLevelsSetLoaded);
         menuItemPreviousLevel.setEnabled(isLevelsSetLoaded && game.getLevelsCount() > 1);
         menuItemNextLevel.setEnabled(isLevelsSetLoaded && game.getLevelsCount() > 1);
+        menuItemTakeBack.setEnabled(currentGameLevel != null ? !isGameStopped && currentGameLevel.getMovesCount() > 0 : false);
     }
     
     /**

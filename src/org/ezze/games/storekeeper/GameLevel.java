@@ -176,6 +176,11 @@ public class GameLevel {
     private int movesCount = 0;
     
     /**
+     * Traces worker's pushes count.
+     */
+    private int pushesCount = 0;
+    
+    /**
      * Level's default constructor.
      * 
      * @param levelLines
@@ -362,6 +367,7 @@ public class GameLevel {
         workerX = 0;
         workerY = 0;
         movesCount = 0;
+        pushesCount = 0;
         
         if (levelInitial == null)
             return false;
@@ -643,6 +649,17 @@ public class GameLevel {
 
         return movesCount;
     }
+    
+    /**
+     * Retrieves pushes count performed by the worker.
+     * 
+     * @return
+     *      Pushes count.
+     */
+    public int getPushesCount() {
+        
+        return pushesCount;
+    }
 
     /**
      * Checks whether level is completed.
@@ -714,6 +731,7 @@ public class GameLevel {
             workerY = workerDestinationY;
 
             movesCount += 1;
+            pushesCount += 1;
 
             return MoveType.WORKER_AND_BOX;
         }

@@ -1162,6 +1162,23 @@ public class Game extends JPanel implements Runnable {
             
             if (gameState == GameState.PLAY || gameState == GameState.COMPLETED) {
                 
+                // Printing worker's moves count and pushes count
+                String movesCountTitle = "Moves:";
+                String pushesCountTitle = "Pushes:";
+                String movesCountText = String.format("%05d", gameLevel.getMovesCount());
+                String pushesCountText = String.format("%05d", gameLevel.getPushesCount());
+                String countLabel = String.format(" %s %s %s %s",
+                        movesCountTitle, movesCountText, pushesCountTitle, pushesCountText);
+                AttributedString countString = new AttributedString(countLabel);
+                countString.addAttribute(TextAttribute.FONT, gameFont);
+                countString.addAttribute(TextAttribute.FOREGROUND, new Color(240, 240, 240));
+                countString.addAttribute(TextAttribute.FOREGROUND, new Color(220, 190, 0),
+                        countLabel.indexOf(movesCountTitle), countLabel.indexOf(movesCountTitle) + movesCountTitle.length());
+                countString.addAttribute(TextAttribute.FOREGROUND, new Color(220, 190, 0),
+                        countLabel.indexOf(pushesCountTitle), countLabel.indexOf(pushesCountTitle) + pushesCountTitle.length());
+                countString.addAttribute(TextAttribute.BACKGROUND, gameGraphics.getBackground());
+                g2d.drawString(countString.getIterator(), infoLineHorizontalOffset, topInfoLineOffset);
+                
                 // Printing level's elapsed time
                 String levelTimeTitle = "Time: ";
                 int levelTimeSeconds = levelTime % 60;
@@ -1172,22 +1189,11 @@ public class Game extends JPanel implements Runnable {
                 AttributedString levelTimeString = new AttributedString(levelTimeLabel);
                 levelTimeString.addAttribute(TextAttribute.FONT, gameFont);
                 levelTimeString.addAttribute(TextAttribute.FOREGROUND, new Color(240, 240, 240));
-                levelTimeString.addAttribute(TextAttribute.FOREGROUND, new Color(10, 200, 0), 0, levelTimeTitle.length());
+                levelTimeString.addAttribute(TextAttribute.FOREGROUND, new Color(50, 230, 0), 0, levelTimeTitle.length());
                 levelTimeString.addAttribute(TextAttribute.BACKGROUND, gameGraphics.getBackground());
                 int levelTimeStringLeftOffset = gameGraphics.getSpriteDimension().width * maximalLevelWidth -
                         fontMetrics.stringWidth(levelTimeLabel) - infoLineHorizontalOffset;
                 g2d.drawString(levelTimeString.getIterator(), levelTimeStringLeftOffset, topInfoLineOffset);
-                
-                // Printing worker's moves count
-                String movesCountTitle = "Moves: ";
-                String movesCountText = String.format("%05d", gameLevel.getMovesCount());
-                String movesCountLabel = String.format(" %s%s ", movesCountTitle, movesCountText);
-                AttributedString movesCountString = new AttributedString(movesCountLabel);
-                movesCountString.addAttribute(TextAttribute.FONT, gameFont);
-                movesCountString.addAttribute(TextAttribute.FOREGROUND, new Color(240, 240, 240));
-                movesCountString.addAttribute(TextAttribute.FOREGROUND, new Color(255, 55, 0), 0, movesCountTitle.length());
-                movesCountString.addAttribute(TextAttribute.BACKGROUND, gameGraphics.getBackground());
-                g2d.drawString(movesCountString.getIterator(), infoLineHorizontalOffset, topInfoLineOffset);
             }
         }
 

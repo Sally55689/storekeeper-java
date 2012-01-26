@@ -114,6 +114,9 @@ public class DesktopGame extends JFrame {
      */
     private JMenuItem menuItemNextLevel = null;
     
+    /**
+     * Action menu item to take game level's position back by one move.
+     */
     private JMenuItem menuItemTakeBack = null;
     
     /**

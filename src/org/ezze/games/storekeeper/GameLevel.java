@@ -768,107 +768,150 @@ public class GameLevel {
         return pushesCount;
     }
     
+    /**
+     * Retrieves count of moves stored in history.
+     * 
+     * @return 
+     *      Count of history moves.
+     */
     public int getMovesHistoryCount() {
         
-        // TODO: make this method thread-safe
-        return movesHistory.size();
+        synchronized(SyncLock.getInstance().getLock(SyncLock.MOVES_HISTORY)) {
+            
+            return movesHistory.size();
+        }
     }
     
+    /**
+     * Adds a move to history and increments {@link #movesCount} and {@link #pushesCount}
+     * if it's necessary.
+     * 
+     * If one want to take level's position back he or she may use {@link #takeBack()}
+     * or {@link #takeBack(int)} methods.
+     * 
+     * @param moveInformation
+     *      An instance with information about recently performed move.
+     * @see #takeBack()
+     * @see #takeBack(int)
+     */
     public void addMoveToHistory(MoveInformation moveInformation) {
         
-        // TODO: make this method thread-safe
+        synchronized(SyncLock.getInstance().getLock(SyncLock.MOVES_HISTORY)) {
         
-        if (moveInformation == null || moveInformation.getType().equals(MoveType.NOTHING) ||
-                moveInformation.getDirection().equals(MoveDirection.NONE)) {
-            
-            return;
+            if (moveInformation == null || moveInformation.getType().equals(MoveType.NOTHING) ||
+                    moveInformation.getDirection().equals(MoveDirection.NONE)) {
+
+                return;
+            }
+
+            while (movesHistory.size() > movesCount)
+                movesHistory.remove(movesHistory.size() - 1);
+
+            movesCount++;
+            if (moveInformation.getType().equals(MoveType.WORKER_AND_BOX))
+                pushesCount++;
+
+            movesHistory.add(moveInformation);
         }
-        
-        while (movesHistory.size() > movesCount)
-            movesHistory.remove(movesHistory.size() - 1);
-        
-        movesCount++;
-        if (moveInformation.getType().equals(MoveType.WORKER_AND_BOX))
-            pushesCount++;
-        
-        movesHistory.add(moveInformation);
     }
     
+    /**
+     * Takes game level's position back by one move.
+     * 
+     * @return
+     *      A number of performed moves after the take-back or {@code -1}
+     *      if level is not initialized or moves' history is empty.
+     * @see #takeBack(int)
+     * @see #addMoveToHistory(org.ezze.games.storekeeper.GameLevel.MoveInformation)
+     */
     public int takeBack() {
         
         return takeBack(1);
     }
     
+    /**
+     * Takes game level's position back by specified moves' count.
+     * 
+     * @param takeBackMovesCount
+     *      Moves' count to take game level's position back by.
+     * @return
+     *      A number of performed moves after the take-back or {@code -1}
+     *      if level is not initialized or {@code takeBackMovesCount}
+     *      is more than performed moves' count.
+     * @see #takeBack()
+     * @see #addMoveToHistory(org.ezze.games.storekeeper.GameLevel.MoveInformation)
+     */
     public int takeBack(int takeBackMovesCount) {
         
-        // TODO: make this method thread-safe
+        synchronized(SyncLock.getInstance().getLock(SyncLock.MOVES_HISTORY)) {
         
-        if (!isInitialized || takeBackMovesCount > getMovesCount())
-            return -1;
-        
-        int lastRemovingMoveIndex = getMovesCount() - 1;
-        int firstRemovingMoveIndex = lastRemovingMoveIndex - takeBackMovesCount + 1;
-        int removingMoveIndex = lastRemovingMoveIndex;
-        while (removingMoveIndex >= firstRemovingMoveIndex) {
-            
-            // Retrieving information of a move to be removed
-            MoveInformation moveInformation = movesHistory.get(removingMoveIndex);
-            if (!moveInformation.getType().equals(MoveType.NOTHING)) {
-            
-                MoveDirection moveDirection = moveInformation.getDirection();                                
-                
-                if (moveInformation.getType().equals(MoveType.WORKER_AND_BOX)) {
-                    
-                    // Retrieving box' current coordinates
-                    int boxX = workerX;
-                    int boxY = workerY;
+            if (!isInitialized || takeBackMovesCount > getMovesCount())
+                return -1;
+
+            int lastRemovingMoveIndex = getMovesCount() - 1;
+            int firstRemovingMoveIndex = lastRemovingMoveIndex - takeBackMovesCount + 1;
+            int removingMoveIndex = lastRemovingMoveIndex;
+            while (removingMoveIndex >= firstRemovingMoveIndex) {
+
+                // Retrieving information of a move to be removed
+                MoveInformation moveInformation = movesHistory.get(removingMoveIndex);
+                if (!moveInformation.getType().equals(MoveType.NOTHING)) {
+
+                    MoveDirection moveDirection = moveInformation.getDirection();                                
+
+                    if (moveInformation.getType().equals(MoveType.WORKER_AND_BOX)) {
+
+                        // Retrieving box' current coordinates
+                        int boxX = workerX;
+                        int boxY = workerY;
+                        if (moveDirection == MoveDirection.LEFT)
+                            boxX -= 1;
+                        else if (moveDirection == MoveDirection.RIGHT)
+                            boxX += 1;
+                        else if (moveDirection == MoveDirection.UP)
+                            boxY -= 1;
+                        else if (moveDirection == MoveDirection.DOWN)
+                            boxY += 1;
+
+                        // Restoring previous item at box' current position
+                        Character levelItem = getLevelItemAt(boxY, boxX);
+                        if (levelItem.equals(LEVEL_ITEM_BOX_IN_CELL))
+                            setLevelItemAt(LEVEL_ITEM_CELL, boxY, boxX);
+                        else if (levelItem.equals(LEVEL_ITEM_BOX))
+                            setLevelItemAt(LEVEL_ITEM_SPACE, boxY, boxX);
+
+                        // Retrieving box' previous coordinates (it's where the worker right now)
+                        boxX = workerX;
+                        boxY = workerY;
+
+                        // Retrieving box' destination item
+                        levelItem = getLevelItemAt(boxY, boxX);
+                        if (levelItem.equals(LEVEL_ITEM_CELL))
+                            setLevelItemAt(LEVEL_ITEM_BOX_IN_CELL, boxY, boxX);
+                        else if (levelItem.equals(LEVEL_ITEM_SPACE))
+                            setLevelItemAt(LEVEL_ITEM_BOX, boxY, boxX);
+
+                        // Decreasing pushes count
+                        pushesCount--;
+                    }
+
+                    // Moving worker back
                     if (moveDirection == MoveDirection.LEFT)
-                        boxX -= 1;
+                        workerX += 1;
                     else if (moveDirection == MoveDirection.RIGHT)
-                        boxX += 1;
+                        workerX -= 1;
                     else if (moveDirection == MoveDirection.UP)
-                        boxY -= 1;
+                        workerY += 1;
                     else if (moveDirection == MoveDirection.DOWN)
-                        boxY += 1;
-                    
-                    // Restoring previous item at box' current position
-                    Character levelItem = getLevelItemAt(boxY, boxX);
-                    if (levelItem.equals(LEVEL_ITEM_BOX_IN_CELL))
-                        setLevelItemAt(LEVEL_ITEM_CELL, boxY, boxX);
-                    else if (levelItem.equals(LEVEL_ITEM_BOX))
-                        setLevelItemAt(LEVEL_ITEM_SPACE, boxY, boxX);
-                    
-                    // Retrieving box' previous coordinates (it's where the worker right now)
-                    boxX = workerX;
-                    boxY = workerY;
-                    
-                    // Retrieving box' destination item
-                    levelItem = getLevelItemAt(boxY, boxX);
-                    if (levelItem.equals(LEVEL_ITEM_CELL))
-                        setLevelItemAt(LEVEL_ITEM_BOX_IN_CELL, boxY, boxX);
-                    else if (levelItem.equals(LEVEL_ITEM_SPACE))
-                        setLevelItemAt(LEVEL_ITEM_BOX, boxY, boxX);
-                    
-                    // Decreasing pushes count
-                    pushesCount--;
+                        workerY -= 1;
+                    movesCount--;
                 }
-                
-                // Moving worker back
-                if (moveDirection == MoveDirection.LEFT)
-                    workerX += 1;
-                else if (moveDirection == MoveDirection.RIGHT)
-                    workerX -= 1;
-                else if (moveDirection == MoveDirection.UP)
-                    workerY += 1;
-                else if (moveDirection == MoveDirection.DOWN)
-                    workerY -= 1;
-                movesCount--;
+
+                removingMoveIndex--;
             }
-            
-            removingMoveIndex--;
+
+            return movesCount;
         }
-        
-        return movesCount;
     }
 
     /**

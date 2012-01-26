@@ -667,6 +667,7 @@ public class Game extends JPanel implements Runnable {
      * @return 
      *      Current level's index
      * @see #currentLevelIndex
+     * @see #getCurrentLevel()
      * @see #gameLevels
      */
     public int getCurrentLevelIndex() {
@@ -674,6 +675,13 @@ public class Game extends JPanel implements Runnable {
         return currentLevelIndex;
     }
     
+    /**
+     * Retrieves a reference to current game's level.
+     * 
+     * @return
+     *      Reference to current game's level.
+     * @see #getCurrentLevelIndex() 
+     */
     public GameLevel getCurrentLevel() {
         
         if (gameLevels == null || currentLevelIndex >= gameLevels.size())
@@ -894,19 +902,46 @@ public class Game extends JPanel implements Runnable {
         return true;
     }
     
+    /**
+     * Takes current game level's position back by one move.
+     * 
+     * @return 
+     *      A number of performed moves after the take-back or {@code -1}
+     *      if the take-back cannot be performed for some reasons.
+     * @see #takeBack(int)
+     * @see GameLevel#takeBack()
+     * @see GameLevel#takeBack(int)
+     */
     public int takeBack() {
         
         return takeBack(1);
     }
     
+    /**
+     * Takes current game level's position back by specified moves' count.
+     * 
+     * @param takeBackMovesCount
+     *      Moves' count to take current level's position back by.
+     * @return
+     *      A number of performed moves after the take-back or {@code -1}
+     *      if the take-back cannot be performed for some reasons.
+     * @see #takeBack()
+     * @see GameLevel#takeBack()
+     * @see GameLevel#takeBack(int)
+     */
     public int takeBack(int takeBackMovesCount) {
         
+        // Checking whether game is in play state
         if (!gameState.equals(GameState.PLAY))
             return -1;
         
         // Retrieving a reference to current game level
         GameLevel gameLevel = getCurrentLevel();
         if (gameLevel == null)
+            return -1;
+        
+        // Preventing from taking back when the worker is moving
+        if (!isWorkerIdle)
             return -1;
         
         return gameLevel.takeBack(takeBackMovesCount);

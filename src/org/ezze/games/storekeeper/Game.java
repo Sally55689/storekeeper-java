@@ -122,15 +122,15 @@ public class Game extends JPanel implements Runnable {
      * 
      * This one must be passed as instance constructor's argument.
      * 
-     * @see #Game(org.ezze.games.storekeeper.Configuration, org.ezze.games.storekeeper.Graphics)
-     * @see #Game(org.ezze.games.storekeeper.Configuration, org.ezze.games.storekeeper.Graphics, org.ezze.games.storekeeper.LevelCompletionListener)
+     * @see #Game(org.ezze.games.storekeeper.Configuration, org.ezze.games.storekeeper.GameGraphics)
+     * @see #Game(org.ezze.games.storekeeper.Configuration, org.ezze.games.storekeeper.GameGraphics, org.ezze.games.storekeeper.LevelCompletionListener)
      */
     private GameGraphics gameGraphics = null;
     
     /**
      * An instance of interface providing actions to do after level will have been completed.
      * 
-     * @see #Game(org.ezze.games.storekeeper.Configuration, org.ezze.games.storekeeper.Graphics, org.ezze.games.storekeeper.LevelCompletionListener)
+     * @see #Game(org.ezze.games.storekeeper.Configuration, org.ezze.games.storekeeper.GameGraphics, org.ezze.games.storekeeper.LevelCompletionListener)
      */
     private LevelCompletionListener gameLevelCompletionListener = null;
     
@@ -194,7 +194,7 @@ public class Game extends JPanel implements Runnable {
      * Worker's animation phase's index.
      * 
      * This index must no less than 0 and less than
-     * {@link Graphics#getActionSpritesCount()} of {@link #gameGraphics}.
+     * {@link GameGraphics#getActionSpritesCount()} of {@link #gameGraphics}.
      * Animation phase with index 0 corresponds to idle worker
      * while another ones represent worker's motion.
      */
@@ -239,7 +239,7 @@ public class Game extends JPanel implements Runnable {
     /**
      * Worker's X animation shift to be performed during current loop execution.
      * 
-     * This one is determined as {@link Graphics#getAnimationStepShift()} of
+     * This one is determined as {@link GameGraphics#getAnimationStepShift()} of
      * {@link #gameGraphics} for each horizontal worker's animation.
      * 
      * Animation continues until {@link #workerAnimCurrX} reaches {@link #workerAnimDestX}
@@ -250,7 +250,7 @@ public class Game extends JPanel implements Runnable {
     /**
      * Worker's Y animation shift to be performed during current loop execution.
      * 
-     * This one is determined as {@link Graphics#getAnimationStepShift()} of
+     * This one is determined as {@link GameGraphics#getAnimationStepShift()} of
      * {@link #gameGraphics} for each vertical worker's animation.
      * 
      * Animation continues until {@link #workerAnimCurrX} reaches {@link #workerAnimDestX}
@@ -313,7 +313,7 @@ public class Game extends JPanel implements Runnable {
      *      A reference to game configuration.
      * @param gameGraphics 
      *      A reference to game graphics implementation.
-     * @see #Game(org.ezze.games.storekeeper.Configuration, org.ezze.games.storekeeper.Graphics, org.ezze.games.storekeeper.LevelCompletionListener)
+     * @see #Game(org.ezze.games.storekeeper.Configuration, org.ezze.games.storekeeper.GameGraphics, org.ezze.games.storekeeper.LevelCompletionListener)
      * @see GameGraphics
      */
     public Game(Configuration gameConfiguration, GameGraphics gameGraphics) {
@@ -330,7 +330,7 @@ public class Game extends JPanel implements Runnable {
      *      A reference to game graphics implementation.
      * @param gameLevelCompletionListener 
      *      A reference to game level's completion listener.
-     * @see #Game(org.ezze.games.storekeeper.Configuration, org.ezze.games.storekeeper.Graphics)
+     * @see #Game(org.ezze.games.storekeeper.Configuration, org.ezze.games.storekeeper.GameGraphics)
      * @see GameGraphics
      * @see LevelCompletionListener
      */
@@ -642,7 +642,7 @@ public class Game extends JPanel implements Runnable {
      * game's state {@link #gameState} to {@link GameState#PLAY}.
      * 
      * Level index {@code gameLevelIndex} must be in the
-     * range [0; {@link #getLevelsCount()} - 1].
+     * range [0; {@link LevelsSet#getLevelsCount()} - 1].
      * 
      * @param gameLevelIndex
      *      Level's index
@@ -653,7 +653,6 @@ public class Game extends JPanel implements Runnable {
      * @see #goToNextLevel()
      * @see #stop() 
      * @see #stop(boolean)
-     * @see #getLevelsCount()
      */
     public boolean startLevel(int gameLevelIndex) {
         

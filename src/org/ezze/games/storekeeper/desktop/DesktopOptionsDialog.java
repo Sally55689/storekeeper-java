@@ -25,7 +25,7 @@ import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import org.ezze.games.storekeeper.Game;
-import org.ezze.games.storekeeper.GameConfiguration;
+import org.ezze.games.storekeeper.Configuration;
 
 /**
  * Options dialog for desktop game.
@@ -161,7 +161,7 @@ public class DesktopOptionsDialog extends JDialog {
         // Saving a reference to game instance
         this.desktopGame = desktopGame;
         Game game = desktopGame.getGameInstance();
-        GameConfiguration gameConfiguration = game.getGameConfiguration();
+        Configuration gameConfiguration = game.getGameConfiguration();
         
         // Setting window closing handler
         setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
@@ -204,19 +204,19 @@ public class DesktopOptionsDialog extends JDialog {
         
         // Creating game cycle time's label and slider
         JLabel gameCycleTimeLabel = new JLabel("Game Speed");
-        int gameCycleTimeValue = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_GAME_CYCLE_TIME,
-                GameConfiguration.DEFAULT_OPTION_GAME_CYCLE_TIME);
-        int gameCycleTimeSliderInitialValue = GameConfiguration.MIN_OPTION_GAME_CYCLE_TIME +
-                (GameConfiguration.MAX_OPTION_GAME_CYCLE_TIME - gameCycleTimeValue);
-        gameCycleTimeSlider = new JSlider(GameConfiguration.MIN_OPTION_GAME_CYCLE_TIME,
-                GameConfiguration.MAX_OPTION_GAME_CYCLE_TIME, gameCycleTimeSliderInitialValue);
+        int gameCycleTimeValue = (Integer)gameConfiguration.getOption(Configuration.OPTION_GAME_CYCLE_TIME,
+                Configuration.DEFAULT_OPTION_GAME_CYCLE_TIME);
+        int gameCycleTimeSliderInitialValue = Configuration.MIN_OPTION_GAME_CYCLE_TIME +
+                (Configuration.MAX_OPTION_GAME_CYCLE_TIME - gameCycleTimeValue);
+        gameCycleTimeSlider = new JSlider(Configuration.MIN_OPTION_GAME_CYCLE_TIME,
+                Configuration.MAX_OPTION_GAME_CYCLE_TIME, gameCycleTimeSliderInitialValue);
         gameCycleTimeSlider.setMajorTickSpacing(10);
         gameCycleTimeSlider.setPaintTicks(true);
         Hashtable<Integer, JLabel> gameCycleTimeLabelsTable = new Hashtable<Integer, JLabel>();
-        gameCycleTimeLabelsTable.put(new Integer(GameConfiguration.MIN_OPTION_GAME_CYCLE_TIME), new JLabel("Slow"));
-        gameCycleTimeLabelsTable.put(new Integer((GameConfiguration.MAX_OPTION_GAME_CYCLE_TIME +
-                GameConfiguration.MIN_OPTION_GAME_CYCLE_TIME) / 2), new JLabel("Normal"));
-        gameCycleTimeLabelsTable.put(new Integer(GameConfiguration.MAX_OPTION_GAME_CYCLE_TIME), new JLabel("Fast"));
+        gameCycleTimeLabelsTable.put(new Integer(Configuration.MIN_OPTION_GAME_CYCLE_TIME), new JLabel("Slow"));
+        gameCycleTimeLabelsTable.put(new Integer((Configuration.MAX_OPTION_GAME_CYCLE_TIME +
+                Configuration.MIN_OPTION_GAME_CYCLE_TIME) / 2), new JLabel("Normal"));
+        gameCycleTimeLabelsTable.put(new Integer(Configuration.MAX_OPTION_GAME_CYCLE_TIME), new JLabel("Fast"));
         gameCycleTimeSlider.setLabelTable(gameCycleTimeLabelsTable);
         gameCycleTimeSlider.setPaintLabels(true);
         gameplayGroupPanel.add(gameCycleTimeLabel);
@@ -256,8 +256,8 @@ public class DesktopOptionsDialog extends JDialog {
         JLabel levelWidthLabel = new JLabel("Level Width");
         levelWidthTextField = new JTextField();
         levelWidthTextField.setHorizontalAlignment(JTextField.TRAILING);
-        levelWidthTextField.setText(gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_WIDTH,
-                GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH).toString());        
+        levelWidthTextField.setText(gameConfiguration.getOption(Configuration.OPTION_LEVEL_WIDTH,
+                Configuration.DEFAULT_OPTION_LEVEL_WIDTH).toString());        
         
         interfaceGroupPanel.add(levelWidthLabel);
         interfaceGroupPanel.add(levelWidthTextField);
@@ -278,8 +278,8 @@ public class DesktopOptionsDialog extends JDialog {
         JLabel levelHeightLabel = new JLabel("Level Height");
         levelHeightTextField = new JTextField();
         levelHeightTextField.setHorizontalAlignment(JTextField.TRAILING);
-        levelHeightTextField.setText(gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_HEIGHT,
-                GameConfiguration.DEFAULT_OPTION_LEVEL_HEIGHT).toString());
+        levelHeightTextField.setText(gameConfiguration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
+                Configuration.DEFAULT_OPTION_LEVEL_HEIGHT).toString());
         interfaceGroupPanel.add(levelHeightLabel);
         interfaceGroupPanel.add(levelHeightTextField);
         
@@ -296,14 +296,14 @@ public class DesktopOptionsDialog extends JDialog {
         // Creating sprite size's label and combobox
         JLabel spriteSizeLabel = new JLabel("Sprite Size");
         spriteSizeComboBox = new JComboBox();
-        spriteSizeComboBox.addItem(new ComboBoxOption(GameConfiguration.OPTION_SPRITE_SIZE_OPTIMAL, OPTION_VALUE_TEXT_OPTIMAL));
-        spriteSizeComboBox.addItem(new ComboBoxOption(GameConfiguration.OPTION_SPRITE_SIZE_LARGE, OPTION_VALUE_TEXT_LARGE));
-        spriteSizeComboBox.addItem(new ComboBoxOption(GameConfiguration.OPTION_SPRITE_SIZE_MEDIUM, OPTION_VALUE_TEXT_MEDIUM));
-        spriteSizeComboBox.addItem(new ComboBoxOption(GameConfiguration.OPTION_SPRITE_SIZE_SMALL, OPTION_VALUE_TEXT_SMALL));
+        spriteSizeComboBox.addItem(new ComboBoxOption(Configuration.OPTION_SPRITE_SIZE_OPTIMAL, OPTION_VALUE_TEXT_OPTIMAL));
+        spriteSizeComboBox.addItem(new ComboBoxOption(Configuration.OPTION_SPRITE_SIZE_LARGE, OPTION_VALUE_TEXT_LARGE));
+        spriteSizeComboBox.addItem(new ComboBoxOption(Configuration.OPTION_SPRITE_SIZE_MEDIUM, OPTION_VALUE_TEXT_MEDIUM));
+        spriteSizeComboBox.addItem(new ComboBoxOption(Configuration.OPTION_SPRITE_SIZE_SMALL, OPTION_VALUE_TEXT_SMALL));
         
         // Initializing sprite size's combobox
-        String spriteSizeKey = (String)gameConfiguration.getOption(GameConfiguration.OPTION_SPRITE_SIZE,
-                GameConfiguration.DEFAULT_OPTION_SPRITE_SIZE);
+        String spriteSizeKey = (String)gameConfiguration.getOption(Configuration.OPTION_SPRITE_SIZE,
+                Configuration.DEFAULT_OPTION_SPRITE_SIZE);
         
         boolean isSpriteSizeSelected = false;
         int spriteSizeItemIndex = 0;
@@ -419,23 +419,23 @@ public class DesktopOptionsDialog extends JDialog {
     private boolean applyChanges() {
 
         // Retrieving current configuration
-        GameConfiguration gameConfiguration = desktopGame.getGameInstance().getGameConfiguration();
-        Integer currentGameCycleTime = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_GAME_CYCLE_TIME,
-                GameConfiguration.DEFAULT_OPTION_GAME_CYCLE_TIME);
-        Integer currentLevelWidth = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_WIDTH,
-                GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH);
-        Integer currentLevelHeight = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_HEIGHT,
-                GameConfiguration.DEFAULT_OPTION_LEVEL_HEIGHT);
-        String currentSpriteSize = (String)gameConfiguration.getOption(GameConfiguration.OPTION_SPRITE_SIZE,
-                GameConfiguration.DEFAULT_OPTION_SPRITE_SIZE);
+        Configuration gameConfiguration = desktopGame.getGameInstance().getGameConfiguration();
+        Integer currentGameCycleTime = (Integer)gameConfiguration.getOption(Configuration.OPTION_GAME_CYCLE_TIME,
+                Configuration.DEFAULT_OPTION_GAME_CYCLE_TIME);
+        Integer currentLevelWidth = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_WIDTH,
+                Configuration.DEFAULT_OPTION_LEVEL_WIDTH);
+        Integer currentLevelHeight = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
+                Configuration.DEFAULT_OPTION_LEVEL_HEIGHT);
+        String currentSpriteSize = (String)gameConfiguration.getOption(Configuration.OPTION_SPRITE_SIZE,
+                Configuration.DEFAULT_OPTION_SPRITE_SIZE);
         
         ArrayList<String> errors = new ArrayList<String>();
         
         // Validating game cycle time
-        Integer gameCycleTime = GameConfiguration.MAX_OPTION_GAME_CYCLE_TIME -
-                (gameCycleTimeSlider.getValue() - GameConfiguration.MIN_OPTION_GAME_CYCLE_TIME);
-        if (gameCycleTime < GameConfiguration.MIN_OPTION_GAME_CYCLE_TIME ||
-                gameCycleTime > GameConfiguration.MAX_OPTION_GAME_CYCLE_TIME) {
+        Integer gameCycleTime = Configuration.MAX_OPTION_GAME_CYCLE_TIME -
+                (gameCycleTimeSlider.getValue() - Configuration.MIN_OPTION_GAME_CYCLE_TIME);
+        if (gameCycleTime < Configuration.MIN_OPTION_GAME_CYCLE_TIME ||
+                gameCycleTime > Configuration.MAX_OPTION_GAME_CYCLE_TIME) {
             
             errors.add("Game speed is incorrect.");
         }
@@ -445,10 +445,10 @@ public class DesktopOptionsDialog extends JDialog {
         try {
             
             levelWidth = Integer.parseInt(levelWidthTextField.getText());
-            if (levelWidth < GameConfiguration.MIN_OPTION_LEVEL_WIDTH || levelWidth > GameConfiguration.MAX_OPTION_LEVEL_WIDTH) {
+            if (levelWidth < Configuration.MIN_OPTION_LEVEL_WIDTH || levelWidth > Configuration.MAX_OPTION_LEVEL_WIDTH) {
                 
                 errors.add(String.format("Level width must be a decimal number no less than %d and no more than %d.",
-                        GameConfiguration.MIN_OPTION_LEVEL_WIDTH, GameConfiguration.MAX_OPTION_LEVEL_WIDTH));
+                        Configuration.MIN_OPTION_LEVEL_WIDTH, Configuration.MAX_OPTION_LEVEL_WIDTH));
                 levelWidth = null;
             }
         }
@@ -462,10 +462,10 @@ public class DesktopOptionsDialog extends JDialog {
         try {
             
             levelHeight = Integer.parseInt(levelHeightTextField.getText());
-            if (levelHeight < GameConfiguration.MIN_OPTION_LEVEL_HEIGHT || levelHeight > GameConfiguration.MAX_OPTION_LEVEL_HEIGHT) {
+            if (levelHeight < Configuration.MIN_OPTION_LEVEL_HEIGHT || levelHeight > Configuration.MAX_OPTION_LEVEL_HEIGHT) {
                 
                 errors.add(String.format("Level height must be a decimal number no less than %d and no more than %d.",
-                        GameConfiguration.MIN_OPTION_LEVEL_HEIGHT, GameConfiguration.MAX_OPTION_LEVEL_HEIGHT));
+                        Configuration.MIN_OPTION_LEVEL_HEIGHT, Configuration.MAX_OPTION_LEVEL_HEIGHT));
                 levelHeight = null;
             }
         }
@@ -508,10 +508,10 @@ public class DesktopOptionsDialog extends JDialog {
         if (areChangesMade) {
             
             // Applying the changes
-            gameConfiguration.setOption(GameConfiguration.OPTION_GAME_CYCLE_TIME, gameCycleTime);
-            gameConfiguration.setOption(GameConfiguration.OPTION_LEVEL_WIDTH, levelWidth);
-            gameConfiguration.setOption(GameConfiguration.OPTION_LEVEL_HEIGHT, levelHeight);
-            gameConfiguration.setOption(GameConfiguration.OPTION_SPRITE_SIZE, spriteSize);
+            gameConfiguration.setOption(Configuration.OPTION_GAME_CYCLE_TIME, gameCycleTime);
+            gameConfiguration.setOption(Configuration.OPTION_LEVEL_WIDTH, levelWidth);
+            gameConfiguration.setOption(Configuration.OPTION_LEVEL_HEIGHT, levelHeight);
+            gameConfiguration.setOption(Configuration.OPTION_SPRITE_SIZE, spriteSize);
             
             // Trying to save the changes
             if (!gameConfiguration.save()) {

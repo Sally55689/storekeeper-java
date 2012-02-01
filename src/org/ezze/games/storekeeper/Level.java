@@ -8,9 +8,9 @@ import java.util.HashMap;
  * This class stores an inner representation of storekeeper's level.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.2
+ * @version 0.0.3
  */
-public class GameLevel {
+public class Level {
 
     /**
      * Default maximal count of level items per line.
@@ -90,6 +90,14 @@ public class GameLevel {
         allowedLevelItems.add(LEVEL_ITEM_BOX);
         allowedLevelItems.add(LEVEL_ITEM_BOX_IN_CELL);
         allowedLevelItems.add(LEVEL_ITEM_SPACE);
+    }
+    
+    public static enum LevelState {
+        
+        EMPTY,        
+        OUT_OF_BOUNDS,
+        CORRUPTED,
+        PLAYABLE
     }
     
     /**
@@ -217,7 +225,8 @@ public class GameLevel {
     /**
      * Shows whether the level is initialized.
      */
-    private boolean isInitialized = false;
+    //private boolean isInitialized = false;
+    private LevelState levelState = LevelState.EMPTY;
     
     /**
      * Stores level's initial state characters.
@@ -293,9 +302,9 @@ public class GameLevel {
      *      Lines to initialize a level from.
      * @param levelInfo 
      *      Level's information.
-     * @see #GameLevel(java.util.ArrayList, java.util.HashMap, int, int)
+     * @see #Level(java.util.ArrayList, java.util.HashMap, int, int)
      */
-    public GameLevel(ArrayList<String> levelLines, HashMap<String, Object> levelInfo) {
+    public Level(ArrayList<String> levelLines, HashMap<String, Object> levelInfo) {
         
         this(levelLines, levelInfo, DEFAULT_LEVEL_WIDTH, DEFAULT_LEVEL_HEIGHT);
     }
@@ -313,9 +322,9 @@ public class GameLevel {
      *      Level's maximal width in items.
      * @param maximalLevelHeight 
      *      Level's maximal height in items.
-     * @see #GameLevel(java.util.ArrayList, java.util.HashMap)
+     * @see #Level(java.util.ArrayList, java.util.HashMap)
      */
-    public GameLevel(ArrayList<String> levelLines, HashMap<String, Object> levelInfo, int maximalLevelWidth, int maximalLevelHeight) {
+    public Level(ArrayList<String> levelLines, HashMap<String, Object> levelInfo, int maximalLevelWidth, int maximalLevelHeight) {
         
         // Checking whether level lines are specified
         if (levelLines == null || levelLines.size() < 1)
@@ -464,7 +473,7 @@ public class GameLevel {
      */
     public final boolean initialize() {
 
-        isInitialized = false;
+        levelState = LevelState.EMPTY;
         
         cellsCount = 0;
         boxesCount = 0;
@@ -476,12 +485,15 @@ public class GameLevel {
         pushesCount = 0;
         movesHistory = new ArrayList<MoveInformation>();
         
-        if (levelInitial == null)
+        if (levelInitial == null || levelInitial.isEmpty())
             return false;
         
-        if (levelInitial.isEmpty() || levelInitial.size() > maximalLevelHeight)
+        if (levelInitial.size() > maximalLevelHeight) {
+        
+            levelState = LevelState.OUT_OF_BOUNDS;
             return false;
-
+        }
+        
         int maxLineWidth = 0;
         int lineIndex = 0;
         while (lineIndex < levelInitial.size()) {
@@ -526,8 +538,11 @@ public class GameLevel {
         }
 
         // Checking whether level parameters are valid
-        if (boxesCount != cellsCount || workersCount != 1 || maxLineWidth > maximalLevelWidth)
+        if (boxesCount != cellsCount || workersCount != 1 || maxLineWidth > maximalLevelWidth) {
+         
+            levelState = LevelState.CORRUPTED;
             return false;
+        }
         
         // Cloning level's instance for playing
         level = new ArrayList<ArrayList<Character>>();
@@ -591,19 +606,30 @@ public class GameLevel {
             lineIndex++;
         }
         
-        isInitialized = true;
+        levelState = LevelState.PLAYABLE;
         return true;
     }
     
     /**
-     * Shows whether level has been successfully initialized.
+     * Retrieves level's state.
      * 
      * @return
-     *      {@code true} if level has been initialized, {@code false} otherwise
+     *      Level's state
      */
-    public boolean isInitialized() {
+    public LevelState getState() {
 
-        return isInitialized;
+        return levelState;
+    }
+    
+    /**
+     * Checks whether level is playable.
+     * 
+     * @return 
+     *      {@code true} is level is playable, {@code false} otherwise.
+     */
+    public boolean isPlayable() {
+        
+        return levelState == LevelState.PLAYABLE;
     }
     
     /**
@@ -612,7 +638,7 @@ public class GameLevel {
      * @return 
      *      Level's numeric identifier or {@code 0} if it's not determined.
      */
-    public int getLevelID() {
+    public int getID() {
         
         try {
             
@@ -634,7 +660,7 @@ public class GameLevel {
      * @return 
      *      Level's name or empty string if it's not determined.
      */
-    public String getLevelName() {
+    public String getName() {
         
         try {
             
@@ -661,12 +687,12 @@ public class GameLevel {
      *      Level's column index within the range [0; {@link #getMaximalLevelWidth()} - 1].
      * @return 
      *      Character of the item.
-     * @see #setLevelItemAt(java.lang.Character, int, int)
+     * @see #setItemAt(java.lang.Character, int, int)
      * @see #allowedLevelItems
      */
-    public Character getLevelItemAt(int line, int column) {
+    public Character getItemAt(int line, int column) {
 
-        if (!isInitialized)
+        if (levelState == LevelState.EMPTY || levelState == LevelState.OUT_OF_BOUNDS)
             return null;
 
         if (line < 0 || line >= level.size())
@@ -692,12 +718,12 @@ public class GameLevel {
      *      Level's column index within the range [0; {@link #getMaximalLevelWidth()} - 1].
      * @return
      *      {@code true} if character has been set, {@code false} otherwise.
-     * @see #getLevelItemAt(int, int)
+     * @see #getItemAt(int, int)
      * @see #allowedLevelItems
      */
-    public boolean setLevelItemAt(Character levelItem, int line, int column) {
+    public boolean setItemAt(Character levelItem, int line, int column) {
 
-        if (!isInitialized)
+        if (levelState == LevelState.EMPTY || levelState == LevelState.OUT_OF_BOUNDS)
             return false;
         
         if (!allowedLevelItems.contains(levelItem))
@@ -822,7 +848,7 @@ public class GameLevel {
      *      A number of performed moves after the take-back or {@code -1}
      *      if level is not initialized or moves' history is empty.
      * @see #takeBack(int)
-     * @see #addMoveToHistory(org.ezze.games.storekeeper.GameLevel.MoveInformation)
+     * @see #addMoveToHistory(org.ezze.games.storekeeper.Level.MoveInformation)
      */
     public int takeBack() {
         
@@ -839,13 +865,13 @@ public class GameLevel {
      *      if level is not initialized or {@code takeBackMovesCount}
      *      is more than performed moves' count.
      * @see #takeBack()
-     * @see #addMoveToHistory(org.ezze.games.storekeeper.GameLevel.MoveInformation)
+     * @see #addMoveToHistory(org.ezze.games.storekeeper.Level.MoveInformation)
      */
     public int takeBack(int takeBackMovesCount) {
         
         synchronized(SyncLock.getInstance().getLock(SyncLock.MOVES_HISTORY)) {
         
-            if (!isInitialized || takeBackMovesCount > getMovesCount())
+            if (levelState != LevelState.PLAYABLE || takeBackMovesCount > getMovesCount())
                 return -1;
 
             int lastRemovingMoveIndex = getMovesCount() - 1;
@@ -874,22 +900,22 @@ public class GameLevel {
                             boxY += 1;
 
                         // Restoring previous item at box' current position
-                        Character levelItem = getLevelItemAt(boxY, boxX);
+                        Character levelItem = getItemAt(boxY, boxX);
                         if (levelItem.equals(LEVEL_ITEM_BOX_IN_CELL))
-                            setLevelItemAt(LEVEL_ITEM_CELL, boxY, boxX);
+                            setItemAt(LEVEL_ITEM_CELL, boxY, boxX);
                         else if (levelItem.equals(LEVEL_ITEM_BOX))
-                            setLevelItemAt(LEVEL_ITEM_SPACE, boxY, boxX);
+                            setItemAt(LEVEL_ITEM_SPACE, boxY, boxX);
 
                         // Retrieving box' previous coordinates (it's where the worker right now)
                         boxX = workerX;
                         boxY = workerY;
 
                         // Retrieving box' destination item
-                        levelItem = getLevelItemAt(boxY, boxX);
+                        levelItem = getItemAt(boxY, boxX);
                         if (levelItem.equals(LEVEL_ITEM_CELL))
-                            setLevelItemAt(LEVEL_ITEM_BOX_IN_CELL, boxY, boxX);
+                            setItemAt(LEVEL_ITEM_BOX_IN_CELL, boxY, boxX);
                         else if (levelItem.equals(LEVEL_ITEM_SPACE))
-                            setLevelItemAt(LEVEL_ITEM_BOX, boxY, boxX);
+                            setItemAt(LEVEL_ITEM_BOX, boxY, boxX);
 
                         // Decreasing pushes count
                         pushesCount--;
@@ -945,7 +971,7 @@ public class GameLevel {
         int workerDestinationY = workerY + workerDeltaY;
 
         // Checking that worker's destination position is not a wall
-        Character workerDestinationLevelItem = getLevelItemAt(workerDestinationY, workerDestinationX);
+        Character workerDestinationLevelItem = getItemAt(workerDestinationY, workerDestinationX);
         if (workerDestinationLevelItem.equals(LEVEL_ITEM_BRICK))
             return new MoveInformation(MoveType.NOTHING, MoveDirection.NONE);
         
@@ -968,26 +994,26 @@ public class GameLevel {
             int boxDestinationY = workerDestinationY + workerDeltaY;
 
             // Checking whether the box' destination position is not a wall or another box
-            Character boxDestinationLevelItem = getLevelItemAt(boxDestinationY, boxDestinationX);
+            Character boxDestinationLevelItem = getItemAt(boxDestinationY, boxDestinationX);
             if (boxDestinationLevelItem.equals(LEVEL_ITEM_BRICK) || boxDestinationLevelItem.equals(LEVEL_ITEM_BOX)
                     || boxDestinationLevelItem.equals(LEVEL_ITEM_BOX_IN_CELL))
                 return new MoveInformation(MoveType.NOTHING, MoveDirection.NONE);
 
             // Removing the box from old location
             if (workerDestinationLevelItem.equals(LEVEL_ITEM_BOX))
-                setLevelItemAt(LEVEL_ITEM_SPACE, workerDestinationY, workerDestinationX);
+                setItemAt(LEVEL_ITEM_SPACE, workerDestinationY, workerDestinationX);
             else if (workerDestinationLevelItem.equals(LEVEL_ITEM_BOX_IN_CELL)) {
 
-                setLevelItemAt(LEVEL_ITEM_CELL, workerDestinationY, workerDestinationX);
+                setItemAt(LEVEL_ITEM_CELL, workerDestinationY, workerDestinationX);
                 boxesInCellsCount--;
             }
 
             // Placing the box in new location
             if (boxDestinationLevelItem.equals(LEVEL_ITEM_SPACE))
-                setLevelItemAt(LEVEL_ITEM_BOX, boxDestinationY, boxDestinationX);
+                setItemAt(LEVEL_ITEM_BOX, boxDestinationY, boxDestinationX);
             else if (boxDestinationLevelItem.equals(LEVEL_ITEM_CELL)) {
 
-                setLevelItemAt(LEVEL_ITEM_BOX_IN_CELL, boxDestinationY, boxDestinationX);
+                setItemAt(LEVEL_ITEM_BOX_IN_CELL, boxDestinationY, boxDestinationX);
                 boxesInCellsCount++;
             }
 

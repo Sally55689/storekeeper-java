@@ -88,6 +88,31 @@ public class LevelsSet {
         return true;
     }
     
+    public boolean setCurrentLevelByFirstPlayable() {
+        
+        if (levels == null || levels.isEmpty()) {
+            
+            currentLevelIndex = -1;
+            return false;
+        }
+        
+        int levelIndex = 0;
+        while (levelIndex < levels.size()) {
+            
+            Level level = levels.get(levelIndex);
+            if (level.isPlayable()) {
+                
+                currentLevelIndex = levelIndex;
+                return true;
+            }
+            
+            levelIndex++;
+        }
+        
+        currentLevelIndex = -1;
+        return false;
+    }
+    
     public boolean goToPreviousLevel() {
         
         return goToPreviousLevel(false);

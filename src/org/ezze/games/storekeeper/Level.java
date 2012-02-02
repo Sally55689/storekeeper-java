@@ -538,7 +538,13 @@ public class Level {
         }
 
         // Checking whether level parameters are valid
-        if (boxesCount != cellsCount || workersCount != 1 || maxLineWidth > maximalLevelWidth) {
+        if (maxLineWidth > maximalLevelWidth) {
+            
+            levelState = LevelState.OUT_OF_BOUNDS;
+            return false;
+        }
+        
+        if (boxesCount != cellsCount || workersCount != 1) {
          
             levelState = LevelState.CORRUPTED;
             return false;
@@ -630,28 +636,6 @@ public class Level {
     public boolean isPlayable() {
         
         return levelState == LevelState.PLAYABLE;
-    }
-    
-    /**
-     * Retrieves level's numeric identifier.
-     * 
-     * @return 
-     *      Level's numeric identifier or {@code 0} if it's not determined.
-     */
-    public int getID() {
-        
-        try {
-            
-            return (Integer)levelInfo.get("id");
-        }
-        catch (NullPointerException ex) {
-            
-        }
-        catch (ClassCastException ex) {
-            
-        }
-        
-        return 0;
     }
     
     /**

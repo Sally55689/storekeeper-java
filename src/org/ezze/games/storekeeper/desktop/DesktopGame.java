@@ -1,12 +1,11 @@
 package org.ezze.games.storekeeper.desktop;
 
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.ezze.utils.application.ApplicationPath;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -30,9 +29,11 @@ import javax.swing.filechooser.FileFilter;
 import org.ezze.games.storekeeper.Game;
 import org.ezze.games.storekeeper.Game.LevelResult;
 import org.ezze.games.storekeeper.Configuration;
+import org.ezze.games.storekeeper.Game.GameState;
 import org.ezze.games.storekeeper.GameGraphics;
 import org.ezze.games.storekeeper.GameGraphics.SpriteSize;
 import org.ezze.games.storekeeper.Level;
+import org.ezze.games.storekeeper.Level.LevelState;
 import org.ezze.games.storekeeper.LevelCompletionListener;
 import org.ezze.utils.ui.FileBrowser;
 import org.ezze.utils.ui.aboutbox.AboutBox;
@@ -227,9 +228,9 @@ public class DesktopGame extends JFrame {
         DesktopGameGraphics desktopGameGraphics = new DesktopGameGraphics();
         
         // Retrieving maximal width (columns) and height (rows) of game level field (in level items)
-        int levelFieldColumnsCount = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_WIDTH,
+        int maximalLevelWidth = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_WIDTH,
                 Configuration.DEFAULT_OPTION_LEVEL_WIDTH);
-        int levelFieldRowsCount = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
+        int maximalLevelHeight = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
                 Configuration.DEFAULT_OPTION_LEVEL_HEIGHT);
         
         // Retrieving sprite size option and determining
@@ -239,7 +240,7 @@ public class DesktopGame extends JFrame {
         // Determining sprite size
         SpriteSize spriteSize = null;
         if (spriteSizeOption.equals(Configuration.OPTION_SPRITE_SIZE_OPTIMAL))
-            spriteSize = desktopGameGraphics.determineOptimalSpriteSize(levelFieldColumnsCount, levelFieldRowsCount);
+            spriteSize = desktopGameGraphics.determineOptimalSpriteSize(maximalLevelWidth, maximalLevelHeight);
         else if (spriteSizeOption.equals(Configuration.OPTION_SPRITE_SIZE_LARGE))
             spriteSize = SpriteSize.LARGE;
         else if (spriteSizeOption.equals(Configuration.OPTION_SPRITE_SIZE_MEDIUM))
@@ -267,9 +268,9 @@ public class DesktopGame extends JFrame {
         contentLayout.putConstraint(SpringLayout.WEST, game, 0, SpringLayout.WEST, contentPane);
         contentLayout.putConstraint(SpringLayout.NORTH, game, 0, SpringLayout.NORTH, contentPane);
         contentLayout.putConstraint(SpringLayout.EAST, game,
-                game.getGameGraphics().getSpriteDimension().width * levelFieldColumnsCount, SpringLayout.WEST, game);
+                game.getGameGraphics().getSpriteDimension().width * maximalLevelWidth, SpringLayout.WEST, game);
         contentLayout.putConstraint(SpringLayout.SOUTH, game,
-                (game.getGameGraphics().getSpriteDimension().height) * levelFieldRowsCount, SpringLayout.NORTH, game);
+                (game.getGameGraphics().getSpriteDimension().height) * maximalLevelHeight, SpringLayout.NORTH, game);
         
         contentLayout.putConstraint(SpringLayout.EAST, contentPane, 0, SpringLayout.EAST, game);
         contentLayout.putConstraint(SpringLayout.SOUTH, contentPane, 0, SpringLayout.SOUTH, game);
@@ -554,63 +555,46 @@ public class DesktopGame extends JFrame {
         pack();
         centerTheWindow();
         
-        KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-        kfm.addKeyEventDispatcher(new KeyEventDispatcher() {
+        // Attaching key listener
+        addKeyListener(new KeyListener() {
 
             @Override
-            public boolean dispatchKeyEvent(KeyEvent e) {
+            public void keyTyped(KeyEvent e) {
+             
+            }
 
-                if (game.getGameState() == Game.GameState.PLAY) {
+            @Override
+            public void keyPressed(KeyEvent e) {
+             
+                if (game.getGameState() != GameState.PLAY)
+                    return;
+                
+                if (e.getKeyCode() == KeyEvent.VK_LEFT)
+                    game.forceWorkerToMoveLeft();
+                else if (e.getKeyCode() == KeyEvent.VK_RIGHT)
+                    game.forceWorkerToMoveRight();
+                else if (e.getKeyCode() == KeyEvent.VK_UP)
+                    game.forceWorkerToMoveUp();
+                else if (e.getKeyCode() == KeyEvent.VK_DOWN)
+                    game.forceWorkerToMoveDown();
+            }
 
-                    if (e.getID() == KeyEvent.KEY_PRESSED) {
-
-                        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-
-                            game.forceWorkerToMoveLeft();
-                            return true;
-                        }
-                        else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-
-                            game.forceWorkerToMoveRight();
-                            return true;
-                        }
-                        else if (e.getKeyCode() == KeyEvent.VK_UP) {
-
-                            game.forceWorkerToMoveUp();
-                            return true;
-                        }
-                        else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-
-                            game.forceWorkerToMoveDown();
-                            return true;
-                        }
-                    }
-                    else if (e.getID() == KeyEvent.KEY_RELEASED) {
-
-                        if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                            
-                            game.forceWorkerToStopHorizontalMovement();
-                            updateMenuItems();
-                            return true;
-                        }
-                        else if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
-                            
-                            game.forceWorkerToStopVerticalMovement();
-                            updateMenuItems();
-                            return true;
-                        }
-                    }
-                }
-
-                return false;
+            @Override
+            public void keyReleased(KeyEvent e) {
+             
+                if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT)
+                    game.forceWorkerToStopHorizontalMovement();
+                else if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN)
+                    game.forceWorkerToStopVerticalMovement();
+                updateMenuItems();
             }
         });
-        
-        if (game.loadDefaultLevelsSet() == Game.LevelResult.ERROR)
-            JOptionPane.showMessageDialog(null, "Unable to load default levels set.", "Open Error", JOptionPane.ERROR_MESSAGE);
+
+        // Loading default levels' set
+        LevelResult loadLevelResult = game.loadDefaultLevelsSet();
+        showLoadLevelResultMessage(loadLevelResult, maximalLevelWidth, maximalLevelHeight);
         
         updateMenuItems();
-        
         setVisible(true);
     }
     
@@ -648,15 +632,15 @@ public class DesktopGame extends JFrame {
         SpringLayout contentLayout = (SpringLayout)contentPane.getLayout();
         
         // Retrieving actual game field's parameters
-        int levelFieldColumnsCount = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_WIDTH,
+        int maximalLevelWidth = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_WIDTH,
                 Configuration.DEFAULT_OPTION_LEVEL_WIDTH);
-        int levelFieldRowsCount = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
+        int maximalLevelHeight = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
                 Configuration.DEFAULT_OPTION_LEVEL_HEIGHT);
         String spriteSizeOption = (String)gameConfiguration.getOption(Configuration.OPTION_SPRITE_SIZE,
                 Configuration.DEFAULT_OPTION_SPRITE_SIZE);
         
         // Determining sprite size
-        SpriteSize optimalSpriteSize = gameGraphics.determineOptimalSpriteSize(levelFieldColumnsCount, levelFieldRowsCount);
+        SpriteSize optimalSpriteSize = gameGraphics.determineOptimalSpriteSize(maximalLevelWidth, maximalLevelHeight);
         SpriteSize spriteSize = null;
         if (!spriteSizeOption.equals(Configuration.OPTION_SPRITE_SIZE_OPTIMAL)) {
             
@@ -707,8 +691,8 @@ public class DesktopGame extends JFrame {
         boolean isWindowSizeChanged = false;
         Spring currentEastSpring = contentLayout.getConstraint(SpringLayout.EAST, game);
         Spring currentSouthSpring = contentLayout.getConstraint(SpringLayout.SOUTH, game);
-        int newGameWidth = gameGraphics.getSpriteDimension().width * levelFieldColumnsCount;
-        int newGameHeight = gameGraphics.getSpriteDimension().height * levelFieldRowsCount;
+        int newGameWidth = gameGraphics.getSpriteDimension().width * maximalLevelWidth;
+        int newGameHeight = gameGraphics.getSpriteDimension().height * maximalLevelHeight;
         if (currentEastSpring.getValue() != newGameWidth) {
             
             contentLayout.putConstraint(SpringLayout.EAST, game, newGameWidth, SpringLayout.WEST, game);
@@ -730,21 +714,46 @@ public class DesktopGame extends JFrame {
         
         // Reinitializing the levels
         LevelResult reinitializationResult = game.reinitializeLevels();
-        if (reinitializationResult == LevelResult.ERROR) {
-            
-            JOptionPane.showMessageDialog(null, "Unable to reinitialize all levels of currently loaded levels set.\n"
-                    + "Please be sure that selected maximal size of a level is enough to make all levels fit.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-        }
-        else if (reinitializationResult == LevelResult.WARNING) {
-            
-            JOptionPane.showMessageDialog(null, "At least one level of currently loaded levels set cannot be reinitialized.\n"
-                    + "Please be sure that selected maximal size of a level is enough to make all levels fit.",
-                    "Warning", JOptionPane.WARNING_MESSAGE);
-        }
+        showLoadLevelResultMessage(reinitializationResult, maximalLevelWidth, maximalLevelHeight);
         
         updateMenuItems();
         setVisible(true);
+    }
+    
+    /**
+     * Shows a result message of levels' load or reinitialization result.
+     * 
+     * @param loadLevelResult
+     *      Result identifier.
+     * @param maximalLevelWidth
+     *      Level's maximal width.
+     * @param maximalLevelHeight
+     *      Level's maximal height.
+     */
+    private void showLoadLevelResultMessage(LevelResult loadLevelResult, int maximalLevelWidth, int maximalLevelHeight) {
+        
+        if (loadLevelResult == LevelResult.ERROR) {
+            
+            JOptionPane.showMessageDialog(null, "Unable to load default levels set.", "Open Error", JOptionPane.ERROR_MESSAGE);
+        }
+        else if (loadLevelResult == LevelResult.WARNING) {
+            
+            int playableLevelsCount = game.getLevelsSet().getPlayableLevelsCount();
+            int outOfBoundsLevelsCount = game.getLevelsSet().getLevelsCountByState(LevelState.OUT_OF_BOUNDS);
+            int levelsCount = game.getLevelsSet().getLevelsCount();
+            
+            String warningMessage = "";
+            if (playableLevelsCount == 0)
+                warningMessage += String.format("No one of %d levels is playable", levelsCount);
+            else
+                warningMessage += String.format("Only %d of %d levels %s playable", playableLevelsCount,
+                        levelsCount, playableLevelsCount > 1 ? "are" : "is");
+            warningMessage += String.format(" with currently selected level's\n"
+                    + "maximal size (%d rows x %d columns). %d of non-playable levels are out of level's bounds\n"
+                    + "so you can play them if you will increase level's maximal allowed size in options dialog.",
+                    maximalLevelHeight, maximalLevelWidth, outOfBoundsLevelsCount);
+            JOptionPane.showMessageDialog(null, warningMessage, "Open Warning", JOptionPane.WARNING_MESSAGE);
+        }
     }
     
     /**
@@ -758,14 +767,15 @@ public class DesktopGame extends JFrame {
         boolean isGameStopped = game.getGameState() == Game.GameState.INTRODUCTION || game.getGameState() == Game.GameState.STOP;
         boolean isLevelsSetLoaded = game.isLevelsSetLoaded();
         Level currentGameLevel = game.getLevelsSet().getCurrentLevel();
+        int playableLevelsCount = game.getLevelsSet().getPlayableLevelsCount();
         
-        menuItemStartTheGame.setEnabled(isGameStopped && isLevelsSetLoaded);
-        menuItemStopTheGame.setEnabled(!isGameStopped && isLevelsSetLoaded);
+        menuItemStartTheGame.setEnabled(isGameStopped && isLevelsSetLoaded && playableLevelsCount > 0);
+        menuItemStopTheGame.setEnabled(!isGameStopped && isLevelsSetLoaded && playableLevelsCount > 0);
         menuItemLoadDefaultLevelsSet.setEnabled(!game.isDefaultLevelsSetLoaded());
         
         menuItemRestartLevel.setEnabled(!isGameStopped && isLevelsSetLoaded);
-        menuItemPreviousLevel.setEnabled(isLevelsSetLoaded && game.getLevelsSet().getLevelsCount() > 1);
-        menuItemNextLevel.setEnabled(isLevelsSetLoaded && game.getLevelsSet().getLevelsCount() > 1);
+        menuItemPreviousLevel.setEnabled(isLevelsSetLoaded && playableLevelsCount > 1);
+        menuItemNextLevel.setEnabled(isLevelsSetLoaded && playableLevelsCount > 1);
         menuItemTakeBack.setEnabled(currentGameLevel != null ? !isGameStopped && currentGameLevel.getMovesCount() > 0 : false);
     }
     

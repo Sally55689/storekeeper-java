@@ -490,13 +490,29 @@ public class Game extends JPanel implements Runnable {
         
         // Retrieving levels set XML file's root element
         Element xmlLevelsSetElement = XMLParser.getDocumentElement(xmlLevelsSetDocument);
-        if (xmlLevelsSetElement == null)
+        if (xmlLevelsSetElement == null) {
+       
+            if (!isDefault) {
+            
+                // Loading default levels set on failure
+                loadDefaultLevelsSet();
+            }
+            
             return LevelResult.ERROR;
+        }
         
         // Retrieving levels count from XML
         int levelsCount = XMLParser.getChildrenCount(xmlLevelsSetElement, "level");
-        if (levelsCount == 0)
+        if (levelsCount == 0) {
+            
+            if (!isDefault) {
+            
+                // Loading default levels set on failure
+                loadDefaultLevelsSet();
+            }
+            
             return LevelResult.ERROR;
+        }
         
         // Stopping the game
         stop(true);
@@ -519,47 +535,36 @@ public class Game extends JPanel implements Runnable {
             // Retrieving XML element of the current level
             Element xmlLevelElement = XMLParser.getChildElement(xmlLevelsSetElement, "level", levelIndex);
             
-            // Retrieving level's ID
-            int levelID = XMLParser.getElementAttributeInteger(xmlLevelElement, "id", 0);
-            
-            // Checking whether level's ID is valid
-            if (levelID > 0) {
+            String levelName = XMLParser.getElementText(XMLParser.getChildElement(xmlLevelElement, "name"), "");
+            int levelLinesCount = XMLParser.getChildrenCount(xmlLevelElement, "l");
+            if (levelLinesCount > 0) {
 
-                String levelName = XMLParser.getElementText(XMLParser.getChildElement(xmlLevelElement, "name"), "");
-                int levelLinesCount = XMLParser.getChildrenCount(xmlLevelElement, "l");
-                if (levelLinesCount > 0) {
+                ArrayList<String> levelLines = new ArrayList<String>();
+                int levelLineIndex = 0;
+                while (levelLineIndex < levelLinesCount) {
 
-                    ArrayList<String> levelLines = new ArrayList<String>();
-                    int levelLineIndex = 0;
-                    while (levelLineIndex < levelLinesCount) {
-
-                        Element xmlLevelLineElement = XMLParser.getChildElement(xmlLevelElement, "l", levelLineIndex);
-                        String levelLine = XMLParser.getElementText(xmlLevelLineElement);
-                        levelLines.add(levelLine);
-                        levelLineIndex++;
-                    }
-
-                    HashMap<String, Object> levelInfo = new HashMap<String, Object>();
-                    levelInfo.put("id", new Integer(levelID));
-                    levelInfo.put("name", levelName);
-                    Level gameLevel = new Level(levelLines, levelInfo, maximalLevelWidth, maximalLevelHeight);
-                    levelsSet.addLevel(gameLevel);
+                    Element xmlLevelLineElement = XMLParser.getChildElement(xmlLevelElement, "l", levelLineIndex);
+                    String levelLine = XMLParser.getElementText(xmlLevelLineElement);
+                    levelLines.add(levelLine);
+                    levelLineIndex++;
                 }
+
+                HashMap<String, Object> levelInfo = new HashMap<String, Object>();
+                levelInfo.put("name", levelName);
+                Level gameLevel = new Level(levelLines, levelInfo, maximalLevelWidth, maximalLevelHeight);
+                levelsSet.addLevel(gameLevel);
             }
             
             levelIndex++;
         }
         
         // Checking whether at least one playable level has been successfully retrieved
-        LevelResult readResult = levelsSet.getPlayableLevelsCount() == 0 ? LevelResult.ERROR :
-                (levelsSet.getPlayableLevelsCount() < levelsSet.getLevelsCount() ? LevelResult.WARNING : LevelResult.SUCCESS);
+        LevelResult readResult = LevelResult.SUCCESS;
+        if (levelsSet.getPlayableLevelsCount() < levelsSet.getLevelsCount())
+            readResult = LevelResult.WARNING;        
         
-        if (readResult == LevelResult.ERROR && !isDefault) {
-            
-            // Loading default levels set on failure
-            loadDefaultLevelsSet();
-        }
-        
+        // Selecting first playable level
+        levelsSet.setCurrentLevelByFirstPlayable();
         return readResult;
     }
     
@@ -604,22 +609,19 @@ public class Game extends JPanel implements Runnable {
             gameLevel.setMaximalLevelSize(levelWidth, levelHeight);
             
             // Attempting to reinitialize the level
-            if (!gameLevel.initialize()) {
-                
-                // Changing currently selected level's index if it's required
-                if (gameLevelIndex < levelsSet.getCurrentLevelIndex() && levelsSet.getCurrentLevelIndex() > 0)
-                    levelsSet.goToPreviousLevel(true);
-            }
-            
+            gameLevel.initialize();
             gameLevelIndex++;
         }
         
+        // Analyzing reinitialization results
         LevelResult reinitializationResult = LevelResult.SUCCESS;
         if (levelsSet.getPlayableLevelsCount() == 0)
             reinitializationResult = LevelResult.ERROR;
         else if (levelsSet.getPlayableLevelsCount() < levelsSet.getLevelsCount())
             reinitializationResult = LevelResult.WARNING;
         
+        // Selecting first playable level
+        levelsSet.setCurrentLevelByFirstPlayable();
         return reinitializationResult;
     }
     
@@ -1117,7 +1119,8 @@ public class Game extends JPanel implements Runnable {
             }
         }
         
-        if (gameState == GameState.INTRODUCTION || gameState == GameState.PLAY || gameState == GameState.COMPLETED) {
+        if ((gameState == GameState.INTRODUCTION || gameState == GameState.PLAY ||
+                gameState == GameState.COMPLETED) && gameLevel != null) {
             
             // Defining information lines' offsets
             int infoLineHorizontalOffset = fontMetrics.stringWidth(" ");
@@ -1129,7 +1132,7 @@ public class Game extends JPanel implements Runnable {
             // Printing level information
             String levelNameTitle = "Level: ";
             String gameLevelName = gameLevel.getName();
-            String levelNameText = String.format("%03d", gameLevel.getID());
+            String levelNameText = String.format("%03d", levelsSet.getCurrentLevelIndex() + 1);
             if (levelsSet != null && !levelsSet.getName().isEmpty()) {
 
                 if (gameLevelName != null && !gameLevelName.isEmpty())

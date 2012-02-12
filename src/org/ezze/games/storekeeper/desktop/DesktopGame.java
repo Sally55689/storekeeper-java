@@ -43,7 +43,7 @@ import org.ezze.utils.ui.aboutbox.AboutBoxInformation;
  * Desktop version of the game.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.3
+ * @version 0.0.4
  */
 public class DesktopGame extends JFrame {
     
@@ -114,6 +114,11 @@ public class DesktopGame extends JFrame {
      * Action menu item to jump to game's next level.
      */
     private JMenuItem menuItemNextLevel = null;
+    
+    /**
+     * Action menu item to repeat a move from the history.
+     */
+    private JMenuItem menuItemRepeatMove = null;
     
     /**
      * Action menu item to take game level's position back by one move.
@@ -477,6 +482,22 @@ public class DesktopGame extends JFrame {
         
         menuAction.add(new JSeparator());
         
+        menuItemRepeatMove = new JMenuItem("Repeat Move");
+        menuItemRepeatMove.addActionListener(new ActionListener() {
+           
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+                if (game != null) {
+                    
+                    game.repeatMove();
+                    updateMenuItems();
+                }
+            }
+        });
+        menuItemRepeatMove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.CTRL_MASK));
+        menuAction.add(menuItemRepeatMove);
+        
         menuItemTakeBack = new JMenuItem("Take Back");
         menuItemTakeBack.addActionListener(new ActionListener() {
 
@@ -784,7 +805,10 @@ public class DesktopGame extends JFrame {
         menuItemRestartLevel.setEnabled(!isGameStopped && isLevelsSetLoaded);
         menuItemPreviousLevel.setEnabled(isLevelsSetLoaded && playableLevelsCount > 1);
         menuItemNextLevel.setEnabled(isLevelsSetLoaded && playableLevelsCount > 1);
-        menuItemTakeBack.setEnabled(currentGameLevel != null ? !isGameStopped && currentGameLevel.getMovesCount() > 0 : false);
+        menuItemRepeatMove.setEnabled(currentGameLevel != null ?
+                !isGameStopped && currentGameLevel.getMovesHistoryCount() - currentGameLevel.getMovesCount() > 0 : false);
+        menuItemTakeBack.setEnabled(currentGameLevel != null ?
+                !isGameStopped && currentGameLevel.getMovesCount() > 0 : false);
     }
     
     /**

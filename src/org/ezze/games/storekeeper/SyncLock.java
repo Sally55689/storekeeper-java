@@ -13,7 +13,7 @@ import java.util.HashMap;
  * method of this class.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class SyncLock {
 
@@ -27,11 +27,6 @@ public class SyncLock {
      * can be retrieved by {@link #getLock(java.lang.String)} method.
      */
     private HashMap<String, Object> locks = new HashMap<String, Object>();
-    
-    /**
-     * Unique string identifier used to get lock object for moves history synchronization.
-     */
-    public static final String MOVES_HISTORY = "moves_history";
     
     /**
      * Retrieves a reference to single instance of this class.

@@ -25,7 +25,7 @@ import org.w3c.dom.Document;
  * animation and user actions' handling.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.4
+ * @version 0.0.5
  */
 public class Game extends JPanel implements Runnable {
     
@@ -693,6 +693,29 @@ public class Game extends JPanel implements Runnable {
             return -1;
         
         return gameLevel.takeBack(takeBackMovesCount);
+    }
+    
+    public int repeatMove() {
+        
+        return repeatMoves(1);
+    }
+    
+    public int repeatMoves(int repeatMovesCount) {
+        
+        // Checking whether game is in play state
+        if (!gameState.equals(GameState.PLAY))
+            return -1;
+        
+        // Retrieving a reference to current game level
+        Level gameLevel = levelsSet.getCurrentLevel();
+        if (gameLevel == null)
+            return -1;
+        
+        // Preventing from move repeat when the worker is moving
+        if (!isWorkerIdle)
+            return -1;
+        
+        return gameLevel.repeatMoves(repeatMovesCount);
     }
     
     /**

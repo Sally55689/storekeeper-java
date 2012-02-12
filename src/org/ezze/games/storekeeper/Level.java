@@ -8,7 +8,7 @@ import java.util.HashMap;
  * This class stores an inner representation of storekeeper's level.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.3
+ * @version 0.0.4
  */
 public class Level {
 
@@ -395,7 +395,7 @@ public class Level {
      * @see #setMaximalLevelSize(int, int)
      * @see #getMaximalLevelWidth()
      */
-    public final boolean setMaximalLevelWidth(int maximalLevelWidth) {
+    synchronized public final boolean setMaximalLevelWidth(int maximalLevelWidth) {
         
         if (maximalLevelWidth < MINIMAL_LEVEL_WIDTH || maximalLevelWidth > MAXIMAL_LEVEL_WIDTH)
             return false;
@@ -417,7 +417,7 @@ public class Level {
      * @see #setMaximalLevelSize(int, int)
      * @see #getMaximalLevelHeight()
      */
-    public final boolean setMaximalLevelHeight(int maximalLevelHeight) {
+    synchronized public final boolean setMaximalLevelHeight(int maximalLevelHeight) {
         
         if (maximalLevelHeight < MINIMAL_LEVEL_HEIGHT || maximalLevelHeight > MAXIMAL_LEVEL_HEIGHT)
             return false;
@@ -494,7 +494,7 @@ public class Level {
      * @return
      *      {@code true} if level has been successfully initialized, {@code false otherwise}.
      */
-    public final boolean initialize() {
+    synchronized public final boolean initialize() {
 
         levelState = LevelState.EMPTY;
         
@@ -697,7 +697,7 @@ public class Level {
      * @see #setItemAt(java.lang.Character, int, int)
      * @see #allowedLevelItems
      */
-    public Character getItemAt(int line, int column) {
+    synchronized public Character getItemAt(int line, int column) {
 
         if (levelState == LevelState.EMPTY || levelState == LevelState.OUT_OF_BOUNDS)
             return null;
@@ -728,7 +728,7 @@ public class Level {
      * @see #getItemAt(int, int)
      * @see #allowedLevelItems
      */
-    public boolean setItemAt(Character levelItem, int line, int column) {
+    synchronized public boolean setItemAt(Character levelItem, int line, int column) {
 
         if (levelState == LevelState.EMPTY || levelState == LevelState.OUT_OF_BOUNDS)
             return false;
@@ -807,12 +807,9 @@ public class Level {
      * @return 
      *      Count of history moves.
      */
-    public int getMovesHistoryCount() {
+    synchronized public int getMovesHistoryCount() {
         
-        synchronized(SyncLock.getInstance().getLock(SyncLock.MOVES_HISTORY)) {
-            
-            return movesHistory.size();
-        }
+        return movesHistory.size();
     }
     
     /**
@@ -824,28 +821,33 @@ public class Level {
      * 
      * @param moveInformation
      *      An instance with information about recently performed move.
+     * @param repeatMove
+     *      Shows whether method's call was produced during move's repeat.
      * @see #takeBack()
      * @see #takeBack(int)
+     * @see #repeatMove()
+     * @see #repeatMoves(int)
      */
-    public void addMoveToHistory(MoveInformation moveInformation) {
+    synchronized protected void addMoveToHistory(MoveInformation moveInformation, boolean repeatMove) {
         
-        synchronized(SyncLock.getInstance().getLock(SyncLock.MOVES_HISTORY)) {
-        
-            if (moveInformation == null || moveInformation.getType().equals(MoveType.NOTHING) ||
-                    moveInformation.getDirection().equals(MoveDirection.NONE)) {
+        if (moveInformation == null || moveInformation.getType().equals(MoveType.NOTHING) ||
+                moveInformation.getDirection().equals(MoveDirection.NONE)) {
 
-                return;
-            }
+            return;
+        }
 
+        if (!repeatMove) {
+            
             while (movesHistory.size() > movesCount)
                 movesHistory.remove(movesHistory.size() - 1);
-
-            movesCount++;
-            if (moveInformation.getType().equals(MoveType.WORKER_AND_BOX))
-                pushesCount++;
-
-            movesHistory.add(moveInformation);
         }
+
+        movesCount++;
+        if (moveInformation.getType().equals(MoveType.WORKER_AND_BOX))
+            pushesCount++;
+
+        if (!repeatMove)
+            movesHistory.add(moveInformation);
     }
     
     /**
@@ -855,7 +857,9 @@ public class Level {
      *      A number of performed moves after the take-back or {@code -1}
      *      if level is not initialized or moves' history is empty.
      * @see #takeBack(int)
-     * @see #addMoveToHistory(org.ezze.games.storekeeper.Level.MoveInformation)
+     * @see #repeatMove()
+     * @see #repeatMoves(int)
+     * @see #addMoveToHistory(org.ezze.games.storekeeper.Level.MoveInformation, boolean)
      */
     public int takeBack() {
         
@@ -872,79 +876,146 @@ public class Level {
      *      if level is not initialized or {@code takeBackMovesCount}
      *      is more than performed moves' count.
      * @see #takeBack()
-     * @see #addMoveToHistory(org.ezze.games.storekeeper.Level.MoveInformation)
+     * @see #repeatMove()
+     * @see #repeatMoves(int)
+     * @see #addMoveToHistory(org.ezze.games.storekeeper.Level.MoveInformation, boolean)
      */
-    public int takeBack(int takeBackMovesCount) {
+    synchronized public int takeBack(int takeBackMovesCount) {
         
-        synchronized(SyncLock.getInstance().getLock(SyncLock.MOVES_HISTORY)) {
-        
-            if (levelState != LevelState.PLAYABLE || takeBackMovesCount > getMovesCount())
-                return -1;
+        if (levelState != LevelState.PLAYABLE || takeBackMovesCount <= 0 || takeBackMovesCount > getMovesCount())
+            return -1;
 
-            int lastRemovingMoveIndex = getMovesCount() - 1;
-            int firstRemovingMoveIndex = lastRemovingMoveIndex - takeBackMovesCount + 1;
-            int removingMoveIndex = lastRemovingMoveIndex;
-            while (removingMoveIndex >= firstRemovingMoveIndex) {
+        int lastRemovingMoveIndex = getMovesCount() - 1;
+        int firstRemovingMoveIndex = lastRemovingMoveIndex - takeBackMovesCount + 1;
+        int removingMoveIndex = lastRemovingMoveIndex;
+        while (removingMoveIndex >= firstRemovingMoveIndex) {
 
-                // Retrieving information of a move to be removed
-                MoveInformation moveInformation = movesHistory.get(removingMoveIndex);
-                if (!moveInformation.getType().equals(MoveType.NOTHING)) {
+            // Retrieving information of a move to be removed
+            MoveInformation moveInformation = movesHistory.get(removingMoveIndex);
+            if (!moveInformation.getType().equals(MoveType.NOTHING)) {
 
-                    MoveDirection moveDirection = moveInformation.getDirection();                                
+                MoveDirection moveDirection = moveInformation.getDirection();                                
 
-                    if (moveInformation.getType().equals(MoveType.WORKER_AND_BOX)) {
+                if (moveInformation.getType().equals(MoveType.WORKER_AND_BOX)) {
 
-                        // Retrieving box' current coordinates
-                        int boxX = workerX;
-                        int boxY = workerY;
-                        if (moveDirection == MoveDirection.LEFT)
-                            boxX -= 1;
-                        else if (moveDirection == MoveDirection.RIGHT)
-                            boxX += 1;
-                        else if (moveDirection == MoveDirection.UP)
-                            boxY -= 1;
-                        else if (moveDirection == MoveDirection.DOWN)
-                            boxY += 1;
-
-                        // Restoring previous item at box' current position
-                        Character levelItem = getItemAt(boxY, boxX);
-                        if (levelItem.equals(LEVEL_ITEM_BOX_IN_CELL))
-                            setItemAt(LEVEL_ITEM_CELL, boxY, boxX);
-                        else if (levelItem.equals(LEVEL_ITEM_BOX))
-                            setItemAt(LEVEL_ITEM_SPACE, boxY, boxX);
-
-                        // Retrieving box' previous coordinates (it's where the worker right now)
-                        boxX = workerX;
-                        boxY = workerY;
-
-                        // Retrieving box' destination item
-                        levelItem = getItemAt(boxY, boxX);
-                        if (levelItem.equals(LEVEL_ITEM_CELL))
-                            setItemAt(LEVEL_ITEM_BOX_IN_CELL, boxY, boxX);
-                        else if (levelItem.equals(LEVEL_ITEM_SPACE))
-                            setItemAt(LEVEL_ITEM_BOX, boxY, boxX);
-
-                        // Decreasing pushes count
-                        pushesCount--;
-                    }
-
-                    // Moving worker back
+                    // Retrieving box' current coordinates
+                    int boxX = workerX;
+                    int boxY = workerY;
                     if (moveDirection == MoveDirection.LEFT)
-                        workerX += 1;
+                        boxX -= 1;
                     else if (moveDirection == MoveDirection.RIGHT)
-                        workerX -= 1;
+                        boxX += 1;
                     else if (moveDirection == MoveDirection.UP)
-                        workerY += 1;
+                        boxY -= 1;
                     else if (moveDirection == MoveDirection.DOWN)
-                        workerY -= 1;
-                    movesCount--;
+                        boxY += 1;
+
+                    // Restoring previous item at box' current position
+                    Character levelItem = getItemAt(boxY, boxX);
+                    if (levelItem.equals(LEVEL_ITEM_BOX_IN_CELL))
+                        setItemAt(LEVEL_ITEM_CELL, boxY, boxX);
+                    else if (levelItem.equals(LEVEL_ITEM_BOX))
+                        setItemAt(LEVEL_ITEM_SPACE, boxY, boxX);
+
+                    // Retrieving box' previous coordinates (it's where the worker right now)
+                    boxX = workerX;
+                    boxY = workerY;
+
+                    // Retrieving box' destination item
+                    levelItem = getItemAt(boxY, boxX);
+                    if (levelItem.equals(LEVEL_ITEM_CELL))
+                        setItemAt(LEVEL_ITEM_BOX_IN_CELL, boxY, boxX);
+                    else if (levelItem.equals(LEVEL_ITEM_SPACE))
+                        setItemAt(LEVEL_ITEM_BOX, boxY, boxX);
+
+                    // Decreasing pushes count
+                    pushesCount--;
                 }
 
-                removingMoveIndex--;
+                // Moving worker back
+                if (moveDirection == MoveDirection.LEFT)
+                    workerX += 1;
+                else if (moveDirection == MoveDirection.RIGHT)
+                    workerX -= 1;
+                else if (moveDirection == MoveDirection.UP)
+                    workerY += 1;
+                else if (moveDirection == MoveDirection.DOWN)
+                    workerY -= 1;
+                movesCount--;
             }
 
-            return movesCount;
+            removingMoveIndex--;
         }
+
+        return movesCount;
+    }
+    
+    /**
+     * Repeats one previously taken back move.
+     * 
+     * @return 
+     *      A number of performed moves after the repeat or {@code -1}
+     *      if level is not initialized or if there no moves to repeat.
+     * @see #repeatMoves(int)
+     * @see #takeBack()
+     * @see #takeBack(int)
+     * @see #addMoveToHistory(org.ezze.games.storekeeper.Level.MoveInformation, boolean) 
+     */
+    public int repeatMove() {
+        
+        return repeatMoves(1);
+    }
+    
+    /**
+     * Repeats previously taken back moves.
+     * 
+     * @param repeatMovesCount
+     *      Count of moves to repeat.
+     * @return
+     *      A number of performed moves after the repeat or {@code -1}
+     *      if level is not initialized or {@code repeatMovesCount}
+     *      is more than count of possible moves to repeat.
+     * @see #takeBack()
+     * @see #takeBack(int)
+     * @see #repeatMove()
+     * @see #addMoveToHistory(org.ezze.games.storekeeper.Level.MoveInformation, boolean)
+     */
+    synchronized public int repeatMoves(int repeatMovesCount) {
+        
+        if (levelState != LevelState.PLAYABLE || repeatMovesCount <= 0
+                || getMovesHistoryCount() - getMovesCount() < repeatMovesCount) {
+
+            return -1;
+        }
+
+        int firstRepeatingMoveIndex = getMovesCount();
+        int lastRepeatingMoveIndex = firstRepeatingMoveIndex + repeatMovesCount - 1;
+        int repeatingMoveIndex = firstRepeatingMoveIndex;
+        while (repeatingMoveIndex <= lastRepeatingMoveIndex) {
+
+            // Retrieving information of a move to be repeated
+            MoveInformation moveInformation = movesHistory.get(repeatingMoveIndex);
+            if (!moveInformation.getType().equals(MoveType.NOTHING)) {
+
+                int workerDeltaX = 0;
+                int workerDeltaY = 0;
+                MoveDirection moveDirection = moveInformation.getDirection();
+                if (moveDirection == MoveDirection.LEFT)
+                    workerDeltaX = -1;
+                else if (moveDirection == MoveDirection.RIGHT)
+                    workerDeltaX = 1;
+                else if (moveDirection == MoveDirection.UP)
+                    workerDeltaY = -1;
+                else if (moveDirection == MoveDirection.DOWN)
+                    workerDeltaY = 1;
+
+                move(workerDeltaX, workerDeltaY, true);
+            }
+
+            repeatingMoveIndex++;
+        }
+
+        return movesCount;
     }
 
     /**
@@ -957,18 +1028,38 @@ public class Level {
 
         return boxesCount == boxesInCellsCount;
     }
-
+    
     /**
-     * Completes worker's move with specified shifts if it's possible
+     * Completes worker's move with specified shifts if it's possible.
      * 
      * @param workerDeltaX
-     *      Worker's horizontal shift
+     *      Worker's horizontal shift.
      * @param workerDeltaY
-     *      Worker's vertical shift
-     * @return
-     *      Completed move's type as number of {@link MoveType} enumeration
+     *      Worker's vertical shift.
+     * @return 
+     *      Completed move's information.
+     * @see #move(int, int, boolean)
      */
-    public MoveInformation move(int workerDeltaX, int workerDeltaY) {
+    protected MoveInformation move(int workerDeltaX, int workerDeltaY) {
+        
+        return move(workerDeltaX, workerDeltaY, false);
+    }
+
+    /**
+     * Completes worker's move with specified shifts if it's possible.
+     * 
+     * @param workerDeltaX
+     *      Worker's horizontal shift.
+     * @param workerDeltaY
+     *      Worker's vertical shift.
+     * @param repeatMove
+     *      Shows whether move is being repeated from moves history and the result information
+     *      is not to be added to moves history.
+     * @return
+     *      Completed move's information.
+     * @see #move(int, int)
+     */
+    synchronized protected MoveInformation move(int workerDeltaX, int workerDeltaY, boolean repeatMove) {
 
         if (workerDeltaX == 0 && workerDeltaY == 0)
             return new MoveInformation(MoveType.NOTHING, MoveDirection.NONE);
@@ -1029,17 +1120,17 @@ public class Level {
 
             // Adding the move to moves' history
             MoveInformation moveInformation = new MoveInformation(MoveType.WORKER_AND_BOX, moveDirection);
-            addMoveToHistory(moveInformation);
+            addMoveToHistory(moveInformation, repeatMove);
 
             return moveInformation;
         }
 
         workerX = workerDestinationX;
         workerY = workerDestinationY;
-
+        
         // Adding the move to moves' history
         MoveInformation moveInformation = new MoveInformation(MoveType.WORKER, moveDirection);
-        addMoveToHistory(moveInformation);
+        addMoveToHistory(moveInformation, repeatMove);
         
         return moveInformation;
     }

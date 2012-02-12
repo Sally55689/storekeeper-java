@@ -1,18 +1,70 @@
 package org.ezze.games.storekeeper;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import org.ezze.games.storekeeper.Level.LevelState;
+import org.ezze.utils.io.XMLParser;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * This class represents a set of loaded levels.
  * 
  * It can securely access both playable and corrupted levels.
- * Look at {@link Level#LevelState} for possible level's states.
+ * Look at {@link LevelState} for possible level's states.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class LevelsSet {
+    
+    /**
+     * Level methods' result enumeration.
+     * 
+     * Used as a result of methods loading and reinitializng levels' sets.
+     * 
+     * @see #load(java.lang.String)
+     * @see #reinitialize()
+     */
+    public enum LoadState {
+        
+        /**
+         * Shows that levels' set has been successfully loaded or reinitialized.
+         */
+        SUCCESS,
+        
+        /**
+         * Shows that at least one level of a set is not valid and
+         * therefore is not loaded or reinitialized.
+         */
+        WARNING,
+        
+        /**
+         * Shows that levels' set couldn't be loaded or reinitialized.
+         */
+        ERROR,
+        
+        /**
+         * Shows that levels' set is not loaded from any source.
+         */
+        NOT_LOADED,
+    }
+    
+    /**
+     * Set's current load state.
+     */
+    LoadState loadState = LoadState.NOT_LOADED;
+    
+    /**
+     * A reference to game's configuration.
+     */
+    Configuration configuration = null;
+    
+    /**
+     * Set's source file's name.
+     */
+    String source = null;
 
     /**
      * Set's name.
@@ -22,7 +74,7 @@ public class LevelsSet {
     /**
      * A list of set's levels.
      */
-    ArrayList<Level> levels = null;
+    ArrayList<Level> levels = new ArrayList<Level>();
     
     /**
      * An index of set's currently selected level.
@@ -32,26 +84,204 @@ public class LevelsSet {
     int currentLevelIndex = -1;
     
     /**
-     * Constructs empty levels' set without name.
+     * Constructs empty levels' set.
      * 
-     * @see #LevelsSet(java.lang.String)
+     * @param configuration
+     *      A reference to game's configuration.
+     * @see #LevelsSet(org.ezze.games.storekeeper.Configuration, java.lang.String)
      */
-    public LevelsSet() {
+    public LevelsSet(Configuration configuration) {
         
-        this("");
+        this(configuration, null);
     }
     
     /**
-     * Constructs empty levels' set with specified name.
+     * Constructs levels' set from specified source file.
      * 
-     * @param name
-     *      Set's name.
+     * @param configuration
+     *      A reference to game's configuration.
+     * @param source 
+     *      Set's source file's name.
+     * @see #LevelsSet(org.ezze.games.storekeeper.Configuration)
      */
-    public LevelsSet(String name) {
+    public LevelsSet(Configuration configuration, String source) {
         
-        this.name = name;
-        levels = new ArrayList<Level>();
-        currentLevelIndex = -1;
+        this.configuration = configuration;
+        this.source = source;
+        if (this.source != null)
+            load(this.source);
+    }
+    
+    /**
+     * Retrieves set's current load state.
+     * 
+     * @return 
+     *      Set's current load state.
+     */
+    public LoadState getLoadState() {
+        
+        return loadState;
+    }
+    
+    /**
+     * Loads levels' set from source file pointed by a name.
+     * 
+     * @param source
+     *      Set's source file's name.
+     * @return
+     *      Set's load result.
+     */
+    public final LoadState load(String source) {
+        
+        if (configuration == null || source == null) {
+         
+            loadState = LoadState.ERROR;
+            return loadState;
+        }
+        
+        File levelsSetFile = new File(source);
+        if (!levelsSetFile.exists() || !levelsSetFile.isFile()) {
+         
+            loadState = LoadState.ERROR;
+            return loadState;
+        }
+        
+        // TODO: analyze source type here in the future
+        
+        // XML source
+        Document xmlLevelsSetDocument = XMLParser.readXMLDocument(source);
+        loadState = loadFromDOM(xmlLevelsSetDocument);
+        return loadState;
+    }
+    
+    /**
+     * Reads levels from provided XML document.
+     * 
+     * @param xmlLevelsSetDocument
+     *      Instance of XML document.
+     * @return 
+     *      Set's load result.
+     * @see #load(java.lang.String)
+     */
+    public LoadState loadFromDOM(Document xmlLevelsSetDocument) {
+        
+        // Retrieving levels set XML file's root element
+        Element xmlLevelsSetElement = XMLParser.getDocumentElement(xmlLevelsSetDocument);
+        if (xmlLevelsSetElement == null) {
+       
+            loadState = LoadState.ERROR;
+            return loadState;
+        }
+        
+        // Retrieving levels count from XML
+        int levelsCount = XMLParser.getChildrenCount(xmlLevelsSetElement, "level");
+        if (levelsCount == 0) {
+            
+            loadState = LoadState.ERROR;
+            return loadState;
+        }
+        
+        // Retrieving set's name
+        setName(XMLParser.getElementText(XMLParser.getChildElement(xmlLevelsSetElement, "name"), null));
+        
+        // Determining level's maximal width and height
+        int maximalLevelWidth = (Integer)configuration.getOption(Configuration.OPTION_LEVEL_WIDTH,
+                Configuration.DEFAULT_OPTION_LEVEL_WIDTH);
+        int maximalLevelHeight = (Integer)configuration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
+                Configuration.DEFAULT_OPTION_LEVEL_HEIGHT);
+        
+        int levelIndex = 0;
+        while (levelIndex < levelsCount) {
+            
+            // Retrieving XML element of the current level
+            Element xmlLevelElement = XMLParser.getChildElement(xmlLevelsSetElement, "level", levelIndex);
+            
+            String levelName = XMLParser.getElementText(XMLParser.getChildElement(xmlLevelElement, "name"), "");
+            int levelLinesCount = XMLParser.getChildrenCount(xmlLevelElement, "l");
+            if (levelLinesCount > 0) {
+
+                ArrayList<String> levelLines = new ArrayList<String>();
+                int levelLineIndex = 0;
+                while (levelLineIndex < levelLinesCount) {
+
+                    Element xmlLevelLineElement = XMLParser.getChildElement(xmlLevelElement, "l", levelLineIndex);
+                    String levelLine = XMLParser.getElementText(xmlLevelLineElement);
+                    levelLines.add(levelLine);
+                    levelLineIndex++;
+                }
+
+                HashMap<String, Object> levelInfo = new HashMap<String, Object>();
+                levelInfo.put("name", levelName);
+                Level gameLevel = new Level(levelLines, levelInfo, maximalLevelWidth, maximalLevelHeight);
+                addLevel(gameLevel);
+            }
+            
+            levelIndex++;
+        }
+        
+        // Checking whether at least one playable level has been successfully retrieved
+        loadState = LoadState.SUCCESS;
+        int playableLevelsCount = getPlayableLevelsCount();
+        levelsCount = getLevelsCount();
+        if (playableLevelsCount < levelsCount)
+            loadState = LoadState.WARNING;
+        else if (playableLevelsCount == 0)
+            loadState = LoadState.ERROR;       
+        return loadState;
+    }
+    
+    /**
+     * Reinitializes all currently loaded levels.
+     * 
+     * This method must be used every time level's maximal size (width and height)
+     * has been changed. New level's maximal size can be small enough to prevent
+     * some of loaded levels to fit it.
+     * 
+     * @return
+     *      Reinitialization result, must be one of the following values:
+     *      <ul>
+     *      <li>{@link LoadState#SUCCESS} - all levels have been successfully reinitialized;</li>
+     *      <li>{@link LoadState#WARNING} - at least one of currently loaded levels was unable
+     *          to be reinitialized;</li>
+     *      <li>{@link LoadState#ERROR} - all currently loaded levels were unable to be reinitialized.</li>
+     *      </ul>
+     * @see Level#initialize()
+     */
+    public LoadState reinitialize() {
+        
+        if (configuration == null || isEmpty()) {
+            
+            loadState = LoadState.ERROR;
+            return loadState;
+        }
+
+        // Retrieving level's configured width and height
+        int levelWidth = (Integer)configuration.getOption(Configuration.OPTION_LEVEL_WIDTH,
+                Configuration.DEFAULT_OPTION_LEVEL_WIDTH);
+        int levelHeight = (Integer)configuration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
+                Configuration.DEFAULT_OPTION_LEVEL_HEIGHT);
+        
+        int gameLevelIndex = 0;
+        while (gameLevelIndex < getLevelsCount()) {
+            
+            // Retrieving a reference to current level
+            Level gameLevel = getLevelByIndex(gameLevelIndex);
+            
+            // Changing level's maximal size before reinitialization
+            gameLevel.setMaximalLevelSize(levelWidth, levelHeight);
+            
+            // Attempting to reinitialize the level
+            gameLevel.initialize();
+            gameLevelIndex++;
+        }
+        
+        // Analyzing reinitialization results
+        loadState = LoadState.SUCCESS;
+        if (getPlayableLevelsCount() == 0)
+            loadState = LoadState.ERROR;
+        else if (getPlayableLevelsCount() < getLevelsCount())
+            loadState = LoadState.WARNING;
+        return loadState;
     }
     
     /**
@@ -59,10 +289,23 @@ public class LevelsSet {
      * 
      * @return 
      *      Set's name.
+     * @see #setName(java.lang.String)
      */
     public String getName() {
         
         return name;
+    }
+    
+    /**
+     * Sets set's name.
+     * 
+     * @param name 
+     *      Desired set's name.
+     * @see #getName()
+     */
+    public void setName(String name) {
+        
+        this.name = name != null ? name : "";
     }
     
     /**

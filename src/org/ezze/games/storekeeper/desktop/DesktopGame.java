@@ -27,7 +27,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileFilter;
 import org.ezze.games.storekeeper.Game;
-import org.ezze.games.storekeeper.Game.LevelResult;
 import org.ezze.games.storekeeper.Configuration;
 import org.ezze.games.storekeeper.Game.GameState;
 import org.ezze.games.storekeeper.GameGraphics;
@@ -35,6 +34,7 @@ import org.ezze.games.storekeeper.GameGraphics.SpriteSize;
 import org.ezze.games.storekeeper.Level;
 import org.ezze.games.storekeeper.Level.LevelState;
 import org.ezze.games.storekeeper.LevelCompletionListener;
+import org.ezze.games.storekeeper.LevelsSet.LoadState;
 import org.ezze.utils.ui.FileBrowser;
 import org.ezze.utils.ui.aboutbox.AboutBox;
 import org.ezze.utils.ui.aboutbox.AboutBoxInformation;
@@ -333,7 +333,7 @@ public class DesktopGame extends JFrame {
                         @Override
                         public boolean accept(File file) {
                             
-                            return file.isFile() && file.getName().toLowerCase().endsWith(".xml");
+                            return file.isDirectory() || (file.isFile() && file.getName().toLowerCase().endsWith(".xml"));
                         }
 
                         @Override
@@ -356,19 +356,22 @@ public class DesktopGame extends JFrame {
                     }
                     
                     String levelsSetFileName = selectedFile.getAbsolutePath();
-                    Game.LevelResult loadResult = game.loadLevelsSet(levelsSetFileName);
-                    if (loadResult == Game.LevelResult.ERROR) {
+                    LoadState loadState = game.loadLevelsSet(levelsSetFileName);
+                    if (loadState == LoadState.ERROR) {
                         
                         JOptionPane.showMessageDialog(null, String.format("Unable to parse \"%s\" as levels set file.", levelsSetFileName),
                                 "Open Error", JOptionPane.ERROR_MESSAGE);
                         updateMenuItems();
                         return;
                     }
-                    else if (loadResult == Game.LevelResult.WARNING) {
+                    else if (loadState == LoadState.WARNING) {
                         
                         JOptionPane.showMessageDialog(null, String.format("At least one level of set \"%s\" cannot be initialized.", levelsSetFileName),
                                 "Open Warning", JOptionPane.WARNING_MESSAGE);
                     }
+                    
+                    // Selecting first playable level
+                    game.getLevelsSet().setCurrentLevelByFirstPlayable();
                     
                     game.startLevel(game.getLevelsSet().getCurrentLevelIndex());
                     updateMenuItems();
@@ -386,7 +389,7 @@ public class DesktopGame extends JFrame {
                 
                 if (game != null) {
                     
-                    if (game.loadDefaultLevelsSet() == Game.LevelResult.ERROR)
+                    if (game.loadDefaultLevelsSet() == LoadState.ERROR)
                         JOptionPane.showMessageDialog(null, "Unable to load default levels set.", "Open Error", JOptionPane.ERROR_MESSAGE);
                     else
                         game.startLevel(game.getLevelsSet().getCurrentLevelIndex());
@@ -591,8 +594,8 @@ public class DesktopGame extends JFrame {
         });
 
         // Loading default levels' set
-        LevelResult loadLevelResult = game.loadDefaultLevelsSet();
-        showLoadLevelResultMessage(loadLevelResult, maximalLevelWidth, maximalLevelHeight);
+        LoadState loadState = game.loadDefaultLevelsSet();
+        showLoadLevelResultMessage(loadState, maximalLevelWidth, maximalLevelHeight);
         
         updateMenuItems();
         setVisible(true);
@@ -712,31 +715,36 @@ public class DesktopGame extends JFrame {
             centerTheWindow();
         }
         
-        // Reinitializing the levels
-        LevelResult reinitializationResult = game.reinitializeLevels();
-        showLoadLevelResultMessage(reinitializationResult, maximalLevelWidth, maximalLevelHeight);
+        // Reinitializing the levels 
+        LoadState loadState = game.getLevelsSet().reinitialize();
+        
+        // Selecting first playable level
+        game.getLevelsSet().setCurrentLevelByFirstPlayable();
+        
+        showLoadLevelResultMessage(loadState, maximalLevelWidth, maximalLevelHeight);
         
         updateMenuItems();
+        game.stop(true);
         setVisible(true);
     }
     
     /**
      * Shows a result message of levels' load or reinitialization result.
      * 
-     * @param loadLevelResult
+     * @param loadState
      *      Result identifier.
      * @param maximalLevelWidth
      *      Level's maximal width.
      * @param maximalLevelHeight
      *      Level's maximal height.
      */
-    private void showLoadLevelResultMessage(LevelResult loadLevelResult, int maximalLevelWidth, int maximalLevelHeight) {
+    private void showLoadLevelResultMessage(LoadState loadState, int maximalLevelWidth, int maximalLevelHeight) {
         
-        if (loadLevelResult == LevelResult.ERROR) {
+        if (loadState == LoadState.ERROR) {
             
             JOptionPane.showMessageDialog(null, "Unable to load default levels set.", "Open Error", JOptionPane.ERROR_MESSAGE);
         }
-        else if (loadLevelResult == LevelResult.WARNING) {
+        else if (loadState == LoadState.WARNING) {
             
             int playableLevelsCount = game.getLevelsSet().getPlayableLevelsCount();
             int outOfBoundsLevelsCount = game.getLevelsSet().getLevelsCountByState(LevelState.OUT_OF_BOUNDS);

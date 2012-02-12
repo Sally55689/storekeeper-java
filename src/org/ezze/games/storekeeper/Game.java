@@ -11,17 +11,14 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.font.TextAttribute;
-import java.io.File;
 import java.io.InputStream;
 import java.text.AttributedString;
-import java.util.ArrayList;
-import java.util.HashMap;
 import javax.swing.JPanel;
 import org.ezze.games.storekeeper.Level.MoveInformation;
 import org.ezze.games.storekeeper.Level.MoveType;
+import org.ezze.games.storekeeper.LevelsSet.LoadState;
 import org.ezze.utils.io.XMLParser;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * This class is the main part of the game implementing graphics,
@@ -31,34 +28,6 @@ import org.w3c.dom.Element;
  * @version 0.0.4
  */
 public class Game extends JPanel implements Runnable {
-
-    /**
-     * Level methods' result enumeration.
-     * 
-     * Used as a result of methods loading and reinitializng levels' sets.
-     * 
-     * @see #loadDefaultLevelsSet()
-     * @see #loadLevelsSet(java.lang.String)
-     * @see #reinitializeLevels()
-     */
-    public enum LevelResult {
-        
-        /**
-         * Shows that levels' set has been successfully loaded or reinitialized.
-         */
-        SUCCESS,
-        
-        /**
-         * Shows that at least one level of a set is not valid and
-         * therefore is not loaded or reinitialized.
-         */
-        WARNING,
-        
-        /**
-         * Shows that levels' set couldn't be loaded or reinitialized.
-         */
-        ERROR
-    }
     
     /**
      * Game's state, can be equal to one of the following values:
@@ -352,7 +321,7 @@ public class Game extends JPanel implements Runnable {
         gameState = GameState.INTRODUCTION;
         
         // No levels are loaded by default
-        levelsSet = null;
+        levelsSet = new LevelsSet(this.gameConfiguration);
         
         // Making game's field double buffered
         setDoubleBuffered(true);
@@ -420,209 +389,58 @@ public class Game extends JPanel implements Runnable {
     }
     
     /**
-     * Loads default levels set.
+     * Loads default levels' set.
      * 
      * @return 
-     *      Level's load result {@link Result}
-     * @see #loadLevelsSet(java.lang.String) 
-     * @see #readLevelsSetFromXML(org.w3c.dom.Document, boolean) 
+     *      Set's load result.
      */
-    public LevelResult loadDefaultLevelsSet() {
+    public LoadState loadDefaultLevelsSet() {
         
         String resourcePathToLevelsSet = String.format("/%s/resources/levels.xml",
                 Game.class.getPackage().getName().replace('.', '/'));
         InputStream levelsSetInputStream = Game.class.getResourceAsStream(resourcePathToLevelsSet);
         if (levelsSetInputStream == null)
-            return LevelResult.ERROR;
+            return LoadState.ERROR;
         
         Document xmlLevelsSetDocument = XMLParser.readXMLDocument(levelsSetInputStream);
-        LevelResult loadResult = readLevelsSetFromXML(xmlLevelsSetDocument, true);
-        if (loadResult != LevelResult.ERROR)
+        LevelsSet loadedLevelsSet = new LevelsSet(gameConfiguration);
+        LoadState loadState = loadedLevelsSet.loadFromDOM(xmlLevelsSetDocument);
+        if (loadState != LoadState.ERROR) {
+         
+            // Stopping the game if it's running
+            stop(true);
+            
+            // Setting a reference to loaded levels' set
+            levelsSet = loadedLevelsSet;
             isDefaultLevelsSetLoaded = true;
-        return loadResult;
+        }
+        
+        return loadState;
     }
     
     /**
-     * Loads levels' set from XML file pointed by a name.
+     * Loads levels' set from specified source file.
      * 
-     * @param levelsSetFileName
-     *      Set's XML file's name
-     * @return
-     *      Level's load result {@link Result}
-     * @see #loadDefaultLevelsSet() 
-     * @see #readLevelsSetFromXML(org.w3c.dom.Document, boolean) 
-     */
-    public LevelResult loadLevelsSet(String levelsSetFileName) {
-        
-        if (levelsSetFileName == null)
-            return LevelResult.ERROR;
-        
-        File levelsSetFile = new File(levelsSetFileName);
-        if (!levelsSetFile.exists() || !levelsSetFile.isFile())
-            return LevelResult.ERROR;
-        
-        Document xmlLevelsSetDocument = XMLParser.readXMLDocument(levelsSetFileName);
-        LevelResult loadResult = readLevelsSetFromXML(xmlLevelsSetDocument, false);
-        if (loadResult != LevelResult.ERROR)
-            isDefaultLevelsSetLoaded = false;
-        return loadResult;
-    }
-    
-    /**
-     * Reads levels from provided XML document.
-     * 
-     * In the case of {@code isDefault} set to {@code false} this method
-     * will try to load default levels' set on failure.
-     * 
-     * This method is used by {@link #loadDefaultLevelsSet()} and
-     * {@link #loadLevelsSet(java.lang.String)} methods.
-     * 
-     * @param xmlLevelsSetDocument
-     *      Instance of XML document
-     * @param isDefault
-     *      Shows whether XML document is of default levels' set
+     * @param source
+     *      Source file's name.
      * @return 
-     *      Level's load result {@link Result}
-     * @see #loadDefaultLevelsSet()
-     * @see #loadLevelsSet(java.lang.String)
+     *      Set's load result.
      */
-    private LevelResult readLevelsSetFromXML(Document xmlLevelsSetDocument, boolean isDefault) {
+    public LoadState loadLevelsSet(String source) {
         
-        // Retrieving levels set XML file's root element
-        Element xmlLevelsSetElement = XMLParser.getDocumentElement(xmlLevelsSetDocument);
-        if (xmlLevelsSetElement == null) {
-       
-            if (!isDefault) {
+        LevelsSet loadedLevelsSet = new LevelsSet(gameConfiguration, source);
+        LoadState loadState = loadedLevelsSet.getLoadState();
+        if (loadState != LoadState.NOT_LOADED && loadState != LoadState.ERROR) {
             
-                // Loading default levels set on failure
-                loadDefaultLevelsSet();
-            }
+            // Stopping the game if it's running
+            stop(true);
             
-            return LevelResult.ERROR;
+            // Setting a reference to loaded levels' set
+            levelsSet = loadedLevelsSet;
+            isDefaultLevelsSetLoaded = false;
         }
         
-        // Retrieving levels count from XML
-        int levelsCount = XMLParser.getChildrenCount(xmlLevelsSetElement, "level");
-        if (levelsCount == 0) {
-            
-            if (!isDefault) {
-            
-                // Loading default levels set on failure
-                loadDefaultLevelsSet();
-            }
-            
-            return LevelResult.ERROR;
-        }
-        
-        // Stopping the game
-        stop(true);
-        
-        // Retrieving set's name
-        String levelsSetName = XMLParser.getElementText(XMLParser.getChildElement(xmlLevelsSetElement, "name"), null);
-        
-        // Creating new levels set
-        levelsSet = new LevelsSet(levelsSetName);
-        
-        // Defining level's maximal width and height
-        int maximalLevelWidth = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_WIDTH,
-                Configuration.DEFAULT_OPTION_LEVEL_WIDTH);
-        int maximalLevelHeight = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
-                Configuration.DEFAULT_OPTION_LEVEL_HEIGHT);
-        
-        int levelIndex = 0;
-        while (levelIndex < levelsCount) {
-            
-            // Retrieving XML element of the current level
-            Element xmlLevelElement = XMLParser.getChildElement(xmlLevelsSetElement, "level", levelIndex);
-            
-            String levelName = XMLParser.getElementText(XMLParser.getChildElement(xmlLevelElement, "name"), "");
-            int levelLinesCount = XMLParser.getChildrenCount(xmlLevelElement, "l");
-            if (levelLinesCount > 0) {
-
-                ArrayList<String> levelLines = new ArrayList<String>();
-                int levelLineIndex = 0;
-                while (levelLineIndex < levelLinesCount) {
-
-                    Element xmlLevelLineElement = XMLParser.getChildElement(xmlLevelElement, "l", levelLineIndex);
-                    String levelLine = XMLParser.getElementText(xmlLevelLineElement);
-                    levelLines.add(levelLine);
-                    levelLineIndex++;
-                }
-
-                HashMap<String, Object> levelInfo = new HashMap<String, Object>();
-                levelInfo.put("name", levelName);
-                Level gameLevel = new Level(levelLines, levelInfo, maximalLevelWidth, maximalLevelHeight);
-                levelsSet.addLevel(gameLevel);
-            }
-            
-            levelIndex++;
-        }
-        
-        // Checking whether at least one playable level has been successfully retrieved
-        LevelResult readResult = LevelResult.SUCCESS;
-        if (levelsSet.getPlayableLevelsCount() < levelsSet.getLevelsCount())
-            readResult = LevelResult.WARNING;        
-        
-        // Selecting first playable level
-        levelsSet.setCurrentLevelByFirstPlayable();
-        return readResult;
-    }
-    
-    /**
-     * Reinitializes all currently loaded levels.
-     * 
-     * This method must be used every time level's maximal size (width and height)
-     * has been changed. New level's maximal size can be small enough to prevent
-     * some of loaded levels to fit it.
-     * 
-     * @return
-     *      Reinitialization result, must be one of the following values:
-     *      <ul>
-     *      <li>{@link LevelResult#SUCCESS} - all levels have been successfully reinitialized;</li>
-     *      <li>{@link LevelResult#WARNING} - at least one of currently loaded levels was unable
-     *          to be reinitialized;</li>
-     *      <li>{@link LevelResult#ERROR} - all currently loaded levels were unable to be reinitialized.</li>
-     *      </ul>
-     * @see Level#initialize()
-     */
-    public LevelResult reinitializeLevels() {
-        
-        // Stopping the game if it's required
-        stop(true);
-        
-        if (levelsSet == null || levelsSet.isEmpty())
-            return LevelResult.ERROR;
-
-        // Retrieving level's configured width and height
-        int levelWidth = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_WIDTH,
-                Configuration.DEFAULT_OPTION_LEVEL_WIDTH);
-        int levelHeight = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
-                Configuration.DEFAULT_OPTION_LEVEL_HEIGHT);
-        
-        int gameLevelIndex = 0;
-        while (gameLevelIndex < levelsSet.getLevelsCount()) {
-            
-            // Retrieving a reference to current level
-            Level gameLevel = levelsSet.getLevelByIndex(gameLevelIndex);
-            
-            // Changing level's maximal size before reinitialization
-            gameLevel.setMaximalLevelSize(levelWidth, levelHeight);
-            
-            // Attempting to reinitialize the level
-            gameLevel.initialize();
-            gameLevelIndex++;
-        }
-        
-        // Analyzing reinitialization results
-        LevelResult reinitializationResult = LevelResult.SUCCESS;
-        if (levelsSet.getPlayableLevelsCount() == 0)
-            reinitializationResult = LevelResult.ERROR;
-        else if (levelsSet.getPlayableLevelsCount() < levelsSet.getLevelsCount())
-            reinitializationResult = LevelResult.WARNING;
-        
-        // Selecting first playable level
-        levelsSet.setCurrentLevelByFirstPlayable();
-        return reinitializationResult;
+        return loadState;
     }
     
     /**

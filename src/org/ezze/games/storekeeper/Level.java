@@ -92,11 +92,34 @@ public class Level {
         allowedLevelItems.add(LEVEL_ITEM_SPACE);
     }
     
+    /**
+     * Enumerates level's possible states.
+     */
     public static enum LevelState {
         
-        EMPTY,        
+        /**
+         * Means that level is not created or initialized.
+         * 
+         * This value must be strongly avoided.
+         */
+        EMPTY,
+        
+        /**
+         * Means that level is valid but cannot be played with specified
+         * maximal level's size (see {@link #getMaximalLevelWidth()}
+         * and {@link #getMaximalLevelHeight()}.
+         */
         OUT_OF_BOUNDS,
+        
+        /**
+         * Means that level is invalid and cannot be played in any case.
+         */
         CORRUPTED,
+        
+        /**
+         * Means that level is valid and can be played with current maximal
+         * level's size.
+         */
         PLAYABLE
     }
     

@@ -430,7 +430,14 @@ public class DesktopGame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent ae) {
             
-                if (game != null) {
+                if (game != null && game.getLevelsSet().getCurrentLevel() != null) {
+              
+                    if (game.getLevelsSet().getCurrentLevel().getMovesCount() == 0) {
+                        
+                        game.restartLevel();
+                        updateMenuItems();
+                        return;
+                    }
                     
                     int confirmResult = JOptionPane.showConfirmDialog(null,
                             "Are you sure that you want to restart the level?", "Restart Confirmation", JOptionPane.YES_NO_OPTION);
@@ -837,17 +844,18 @@ public class DesktopGame extends JFrame {
      */
     private void onCloseApplication() {
         
-        if (game != null) {
+        if (game != null && game.getGameState() == Game.GameState.PLAY || game.getGameState() == Game.GameState.COMPLETED) {
          
-            if (game.getGameState() == Game.GameState.PLAY || game.getGameState() == Game.GameState.COMPLETED) {
-                
+            if (game.getLevelsSet().getCurrentLevel() != null &&
+                    game.getLevelsSet().getCurrentLevel().getMovesCount() > 0) {
+            
                 int confirmResult = JOptionPane.showConfirmDialog(null, "Are you sure that you want to exit the game?",
                         "Exit Confirmation", JOptionPane.YES_NO_OPTION);
                 if (confirmResult != JOptionPane.YES_OPTION)
                     return;
-                
-                game.stop();
             }
+
+            game.stop();
         }
         
         // Saving game's current settings

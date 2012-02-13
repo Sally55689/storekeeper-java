@@ -124,32 +124,9 @@ public class Level {
     }
     
     /**
-     * Represents a type of a move attempted by {@link #move(int, int)} method.
-     */
-    public static enum MoveType {
-
-        /**
-         * Nothing has been changed after the attempt to move.
-         * 
-         * This value is linked with {@link MoveDirection#NONE}.
-         */
-        NOTHING,
-        
-        /**
-         * Worker has moved.
-         */
-        WORKER,
-        
-        /**
-         * Worker has moved with a box.
-         */
-        WORKER_AND_BOX
-    };
-    
-    /**
      * Represents a direction of a move attempted by {@link #move(int, int)} method.
      */
-    public static enum MoveDirection {
+    public static enum Direction {
         
         /**
          * Nothing has been changed after the attempt to move.
@@ -180,10 +157,33 @@ public class Level {
     }
     
     /**
+     * Represents a type of a move attempted by {@link #move(int, int)} method.
+     */
+    public static enum MoveType {
+
+        /**
+         * Nothing has been changed after the attempt to move.
+         * 
+         * This value is linked with {@link Direction#NONE}.
+         */
+        NOTHING,
+        
+        /**
+         * Worker has moved.
+         */
+        WORKER,
+        
+        /**
+         * Worker has moved with a box.
+         */
+        WORKER_AND_BOX
+    };
+    
+    /**
      * This class accumulates the information about a move
      * performed by the worker.
      */
-    public class MoveInformation {
+    public static class MoveInformation {
         
         /**
          * Describes performed move's type.
@@ -193,13 +193,12 @@ public class Level {
         /**
          * Stores performed move's direction.
          */
-        private MoveDirection moveDirection = MoveDirection.NONE;
+        private Direction moveDirection = Direction.NONE;
         
         /**
          * Creates information of an empty move meaning that the worker didn't move.
          */
         public MoveInformation() {
-            
         }
         
         /**
@@ -210,10 +209,10 @@ public class Level {
          * @param moveDirection
          *      Performed move's direction.
          */
-        public MoveInformation(MoveType moveType, MoveDirection moveDirection) {
+        public MoveInformation(MoveType moveType, Direction moveDirection) {
             
             if (moveType == null || moveType == MoveType.NOTHING ||
-                    moveDirection == null || moveDirection == MoveDirection.NONE) {
+                    moveDirection == null || moveDirection == Direction.NONE) {
                 
                 return;
             }
@@ -239,9 +238,128 @@ public class Level {
          * @return 
          *      Move's direction.
          */
-        public MoveDirection getDirection() {
+        public Direction getDirection() {
             
             return moveDirection;
+        }
+    }
+    
+    /**
+     * This class represents worker's compound look direction.
+     * 
+     * It consists of two directions - horizontal and vertical, and can be used
+     * for rendering purporses when one direction (e.g. vertical) is absent.
+     */
+    public static class WorkerDirection {
+        
+        /**
+         * Describes worker's horizontal direction.
+         */
+        private Direction horizontal = Direction.LEFT;
+        
+        /**
+         * Describes worker's vertical direction.
+         */
+        private Direction vertical = Direction.DOWN;
+        
+        /**
+         * Shows whether vertical direction represents a real direction.
+         */
+        private boolean isVerticalReal = false;
+        
+        /**
+         * Worker's direction default constructor with horizontal direction equal
+         * to {@link Direction#LEFT} and supposed as real one, and vertical
+         * direction equal to {@link Direction#DOWN}.
+         */
+        public WorkerDirection() {
+        }
+        
+        /**
+         * Worker's direction advanced constructor.
+         * 
+         * @param horizontal
+         *      Specifies horizontal direction.
+         * @param vertical
+         *      Specifies vertical direction.
+         * @param isVerticalReal 
+         *      If it's set to {@code true} then vertical direction represents a real direction,
+         *      otherwise this one is represented by horizontal direction.
+         */
+        public WorkerDirection(Direction horizontal, Direction vertical, boolean isVerticalReal) {
+            
+            if (horizontal == Direction.LEFT || horizontal == Direction.RIGHT)
+                this.horizontal = horizontal;
+            if (vertical == Direction.UP || vertical == Direction.DOWN)
+                this.vertical = vertical;
+            this.isVerticalReal = isVerticalReal;
+        }
+        
+        /**
+         * Retrieves horizontal direction.
+         * 
+         * @return 
+         *      Worker's horizontal direction.
+         */
+        public Direction getHorizontal() {
+            
+            return horizontal;
+        }
+        
+        /**
+         * Retrieves vertical direction.
+         * 
+         * @return 
+         *      Worker's vertical direction.
+         */
+        public Direction getVertical() {
+            
+            return vertical;
+        }
+        
+        /**
+         * Show whether vertical direction represents a real direction.
+         * 
+         * @return 
+         *      {@code true} if vertical direction represents a real direction,
+         *      {@code false} if horizontal direction represents this one.
+         */
+        public boolean isVerticalReal() {
+            
+            return isVerticalReal;
+        }
+        
+        /**
+         * Retrieves a real direction.
+         * 
+         * @return 
+         *      Real direction.
+         */
+        public Direction get() {
+            
+            return isVerticalReal ? vertical : horizontal;
+        }
+        
+        /**
+         * Updates instance by new value of real direction.
+         * 
+         * @param direction
+         *      New value of real direction.
+         */
+        public void update(Direction direction) {
+            
+            if (direction == null)
+                return;
+            
+            if (direction == Direction.LEFT || direction == Direction.RIGHT) {
+                
+                horizontal = direction;
+                isVerticalReal = false;
+                return;
+            }
+            
+            vertical = direction;
+            isVerticalReal = true;
         }
     }
     
@@ -302,6 +420,11 @@ public class Level {
      * Keeps current worker position's vertical index within the range [0; {@link #getMaximalLevelHeight()} - 1].
      */
     private int workerY = 0;
+    
+    /**
+     * Represents worker's actual compound look direction.
+     */
+    private WorkerDirection workerDirection = new WorkerDirection();
     
     /**
      * Traces worker's moves count.
@@ -765,6 +888,17 @@ public class Level {
 
         return workerY;
     }
+    
+    /**
+     * Retrieves worker's compound look direction.
+     * 
+     * @return 
+     *      Worker's compound look direction.
+     */
+    public WorkerDirection getWorkerDirection() {
+        
+        return workerDirection;
+    }
 
     /**
      * Retrieves worker's current location
@@ -831,7 +965,7 @@ public class Level {
     synchronized protected void addMoveToHistory(MoveInformation moveInformation, boolean repeatMove) {
         
         if (moveInformation == null || moveInformation.getType().equals(MoveType.NOTHING) ||
-                moveInformation.getDirection().equals(MoveDirection.NONE)) {
+                moveInformation.getDirection().equals(Direction.NONE)) {
 
             return;
         }
@@ -894,20 +1028,20 @@ public class Level {
             MoveInformation moveInformation = movesHistory.get(removingMoveIndex);
             if (!moveInformation.getType().equals(MoveType.NOTHING)) {
 
-                MoveDirection moveDirection = moveInformation.getDirection();                                
+                Direction moveDirection = moveInformation.getDirection();                                
 
                 if (moveInformation.getType().equals(MoveType.WORKER_AND_BOX)) {
 
                     // Retrieving box' current coordinates
                     int boxX = workerX;
                     int boxY = workerY;
-                    if (moveDirection == MoveDirection.LEFT)
+                    if (moveDirection == Direction.LEFT)
                         boxX -= 1;
-                    else if (moveDirection == MoveDirection.RIGHT)
+                    else if (moveDirection == Direction.RIGHT)
                         boxX += 1;
-                    else if (moveDirection == MoveDirection.UP)
+                    else if (moveDirection == Direction.UP)
                         boxY -= 1;
-                    else if (moveDirection == MoveDirection.DOWN)
+                    else if (moveDirection == Direction.DOWN)
                         boxY += 1;
 
                     // Restoring previous item at box' current position
@@ -933,14 +1067,23 @@ public class Level {
                 }
 
                 // Moving worker back
-                if (moveDirection == MoveDirection.LEFT)
+                if (moveDirection == Direction.LEFT)
                     workerX += 1;
-                else if (moveDirection == MoveDirection.RIGHT)
+                else if (moveDirection == Direction.RIGHT)
                     workerX -= 1;
-                else if (moveDirection == MoveDirection.UP)
+                else if (moveDirection == Direction.UP)
                     workerY += 1;
-                else if (moveDirection == MoveDirection.DOWN)
+                else if (moveDirection == Direction.DOWN)
                     workerY -= 1;
+                
+                // Restoring worker's direction
+                MoveInformation previousMoveInformation = null;
+                if (removingMoveIndex >= 1)
+                    previousMoveInformation = movesHistory.get(removingMoveIndex - 1);
+                Direction previousDirection = previousMoveInformation != null ?
+                        previousMoveInformation.getDirection() : new WorkerDirection().get();
+                workerDirection.update(previousDirection);
+                
                 movesCount--;
             }
 
@@ -999,14 +1142,14 @@ public class Level {
 
                 int workerDeltaX = 0;
                 int workerDeltaY = 0;
-                MoveDirection moveDirection = moveInformation.getDirection();
-                if (moveDirection == MoveDirection.LEFT)
+                Direction moveDirection = moveInformation.getDirection();
+                if (moveDirection == Direction.LEFT)
                     workerDeltaX = -1;
-                else if (moveDirection == MoveDirection.RIGHT)
+                else if (moveDirection == Direction.RIGHT)
                     workerDeltaX = 1;
-                else if (moveDirection == MoveDirection.UP)
+                else if (moveDirection == Direction.UP)
                     workerDeltaY = -1;
-                else if (moveDirection == MoveDirection.DOWN)
+                else if (moveDirection == Direction.DOWN)
                     workerDeltaY = 1;
 
                 move(workerDeltaX, workerDeltaY, true);
@@ -1062,7 +1205,7 @@ public class Level {
     synchronized protected MoveInformation move(int workerDeltaX, int workerDeltaY, boolean repeatMove) {
 
         if (workerDeltaX == 0 && workerDeltaY == 0)
-            return new MoveInformation(MoveType.NOTHING, MoveDirection.NONE);
+            return new MoveInformation(MoveType.NOTHING, Direction.NONE);
 
         // Calculating worker's destination location
         int workerDestinationX = workerX + workerDeltaX;
@@ -1071,18 +1214,18 @@ public class Level {
         // Checking that worker's destination position is not a wall
         Character workerDestinationLevelItem = getItemAt(workerDestinationY, workerDestinationX);
         if (workerDestinationLevelItem.equals(LEVEL_ITEM_BRICK))
-            return new MoveInformation(MoveType.NOTHING, MoveDirection.NONE);
+            return new MoveInformation(MoveType.NOTHING, Direction.NONE);
         
         // Defining worker's move direction
-        MoveDirection moveDirection = MoveDirection.NONE;
+        Direction moveDirection = Direction.NONE;
         if (workerDeltaX > 0)
-            moveDirection = MoveDirection.RIGHT;
+            moveDirection = Direction.RIGHT;
         else if (workerDeltaX < 0)
-            moveDirection = MoveDirection.LEFT;
+            moveDirection = Direction.LEFT;
         else if (workerDeltaY > 0)
-            moveDirection = MoveDirection.DOWN;
+            moveDirection = Direction.DOWN;
         else if (workerDeltaY < 0)
-            moveDirection = MoveDirection.UP;
+            moveDirection = Direction.UP;
 
         // Checking whether worker's destination position is a box
         if (workerDestinationLevelItem.equals(LEVEL_ITEM_BOX) || workerDestinationLevelItem.equals(LEVEL_ITEM_BOX_IN_CELL)) {
@@ -1095,7 +1238,7 @@ public class Level {
             Character boxDestinationLevelItem = getItemAt(boxDestinationY, boxDestinationX);
             if (boxDestinationLevelItem.equals(LEVEL_ITEM_BRICK) || boxDestinationLevelItem.equals(LEVEL_ITEM_BOX)
                     || boxDestinationLevelItem.equals(LEVEL_ITEM_BOX_IN_CELL))
-                return new MoveInformation(MoveType.NOTHING, MoveDirection.NONE);
+                return new MoveInformation(MoveType.NOTHING, Direction.NONE);
 
             // Removing the box from old location
             if (workerDestinationLevelItem.equals(LEVEL_ITEM_BOX))
@@ -1117,16 +1260,21 @@ public class Level {
 
             workerX = workerDestinationX;
             workerY = workerDestinationY;
+            
+            workerDirection.update(moveDirection);
 
             // Adding the move to moves' history
             MoveInformation moveInformation = new MoveInformation(MoveType.WORKER_AND_BOX, moveDirection);
             addMoveToHistory(moveInformation, repeatMove);
+            
 
             return moveInformation;
         }
 
         workerX = workerDestinationX;
         workerY = workerDestinationY;
+        
+        workerDirection.update(moveDirection);
         
         // Adding the move to moves' history
         MoveInformation moveInformation = new MoveInformation(MoveType.WORKER, moveDirection);

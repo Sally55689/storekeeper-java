@@ -16,6 +16,7 @@ import java.text.AttributedString;
 import javax.swing.JPanel;
 import org.ezze.games.storekeeper.Level.MoveInformation;
 import org.ezze.games.storekeeper.Level.MoveType;
+import org.ezze.games.storekeeper.Level.WorkerDirection;
 import org.ezze.games.storekeeper.LevelsSet.LoadState;
 import org.ezze.utils.io.XMLParser;
 import org.w3c.dom.Document;
@@ -67,22 +68,6 @@ public class Game extends JPanel implements Runnable {
         COMPLETED
     }
     
-    /**
-     * Specifies worker's look direction.
-     */
-    private enum WorkerDirection {
-
-        /**
-         * Worker looks to the left.
-         */
-        LEFT,
-        
-        /**
-         * Worker looks to the right.
-         */
-        RIGHT
-    }
-    
     private Configuration gameConfiguration = null;
     
     /**
@@ -131,11 +116,6 @@ public class Game extends JPanel implements Runnable {
     private Thread gameLoopThread = null;
     
     /**
-     * Stores worker's current glance direction.
-     */
-    private WorkerDirection workerDirection = WorkerDirection.LEFT;
-    
-    /**
      * Stores worker's desired horizontal shift forced by user.
      * 
      * Can be equal to -1, 0, 1.
@@ -163,8 +143,8 @@ public class Game extends JPanel implements Runnable {
      * Worker's animation phase's index.
      * 
      * This index must no less than 0 and less than
-     * {@link GameGraphics#getActionSpritesCount()} of {@link #gameGraphics}.
-     * Animation phase with index 0 corresponds to idle worker
+     * {@link GameGraphics#getActionSpritesCount(org.ezze.games.storekeeper.Level.WorkerDirection)}
+     * of {@link #gameGraphics}. Animation phase with index 0 corresponds to idle worker
      * while another ones represent worker's motion.
      */
     private int workerAnimPhase = 0;
@@ -496,7 +476,6 @@ public class Game extends JPanel implements Runnable {
             return false;
         }
         
-        workerDirection = WorkerDirection.LEFT;
         workerDeltaX = 0;
         workerDeltaY = 0;
         isWorkerIdle = true;
@@ -733,7 +712,6 @@ public class Game extends JPanel implements Runnable {
      */
     public void forceWorkerToMoveLeft() {
         
-        workerDirection = WorkerDirection.LEFT;
         workerDeltaX = -1;
         workerDeltaY = 0;
     }
@@ -753,7 +731,6 @@ public class Game extends JPanel implements Runnable {
      */
     public void forceWorkerToMoveRight() {
         
-        workerDirection = WorkerDirection.RIGHT;
         workerDeltaX = 1;
         workerDeltaY = 0;
     }
@@ -927,24 +904,19 @@ public class Game extends JPanel implements Runnable {
 
                 // Idle worker
                 Point workerLocation = gameLevel.getWorkerLocation();
-                Image workerSprite = null;
-                if (workerDirection == WorkerDirection.LEFT)
-                    workerSprite = gameGraphics.getLeftActionSprite(0);
-                else if (workerDirection == WorkerDirection.RIGHT)
-                    workerSprite = gameGraphics.getRightActionSprite(0);
+                Image workerSprite = gameGraphics.getActionSprite(gameLevel.getWorkerDirection(), 0);
                 if (workerSprite != null) {
-
-                    g2d.drawImage(workerSprite, workerLocation.x * spriteDimension.width, workerLocation.y * spriteDimension.height, this);
+                    
+                    g2d.drawImage(workerSprite, workerLocation.x * spriteDimension.width,
+                            workerLocation.y * spriteDimension.height, this);
                 }
             }
             else {
 
                 // Moving worker
-                Image workerSprite = null;
-                if (workerDirection == WorkerDirection.LEFT) 
-                    workerSprite = gameGraphics.getLeftActionSprite(gameGraphics.getActionSpritesCount() > 1 ? workerAnimPhase : 0);
-                else if (workerDirection == WorkerDirection.RIGHT)
-                    workerSprite = gameGraphics.getRightActionSprite(gameGraphics.getActionSpritesCount() > 1 ? workerAnimPhase : 0);
+                WorkerDirection workerDirection = gameLevel.getWorkerDirection();
+                Image workerSprite = gameGraphics.getActionSprite(workerDirection,
+                        gameGraphics.getActionSpritesCount(workerDirection) > 1 ? workerAnimPhase : 0);
                 if (workerSprite != null) {
 
                     g2d.drawImage(workerSprite, (int)(workerAnimCurrX * spriteDimension.width),
@@ -1166,7 +1138,7 @@ public class Game extends JPanel implements Runnable {
 
                 // Defining worker's new animation phase
                 workerAnimPhase++;
-                if (workerAnimPhase == gameGraphics.getActionSpritesCount())
+                if (workerAnimPhase >= gameGraphics.getActionSpritesCount(gameLevel.getWorkerDirection()))
                     workerAnimPhase = 1;
 
                 // Calculating worker's new animation position

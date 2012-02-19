@@ -11,6 +11,8 @@
     <property name="jar.dir" value="jar" />
     <property name="javadoc.dir" value="javadoc" />
     
+    <property file="${src.dir}/org/ezze/games/storekeeper/resources/storekeeper.properties" />
+    
     <path id="libpath">
         <fileset dir="${lib.dir}" includes="**/*.jar" />
     </path>
@@ -52,7 +54,7 @@
     <target name="run" depends="jar">
         <java jar="${jar.dir}/${ant.project.name}.jar" fork="true" />
     </target>
-    
+   
     <target name="debug" depends="compile">
         <nbjpdastart addressproperty="jpda.address" name="${ant.project.name}" transport="dt_socket">
             <classpath>
@@ -61,7 +63,6 @@
             </classpath>
         </nbjpdastart>
         <java fork="true" classname="${main-class}">
-            <sysproperty key="java.library.path" path="${dist.dir}" />
             <classpath>
                 <pathelement location="${classes.dir}" />
                 <path refid="libpath" />

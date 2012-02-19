@@ -18,7 +18,7 @@ import org.ezze.games.storekeeper.Level.MoveInformation;
 import org.ezze.games.storekeeper.Level.MoveType;
 import org.ezze.games.storekeeper.Level.WorkerDirection;
 import org.ezze.games.storekeeper.LevelsSet.LoadState;
-import org.ezze.utils.io.XMLParser;
+import org.ezze.utils.io.XMLHelper;
 import org.w3c.dom.Document;
 
 /**
@@ -26,7 +26,7 @@ import org.w3c.dom.Document;
  * animation and user actions' handling.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.5
+ * @version 0.0.6
  */
 public class Game extends JPanel implements Runnable {
     
@@ -382,7 +382,7 @@ public class Game extends JPanel implements Runnable {
         if (levelsSetInputStream == null)
             return LoadState.ERROR;
         
-        Document xmlLevelsSetDocument = XMLParser.readXMLDocument(levelsSetInputStream);
+        Document xmlLevelsSetDocument = XMLHelper.readXMLDocument(levelsSetInputStream);
         LevelsSet loadedLevelsSet = new LevelsSet(gameConfiguration);
         LoadState loadState = loadedLevelsSet.loadFromDOM(xmlLevelsSetDocument);
         if (loadState != LoadState.ERROR) {

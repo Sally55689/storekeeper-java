@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.ezze.games.storekeeper.Level.LevelState;
-import org.ezze.utils.io.XMLParser;
+import org.ezze.utils.io.XMLHelper;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -15,7 +15,7 @@ import org.w3c.dom.Element;
  * Look at {@link LevelState} for possible level's states.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.2
+ * @version 0.0.3
  */
 public class LevelsSet {
     
@@ -149,7 +149,7 @@ public class LevelsSet {
         // TODO: analyze source type here in the future
         
         // XML source
-        Document xmlLevelsSetDocument = XMLParser.readXMLDocument(source);
+        Document xmlLevelsSetDocument = XMLHelper.readXMLDocument(source);
         loadState = loadFromDOM(xmlLevelsSetDocument);
         return loadState;
     }
@@ -166,7 +166,7 @@ public class LevelsSet {
     public LoadState loadFromDOM(Document xmlLevelsSetDocument) {
         
         // Retrieving levels set XML file's root element
-        Element xmlLevelsSetElement = XMLParser.getDocumentElement(xmlLevelsSetDocument);
+        Element xmlLevelsSetElement = XMLHelper.getDocumentElement(xmlLevelsSetDocument);
         if (xmlLevelsSetElement == null) {
        
             loadState = LoadState.ERROR;
@@ -174,7 +174,7 @@ public class LevelsSet {
         }
         
         // Retrieving levels count from XML
-        int levelsCount = XMLParser.getChildrenCount(xmlLevelsSetElement, "level");
+        int levelsCount = XMLHelper.getChildrenCount(xmlLevelsSetElement, "level");
         if (levelsCount == 0) {
             
             loadState = LoadState.ERROR;
@@ -182,7 +182,7 @@ public class LevelsSet {
         }
         
         // Retrieving set's name
-        setName(XMLParser.getElementText(XMLParser.getChildElement(xmlLevelsSetElement, "name"), null));
+        setName(XMLHelper.getElementText(XMLHelper.getChildElement(xmlLevelsSetElement, "name"), null));
         
         // Determining level's maximal width and height
         int maximalLevelWidth = (Integer)configuration.getOption(Configuration.OPTION_LEVEL_WIDTH,
@@ -194,18 +194,18 @@ public class LevelsSet {
         while (levelIndex < levelsCount) {
             
             // Retrieving XML element of the current level
-            Element xmlLevelElement = XMLParser.getChildElement(xmlLevelsSetElement, "level", levelIndex);
+            Element xmlLevelElement = XMLHelper.getChildElement(xmlLevelsSetElement, "level", levelIndex);
             
-            String levelName = XMLParser.getElementText(XMLParser.getChildElement(xmlLevelElement, "name"), "");
-            int levelLinesCount = XMLParser.getChildrenCount(xmlLevelElement, "l");
+            String levelName = XMLHelper.getElementText(XMLHelper.getChildElement(xmlLevelElement, "name"), "");
+            int levelLinesCount = XMLHelper.getChildrenCount(xmlLevelElement, "l");
             if (levelLinesCount > 0) {
 
                 ArrayList<String> levelLines = new ArrayList<String>();
                 int levelLineIndex = 0;
                 while (levelLineIndex < levelLinesCount) {
 
-                    Element xmlLevelLineElement = XMLParser.getChildElement(xmlLevelElement, "l", levelLineIndex);
-                    String levelLine = XMLParser.getElementText(xmlLevelLineElement);
+                    Element xmlLevelLineElement = XMLHelper.getChildElement(xmlLevelElement, "l", levelLineIndex);
+                    String levelLine = XMLHelper.getElementText(xmlLevelLineElement);
                     levelLines.add(levelLine);
                     levelLineIndex++;
                 }

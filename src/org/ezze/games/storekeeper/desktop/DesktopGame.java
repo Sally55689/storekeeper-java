@@ -56,11 +56,6 @@ public class DesktopGame extends JFrame {
     }
     
     /**
-     * Self-referencing.
-     */
-    private DesktopGame desktopGame = this;
-    
-    /**
      * Game instance.
      */
     private Game game = null;
@@ -124,6 +119,11 @@ public class DesktopGame extends JFrame {
      * Action menu item to take game level's position back by one move.
      */
     private JMenuItem menuItemTakeBack = null;
+    
+    /**
+     * Action menu item to show moves history dialog.
+     */
+    private JMenuItem menuItemMovesHistory = null;
     
     /**
      * Tools menu instance.
@@ -520,6 +520,20 @@ public class DesktopGame extends JFrame {
         });
         menuItemTakeBack.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK));
         menuAction.add(menuItemTakeBack);
+        
+        menuItemMovesHistory = new JMenuItem("Moves History...");
+        menuItemMovesHistory.addActionListener(new ActionListener() {
+           
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+                DesktopMovesHistoryDialog desktopMovesHistoryDialog =
+                        new DesktopMovesHistoryDialog(DesktopGame.this, DesktopGame.this);
+                desktopMovesHistoryDialog.setVisible(true);
+            }
+        });
+        menuItemMovesHistory.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, KeyEvent.CTRL_MASK));
+        menuAction.add(menuItemMovesHistory);
  
         menuBar.add(menuAction);
         
@@ -532,7 +546,7 @@ public class DesktopGame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 
-                DesktopOptionsDialog desktopOptionsDialog = new DesktopOptionsDialog(desktopGame, desktopGame);
+                DesktopOptionsDialog desktopOptionsDialog = new DesktopOptionsDialog(DesktopGame.this, DesktopGame.this);
                 desktopOptionsDialog.setVisible(true);
                 if (desktopOptionsDialog.isGameWindowRebuildRequired())
                     rebuildGameWindow();
@@ -680,7 +694,7 @@ public class DesktopGame extends JFrame {
             else if (spriteSizeOption.equals(Configuration.OPTION_SPRITE_SIZE_MEDIUM))
                 spriteSize = SpriteSize.MEDIUM;
             else
-                spriteSize = SpriteSize.SMALL;
+                spriteSize = SpriteSize.SMALL;  
             
             // Checking whether determined size is no more than optimal one
             SpriteSize[] spriteSizeValues = SpriteSize.values();
@@ -802,8 +816,8 @@ public class DesktopGame extends JFrame {
         
         boolean isGameStopped = game.getGameState() == Game.GameState.INTRODUCTION || game.getGameState() == Game.GameState.STOP;
         boolean isLevelsSetLoaded = game.isLevelsSetLoaded();
-        Level currentGameLevel = game.getLevelsSet().getCurrentLevel();
-        int playableLevelsCount = game.getLevelsSet().getPlayableLevelsCount();
+        Level currentGameLevel = isLevelsSetLoaded ? game.getLevelsSet().getCurrentLevel() : null;
+        int playableLevelsCount = isLevelsSetLoaded ? game.getLevelsSet().getPlayableLevelsCount() : 0;
         
         menuItemStartTheGame.setEnabled(isGameStopped && isLevelsSetLoaded && playableLevelsCount > 0);
         menuItemStopTheGame.setEnabled(!isGameStopped && isLevelsSetLoaded && playableLevelsCount > 0);
@@ -816,6 +830,7 @@ public class DesktopGame extends JFrame {
                 !isGameStopped && currentGameLevel.getMovesHistoryCount() - currentGameLevel.getMovesCount() > 0 : false);
         menuItemTakeBack.setEnabled(currentGameLevel != null ?
                 !isGameStopped && currentGameLevel.getMovesCount() > 0 : false);
+        menuItemMovesHistory.setEnabled(currentGameLevel != null && currentGameLevel.getMovesCount() > 0);
     }
     
     /**

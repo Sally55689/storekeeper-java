@@ -1,8 +1,8 @@
 package org.ezze.games.storekeeper.desktop;
 
-import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -14,7 +14,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -31,76 +30,76 @@ import org.ezze.games.storekeeper.Configuration;
  * Options dialog for desktop game.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class DesktopOptionsDialog extends JDialog {
     
-    private final static int DIALOG_WIDTH = 400;
+    protected final static int DIALOG_WIDTH = 400;
     
-    private final static int PADDING_HORIZONTAL = 10;
-    private final static int PADDING_VERTICAL = 10;
+    protected final static int PADDING_HORIZONTAL = 10;
+    protected final static int PADDING_VERTICAL = 10;
     
-    private final static int GROUP_GAP = 8;
+    protected final static int GROUP_GAP = 8;
     
-    private final static int OPTION_PADDING_HORIZONTAL = 8;
-    private final static int OPTION_PADDING_VERTICAL = 8;
-    private final static int OPTION_GAP = 10;
+    protected final static int OPTION_PADDING_HORIZONTAL = 8;
+    protected final static int OPTION_PADDING_VERTICAL = 8;
+    protected final static int OPTION_GAP = 10;
     
-    private final static int LABEL_WIDTH = 120;
+    protected final static int LABEL_WIDTH = 120;
  
-    private final static int BUTTON_WIDTH = 80;
-    private final static int BUTTON_GAP = 4;
+    protected final static int BUTTON_WIDTH = 80;
+    protected final static int BUTTON_GAP = 4;
     
-    private final static String OPTION_VALUE_TEXT_OPTIMAL = "Optimal";
-    private final static String OPTION_VALUE_TEXT_LARGE = "Large";
-    private final static String OPTION_VALUE_TEXT_MEDIUM = "Medium";
-    private final static String OPTION_VALUE_TEXT_SMALL = "Small";
+    protected final static String OPTION_VALUE_TEXT_OPTIMAL = "Optimal";
+    protected final static String OPTION_VALUE_TEXT_LARGE = "Large";
+    protected final static String OPTION_VALUE_TEXT_MEDIUM = "Medium";
+    protected final static String OPTION_VALUE_TEXT_SMALL = "Small";
     
     /**
      * A reference to desktop game's instance.
      */
-    private DesktopGame desktopGame = null;
+    protected DesktopGame desktopGame = null;
     
     /**
      * Slider to manipulate the game speed.
      */
-    private JSlider gameCycleTimeSlider = null;
+    protected JSlider gameCycleTimeSlider = null;
     
     /**
      * Text field to edit level's maximal width.
      */
-    private JTextField levelWidthTextField = null;
+    protected JTextField levelWidthTextField = null;
     
     /**
      * Text field to edit level's maximal height.
      */
-    private JTextField levelHeightTextField = null;
+    protected JTextField levelHeightTextField = null;
     
     /**
      * Combobox to select sprite's size.
      */
-    private JComboBox spriteSizeComboBox = null;
+    protected JComboBox spriteSizeComboBox = null;
     
     /**
      * Shows whether game window's rebuild is required after
      * options' changes have been applied.
      */
-    private boolean isGameWindowRebuildRequired = false;
+    protected boolean isGameWindowRebuildRequired = false;
     
     /**
      * Combobox' option class used to associate its value with a key.
      */
-    private class ComboBoxOption {
+    protected class ComboBoxOption {
         
         /**
          * Option's key.
          */
-        private String optionKey = null;
+        protected String optionKey = null;
         
         /**
          * Option's value.
          */
-        private Object optionValue = null;
+        protected Object optionValue = null;
         
         /**
          * Option's constructor.
@@ -153,7 +152,7 @@ public class DesktopOptionsDialog extends JDialog {
      * @param parentFrame
      *      A reference to desktop game's main window.
      */
-    public DesktopOptionsDialog(DesktopGame desktopGame, JFrame parentFrame) {
+    public DesktopOptionsDialog(DesktopGame desktopGame, Frame parentFrame) {
         
         // Creating modal dialog
         super(parentFrame, true);
@@ -189,7 +188,6 @@ public class DesktopOptionsDialog extends JDialog {
         
         // Defining baselines for different components
         JLabel baselineLabel = new JLabel(" ");
-        JSlider baselineSlider = new JSlider();
         JTextField baselineTextField = new JTextField(" ");
         JComboBox baselineComboBox = new JComboBox();
         int labelBaseline = baselineLabel.getBaseline(0, baselineLabel.getPreferredSize().height);
@@ -416,7 +414,7 @@ public class DesktopOptionsDialog extends JDialog {
      *      {@code true} if changes have been successfully applied, {@code false} otherwise.
      * @see #isGameWindowRebuildRequired()
      */
-    private boolean applyChanges() {
+    protected boolean applyChanges() {
 
         // Retrieving current configuration
         Configuration gameConfiguration = desktopGame.getGameInstance().getGameConfiguration();
@@ -528,7 +526,7 @@ public class DesktopOptionsDialog extends JDialog {
         return true;
     }
     
-    private void closeDialog() {
+    protected void closeDialog() {
         
         WindowListener[] windowListeners = getWindowListeners();
         if (windowListeners.length > 0) {
@@ -538,7 +536,7 @@ public class DesktopOptionsDialog extends JDialog {
         }
     }
     
-    private void onCloseDialog() {
+    protected void onCloseDialog() {
         
         dispose();
     }

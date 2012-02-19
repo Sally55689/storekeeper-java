@@ -25,7 +25,7 @@ import javax.swing.Spring;
 import javax.swing.SpringLayout;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.ezze.games.storekeeper.Game;
 import org.ezze.games.storekeeper.Configuration;
 import org.ezze.games.storekeeper.Game.GameState;
@@ -35,6 +35,7 @@ import org.ezze.games.storekeeper.Level;
 import org.ezze.games.storekeeper.Level.LevelState;
 import org.ezze.games.storekeeper.LevelCompletionListener;
 import org.ezze.games.storekeeper.LevelsSet.LoadState;
+import org.ezze.utils.io.CompoundFileFilter;
 import org.ezze.utils.ui.FileBrowser;
 import org.ezze.utils.ui.aboutbox.AboutBox;
 import org.ezze.utils.ui.aboutbox.AboutBoxInformation;
@@ -43,7 +44,7 @@ import org.ezze.utils.ui.aboutbox.AboutBoxInformation;
  * Desktop version of the game.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.4
+ * @version 0.0.5
  */
 public class DesktopGame extends JFrame {
     
@@ -332,21 +333,13 @@ public class DesktopGame extends JFrame {
                 if (game != null) {
                     
                     // Browsing for a levels' set files
+                    CompoundFileFilter levelsSetsFilter = new CompoundFileFilter();
+                    levelsSetsFilter.add(new FileNameExtensionFilter("Storekeeper levels sets (*.xml)", "xml"));
+                    levelsSetsFilter.add(new FileNameExtensionFilter("Sokoban levels files (*.sok)", "sok"));
+                    levelsSetsFilter.add(new FileNameExtensionFilter("All supported levels files (*.xml, *.sok)", "xml", "sok"));
+                    levelsSetsFilter.setDefaultFileFilterIndex(levelsSetsFilter.getFileFilters().size() - 1);
                     File selectedFile = FileBrowser.browseFile(ApplicationPath.getApplicationPath(DesktopGame.class),
-                            "Please, select levels set file...", new FileFilter() {
-
-                        @Override
-                        public boolean accept(File file) {
-                            
-                            return file.isDirectory() || (file.isFile() && file.getName().toLowerCase().endsWith(".xml"));
-                        }
-
-                        @Override
-                        public String getDescription() {
-                            
-                            return "Levels set files (*.xml)";
-                        }
-                    });
+                            "Please, select levels set file...", levelsSetsFilter);
                     
                     // Checking whether levels' set file has been selected
                     if (selectedFile == null)

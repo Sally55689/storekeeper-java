@@ -146,11 +146,21 @@ public class LevelsSet {
             return loadState;
         }
         
-        // TODO: analyze source type here in the future
+        // Analyzing source's extension
+        if (levelsSetFile.getAbsolutePath().endsWith(".xml")) {
+            
+            // XML source
+            Document xmlLevelsSetDocument = XMLHelper.readXMLDocument(source);
+            loadState = loadFromDOM(xmlLevelsSetDocument);
+            return loadState;
+        }
+        else if (levelsSetFile.getAbsolutePath().endsWith(".sok")) {
+            
+            // SOK source
+            // TODO:
+        }
         
-        // XML source
-        Document xmlLevelsSetDocument = XMLHelper.readXMLDocument(source);
-        loadState = loadFromDOM(xmlLevelsSetDocument);
+        loadState = LoadState.ERROR;
         return loadState;
     }
     

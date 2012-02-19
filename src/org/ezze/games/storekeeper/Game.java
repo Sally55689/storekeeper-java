@@ -384,7 +384,16 @@ public class Game extends JPanel implements Runnable {
         
         Document xmlLevelsSetDocument = XMLHelper.readXMLDocument(levelsSetInputStream);
         LevelsSet loadedLevelsSet = new LevelsSet(gameConfiguration);
-        LoadState loadState = loadedLevelsSet.loadFromDOM(xmlLevelsSetDocument);
+        loadedLevelsSet.loadFromDOM(xmlLevelsSetDocument);
+        
+        LoadState loadState = LoadState.ERROR;
+        int playableLevelsCount = loadedLevelsSet.getPlayableLevelsCount();
+        int levelsCount = loadedLevelsSet.getLevelsCount();
+        if (playableLevelsCount == levelsCount)
+            loadState = LoadState.SUCCESS;
+        else if (playableLevelsCount > 0 && playableLevelsCount < levelsCount)
+            loadState = LoadState.WARNING;
+        
         if (loadState != LoadState.ERROR) {
          
             // Stopping the game if it's running
@@ -855,8 +864,8 @@ public class Game extends JPanel implements Runnable {
         else if ((gameState == GameState.PLAY || gameState == GameState.COMPLETED) && gameLevel != null) {
             
             // Retrieving level's maximal size
-            int maximalLevelWidth = gameLevel.getMaximalLevelWidth();
-            int maximalLevelHeight = gameLevel.getMaximalLevelHeight();
+            int maximalLevelWidth = gameLevel.getMaximalWidth();
+            int maximalLevelHeight = gameLevel.getMaximalHeight();
             
             // Retrieving sprites' dimension
             Dimension spriteDimension = gameGraphics.getSpriteDimension();
@@ -869,9 +878,9 @@ public class Game extends JPanel implements Runnable {
                     Character levelItem = gameLevel.getItemAt(lineIndex, columnIndex);
                     Image levelItemSprite = null;
 
-                    if (levelItem.equals(Level.LEVEL_ITEM_CELL)) {
+                    if (levelItem.equals(Level.LEVEL_ITEM_GOAL)) {
 
-                        levelItemSprite = gameGraphics.getCellSprite();
+                        levelItemSprite = gameGraphics.getGoalSprite();
                     }
                     else if (levelItem.equals(Level.LEVEL_ITEM_BOX)) {
 
@@ -880,12 +889,12 @@ public class Game extends JPanel implements Runnable {
                         else
                             levelItemSprite = gameGraphics.getBoxSprite();
                     }
-                    else if (levelItem.equals(Level.LEVEL_ITEM_BOX_IN_CELL)) {
+                    else if (levelItem.equals(Level.LEVEL_ITEM_BOX_ON_GOAL)) {
 
                         if (!isWorkerIdle && boxAnimDestX == columnIndex && boxAnimDestY == lineIndex)
-                            levelItemSprite = gameGraphics.getCellSprite();
+                            levelItemSprite = gameGraphics.getGoalSprite();
                         else
-                            levelItemSprite = gameGraphics.getBoxInCellSprite();
+                            levelItemSprite = gameGraphics.getBoxOnGoalSprite();
                     }
                     else if(levelItem.equals(Level.LEVEL_ITEM_BRICK)) {
 
@@ -939,7 +948,7 @@ public class Game extends JPanel implements Runnable {
             int infoLineHorizontalOffset = fontMetrics.stringWidth(" ");
             int topInfoLineOffset = gameGraphics.getSpriteDimension().height -
                     (gameGraphics.getSpriteDimension().height - gameFont.getSize()) / 2;
-            int bottomInfoLineOffset = gameGraphics.getSpriteDimension().height * (gameLevel.getMaximalLevelHeight() - 1)
+            int bottomInfoLineOffset = gameGraphics.getSpriteDimension().height * (gameLevel.getMaximalHeight() - 1)
                     + topInfoLineOffset - 2;
             
             // Printing level information
@@ -966,7 +975,7 @@ public class Game extends JPanel implements Runnable {
             if ((gameState == GameState.PLAY || gameState == GameState.COMPLETED) && gameLevel != null) {
                 
                 // Retrieving level's maximal width
-                int maximalLevelWidth = gameLevel.getMaximalLevelWidth();
+                int maximalLevelWidth = gameLevel.getMaximalWidth();
                 
                 // Printing worker's moves count and pushes count
                 String movesCountTitle = "Moves:";

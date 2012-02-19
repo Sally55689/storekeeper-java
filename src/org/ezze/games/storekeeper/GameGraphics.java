@@ -57,9 +57,9 @@ abstract public class GameGraphics {
     public final static String SPRITE_ID_BRICK = "brick";
     
     /**
-     * String identifier for cell sprite.
+     * String identifier for goal sprite.
      */
-    public final static String SPRITE_ID_CELL = "cell";
+    public final static String SPRITE_ID_GOAL = "goal";
     
     /**
      * String identifier for box sprite.
@@ -67,9 +67,9 @@ abstract public class GameGraphics {
     public final static String SPRITE_ID_BOX = "box";
     
     /**
-     * String identifier for box in cell sprite.
+     * String identifier for box on goal sprite.
      */
-    public final static String SPRITE_ID_BOX_IN_CELL = "box_in_cell";
+    public final static String SPRITE_ID_BOX_ON_GOAL = "box_on_goal";
 
     /**
      * Sprite size enumeration.
@@ -271,9 +271,9 @@ abstract public class GameGraphics {
      *      <li>{@link #SPRITE_ID_WORKER_UP} for up-oriented worker sprite;</li>
      *      <li>{@link #SPRITE_ID_WORKER_DOWN} for down-oriented worker sprite;</li> 
      *      <li>{@link #SPRITE_ID_BRICK} for brick sprite;</li>
-     *      <li>{@link #SPRITE_ID_CELL} for cell sprite;</li>
+     *      <li>{@link #SPRITE_ID_GOAL} for goal sprite;</li>
      *      <li>{@link #SPRITE_ID_BOX} for box sprite;</li>
-     *      <li>{@link #SPRITE_ID_BOX_IN_CELL} for box in cell sprite;</li>
+     *      <li>{@link #SPRITE_ID_BOX_ON_GOAL} for box on goal sprite;</li>
      *      <li>{@link #SPRITE_ID_EMPTY} for empty sprite.</li>
      *      </ul>
      * @param animationIndex
@@ -347,9 +347,9 @@ abstract public class GameGraphics {
      *      <li>{@link #SPRITE_ID_WORKER_LEFT} for left-oriented worker sprite;</li>
      *      <li>{@link #SPRITE_ID_WORKER_RIGHT} for right-oriented worker sprite;</li>
      *      <li>{@link #SPRITE_ID_BRICK} for brick sprite;</li>
-     *      <li>{@link #SPRITE_ID_CELL} for cell sprite;</li>
+     *      <li>{@link #SPRITE_ID_GOAL} for goal sprite;</li>
      *      <li>{@link #SPRITE_ID_BOX} for box sprite;</li>
-     *      <li>{@link #SPRITE_ID_BOX_IN_CELL} for box in cell sprite;</li>
+     *      <li>{@link #SPRITE_ID_BOX_ON_GOAL} for box on goal sprite;</li>
      *      <li>{@link #SPRITE_ID_EMPTY} for empty sprite.</li>
      *      </ul>
      * @param animationIndex
@@ -411,14 +411,14 @@ abstract public class GameGraphics {
     }
     
     /**
-     * Retrieves cell's sprite.
+     * Retrieves goal's sprite.
      * 
      * @return
-     *      Cell's sprite
+     *      Goal's sprite
      */
-    public Image getCellSprite() {
+    public Image getGoalSprite() {
         
-        return getSprite(spriteSize, SPRITE_ID_CELL);
+        return getSprite(spriteSize, SPRITE_ID_GOAL);
     }
     
     /**
@@ -433,13 +433,13 @@ abstract public class GameGraphics {
     }
     
     /**
-     * Retrieves sprite of a box in a cell.
+     * Retrieves sprite of a box on a goal.
      * 
      * @return 
-     *      Box in a cell sprite
+     *      Box on a goal sprite
      */
-    public Image getBoxInCellSprite() {
+    public Image getBoxOnGoalSprite() {
         
-        return getSprite(spriteSize, SPRITE_ID_BOX_IN_CELL);
+        return getSprite(spriteSize, SPRITE_ID_BOX_ON_GOAL);
     }
 }

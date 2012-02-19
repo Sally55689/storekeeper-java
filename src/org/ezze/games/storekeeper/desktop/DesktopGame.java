@@ -228,7 +228,7 @@ public class DesktopGame extends JFrame {
         
         // Reading game's configuration
         String configurationFileName = String.format("%s/storekeeperConfig.xml", ApplicationPath.getApplicationPath(DesktopGame.class));
-        Configuration gameConfiguration = new Configuration(configurationFileName);
+        final Configuration gameConfiguration = new Configuration(configurationFileName);
         
         // Creating game graphics' instance
         DesktopGameGraphics desktopGameGraphics = new DesktopGameGraphics();
@@ -355,18 +355,13 @@ public class DesktopGame extends JFrame {
                     
                     String levelsSetFileName = selectedFile.getAbsolutePath();
                     LoadState loadState = game.loadLevelsSet(levelsSetFileName);
-                    if (loadState == LoadState.ERROR) {
-                        
-                        JOptionPane.showMessageDialog(null, String.format("Unable to parse \"%s\" as levels set file.", levelsSetFileName),
-                                "Open Error", JOptionPane.ERROR_MESSAGE);
-                        updateMenuItems();
-                        return;
-                    }
-                    else if (loadState == LoadState.WARNING) {
-                        
-                        JOptionPane.showMessageDialog(null, String.format("At least one level of set \"%s\" cannot be initialized.", levelsSetFileName),
-                                "Open Warning", JOptionPane.WARNING_MESSAGE);
-                    }
+                    
+                    // Retrieving maximal width and height of a level
+                    int maximalLevelWidth = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_WIDTH,
+                            Configuration.DEFAULT_OPTION_LEVEL_WIDTH);
+                    int maximalLevelHeight = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
+                            Configuration.DEFAULT_OPTION_LEVEL_HEIGHT);
+                    showLoadLevelResultMessage(loadState, maximalLevelWidth, maximalLevelHeight);
                     
                     // Selecting first playable level
                     game.getLevelsSet().setCurrentLevelByFirstPlayable();

@@ -8,10 +8,10 @@ import java.util.HashMap;
  * This class stores an inner representation of storekeeper's level.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.4
+ * @version 0.0.6
  */
 public class Level {
-
+    
     /**
      * Default maximal count of level items per line.
      */
@@ -47,35 +47,49 @@ public class Level {
      */
     public static final Character LEVEL_ITEM_WORKER = '@';
     
+    public static final String LEVEL_ITEM_WORKER_REG = "@";
+    
     /**
-     * Character used to represent staying in cell worker's item.
+     * Character used to represent staying on goal worker's item.
      */
-    public static final Character LEVEL_ITEM_WORKER_IN_CELL = '+';
+    public static final Character LEVEL_ITEM_WORKER_ON_GOAL = '+';
+    
+    public static final String LEVEL_ITEM_WORKER_ON_GOAL_REG = "\\+";
     
     /**
      * Character used to represent brick's item.
      */
     public static final Character LEVEL_ITEM_BRICK = '#';
     
+    public static final String LEVEL_ITEM_BRICK_REG = "#";
+    
     /**
-     * Character used to represent cell's item.
+     * Character used to represent goal's item.
      */
-    public static final Character LEVEL_ITEM_CELL = '.';
+    public static final Character LEVEL_ITEM_GOAL = '.';
+    
+    public static final String LEVEL_ITEM_GOAL_REG = "\\.";
     
     /**
      * Character used to represent box' item.
      */
     public static final Character LEVEL_ITEM_BOX = '$';
     
+    public static final String LEVEL_ITEM_BOX_REG = "\\$";
+    
     /**
-     * Character used to represent staying in cell box' item.
+     * Character used to represent staying on goal box' item.
      */
-    public static final Character LEVEL_ITEM_BOX_IN_CELL = '*';
+    public static final Character LEVEL_ITEM_BOX_ON_GOAL = '*';
+    
+    public static final String LEVEL_ITEM_BOX_ON_GOAL_REG = "\\*";
     
     /**
      * Character used to represent empty space's item.
      */
     public static final Character LEVEL_ITEM_SPACE = ' ';
+    
+    public static final String LEVEL_ITEM_SPACE_REG = " ";
     
     /**
      * List of allowed level items.
@@ -84,11 +98,11 @@ public class Level {
     static {
 
         allowedLevelItems.add(LEVEL_ITEM_WORKER);
-        allowedLevelItems.add(LEVEL_ITEM_WORKER_IN_CELL);
+        allowedLevelItems.add(LEVEL_ITEM_WORKER_ON_GOAL);
         allowedLevelItems.add(LEVEL_ITEM_BRICK);
-        allowedLevelItems.add(LEVEL_ITEM_CELL);
+        allowedLevelItems.add(LEVEL_ITEM_GOAL);
         allowedLevelItems.add(LEVEL_ITEM_BOX);
-        allowedLevelItems.add(LEVEL_ITEM_BOX_IN_CELL);
+        allowedLevelItems.add(LEVEL_ITEM_BOX_ON_GOAL);
         allowedLevelItems.add(LEVEL_ITEM_SPACE);
     }
     
@@ -106,8 +120,8 @@ public class Level {
         
         /**
          * Means that level is valid but cannot be played with specified
-         * maximal level's size (see {@link #getMaximalLevelWidth()}
-         * and {@link #getMaximalLevelHeight()}.
+         * maximal level's size (see {@link #getMaximalWidth()}
+         * and {@link #getMaximalHeight()}.
          */
         OUT_OF_BOUNDS,
         
@@ -188,12 +202,12 @@ public class Level {
         /**
          * Describes performed move's type.
          */
-        private MoveType moveType = MoveType.NOTHING;
+        protected MoveType moveType = MoveType.NOTHING;
         
         /**
          * Stores performed move's direction.
          */
-        private Direction moveDirection = Direction.NONE;
+        protected Direction moveDirection = Direction.NONE;
         
         /**
          * Creates information of an empty move meaning that the worker didn't move.
@@ -255,17 +269,17 @@ public class Level {
         /**
          * Describes worker's horizontal direction.
          */
-        private Direction horizontal = Direction.LEFT;
+        protected Direction horizontal = Direction.LEFT;
         
         /**
          * Describes worker's vertical direction.
          */
-        private Direction vertical = Direction.DOWN;
+        protected Direction vertical = Direction.DOWN;
         
         /**
          * Shows whether vertical direction represents a real direction.
          */
-        private boolean isVerticalReal = false;
+        protected boolean isVerticalReal = false;
         
         /**
          * Worker's direction default constructor with horizontal direction equal
@@ -363,83 +377,100 @@ public class Level {
         }
     }
     
+    public static class LevelSize {
+        
+        protected int width = 0;
+        protected int height = 0;
+        
+        public LevelSize(int width, int height) {
+            
+            this.width = width;
+            this.height = height;
+        }
+        
+        public int getWidth() {
+            
+            return width;
+        }
+        
+        public int getHeight() {
+            
+            return height;
+        }
+    }
+    
     /**
      * Shows whether the level is initialized.
      */
-    //private boolean isInitialized = false;
-    private LevelState levelState = LevelState.EMPTY;
+    //protected boolean isInitialized = false;
+    protected LevelState levelState = LevelState.EMPTY;
     
     /**
      * Stores level's initial state characters.
      */
-    private ArrayList<ArrayList<Character>> levelInitial = null;
+    protected ArrayList<ArrayList<Character>> levelInitial = null;
     
     /**
      * Stores level's current state with empty lines and columns appended
      * to make level's size equal to {@link #maximalLevelWidth} and
      * {@link #maximalLevelHeight}.
      */
-    private ArrayList<ArrayList<Character>> level = null;
+    protected ArrayList<ArrayList<Character>> level = null;
     
     /**
      * Keeps level's information.
      */
-    private HashMap<String, Object> levelInfo = null;
+    protected HashMap<String, Object> levelInfo = null;
     
     /**
-     * Restricts level's width (horizontal items' count).
+     * Restricts level's width (horizontal items' count) and height (vertical items' count).
      */
-    private int maximalLevelWidth = DEFAULT_LEVEL_WIDTH;
+    protected LevelSize maximalSize = new LevelSize(DEFAULT_LEVEL_WIDTH, DEFAULT_LEVEL_HEIGHT);
     
     /**
-     * Restricts level's height (vertical items' count).
+     * Keeps goals count of the level.
      */
-    private int maximalLevelHeight = DEFAULT_LEVEL_HEIGHT;
-    
-    /**
-     * Keeps cells count of the level.
-     */
-    private int cellsCount = 0;
+    protected int goalsCount = 0;
     
     /**
      * Keeps boxes count of the level.
      */
-    private int boxesCount = 0;
+    protected int boxesCount = 0;
     
     /**
-     * Traces boxes count placed in the cells.
+     * Traces boxes count placed on the goals.
      */
-    private int boxesInCellsCount = 0;
+    protected int boxesOnGoalsCount = 0;
     
     /**
-     * Keeps current worker position's horizontal index within the range [0; {@link #getMaximalLevelWidth()} - 1].
+     * Keeps current worker position's horizontal index within the range [0; {@link #getMaximalWidth()} - 1].
      */
-    private int workerX = 0;
+    protected int workerX = 0;
     
     /**
-     * Keeps current worker position's vertical index within the range [0; {@link #getMaximalLevelHeight()} - 1].
+     * Keeps current worker position's vertical index within the range [0; {@link #getMaximalHeight()} - 1].
      */
-    private int workerY = 0;
+    protected int workerY = 0;
     
     /**
      * Represents worker's actual compound look direction.
      */
-    private WorkerDirection workerDirection = new WorkerDirection();
+    protected WorkerDirection workerDirection = new WorkerDirection();
     
     /**
      * Traces worker's moves count.
      */
-    private int movesCount = 0;
+    protected int movesCount = 0;
     
     /**
      * Traces worker's pushes count.
      */
-    private int pushesCount = 0;
+    protected int pushesCount = 0;
     
     /**
      * Keeps an information about performed moves.
      */
-    private ArrayList<MoveInformation> movesHistory = new ArrayList<MoveInformation>();
+    protected ArrayList<MoveInformation> movesHistory = new ArrayList<MoveInformation>();
     
     /**
      * Level's default constructor.
@@ -452,7 +483,7 @@ public class Level {
      */
     public Level(ArrayList<String> levelLines, HashMap<String, Object> levelInfo) {
         
-        this(levelLines, levelInfo, DEFAULT_LEVEL_WIDTH, DEFAULT_LEVEL_HEIGHT);
+        this(levelLines, levelInfo, new LevelSize(DEFAULT_LEVEL_WIDTH, DEFAULT_LEVEL_HEIGHT));
     }
     
     /**
@@ -464,20 +495,18 @@ public class Level {
      *      Lines to initialize a level from.
      * @param levelInfo
      *      Level's information.
-     * @param maximalLevelWidth
-     *      Level's maximal width in items.
-     * @param maximalLevelHeight 
-     *      Level's maximal height in items.
+     * @param maximalSize
+     *      Level's maximal size.
      * @see #Level(java.util.ArrayList, java.util.HashMap)
      */
-    public Level(ArrayList<String> levelLines, HashMap<String, Object> levelInfo, int maximalLevelWidth, int maximalLevelHeight) {
+    public Level(ArrayList<String> levelLines, HashMap<String, Object> levelInfo, LevelSize maximalSize) {
         
         // Checking whether level lines are specified
         if (levelLines == null || levelLines.size() < 1)
             return;
         
         // Trying to set level's maximal size
-        if (!setMaximalLevelSize(maximalLevelWidth, maximalLevelHeight))
+        if (!setMaximalSize(maximalSize.getWidth(), maximalSize.getHeight()))
             return;
         
         levelInitial = new ArrayList<ArrayList<Character>>();
@@ -505,77 +534,26 @@ public class Level {
     }
     
     /**
-     * Sets level's maximal width in items.
-     * 
-     * Desired value must be no less than {@link #MINIMAL_LEVEL_WIDTH} and
-     * no more than {@link #MAXIMAL_LEVEL_WIDTH}.
-     * 
-     * @param maximalLevelWidth
-     *      Level's desired maximal width in items.
-     * @return 
-     *      {@code true} if desired value has been set, {@code false} otherwise.
-     * @see #setMaximalLevelHeight(int)
-     * @see #setMaximalLevelSize(int, int)
-     * @see #getMaximalLevelWidth()
-     */
-    synchronized public final boolean setMaximalLevelWidth(int maximalLevelWidth) {
-        
-        if (maximalLevelWidth < MINIMAL_LEVEL_WIDTH || maximalLevelWidth > MAXIMAL_LEVEL_WIDTH)
-            return false;
-        this.maximalLevelWidth = maximalLevelWidth;
-        return true;
-    }
-    
-    /**
-     * Sets level's maximal height in items.
-     * 
-     * Desired value must be no less than {@link #MINIMAL_LEVEL_HEIGHT} and
-     * no more than {@link #MAXIMAL_LEVEL_HEIGHT}.
-     * 
-     * @param maximalLevelHeight
-     *      Level's desired maximal height in items.
-     * @return 
-     *      {@code true} if desired value has been set, {@code false} otherwise.
-     * @see #setMaximalLevelWidth(int)
-     * @see #setMaximalLevelSize(int, int)
-     * @see #getMaximalLevelHeight()
-     */
-    synchronized public final boolean setMaximalLevelHeight(int maximalLevelHeight) {
-        
-        if (maximalLevelHeight < MINIMAL_LEVEL_HEIGHT || maximalLevelHeight > MAXIMAL_LEVEL_HEIGHT)
-            return false;
-        this.maximalLevelHeight = maximalLevelHeight;
-        return true;
-    }
-    
-    /**
      * Sets level's maximal size in items.
      * 
-     * @param maximalLevelWidth
+     * @param maximalWidth
      *      Level's desired maximal width in items.
-     * @param maximalLevelHeight
+     * @param maximalHeight
      *      Level's desired maximal height in items.
      * @return 
      *      {@code true} if desired width and height have been set, {@code false} otherwise.
-     * @see #setMaximalLevelWidth(int)
-     * @see #setMaximalLevelHeight(int)
-     * @see #getMaximalLevelWidth()
-     * @see #getMaximalLevelHeight()
+     * @see #getMaximalWidth()
+     * @see #getMaximalHeight()
      */
-    public final boolean setMaximalLevelSize(int maximalLevelWidth, int maximalLevelHeight) {
+    public final boolean setMaximalSize(int maximalWidth, int maximalHeight) {
         
-        int currentMaximalLevelWidth = this.maximalLevelWidth;
-        if (!setMaximalLevelWidth(maximalLevelWidth)) {
+        if (maximalWidth < MINIMAL_LEVEL_WIDTH || maximalWidth > MAXIMAL_LEVEL_WIDTH ||
+                maximalHeight < MINIMAL_LEVEL_HEIGHT || maximalHeight > MAXIMAL_LEVEL_HEIGHT) {
             
             return false;
         }
         
-        if (!setMaximalLevelHeight(maximalLevelHeight)) {
-        
-            this.maximalLevelWidth = currentMaximalLevelWidth;
-            return false;
-        }
-        
+        maximalSize = new LevelSize(maximalWidth, maximalHeight);
         return true;
     }
     
@@ -584,12 +562,11 @@ public class Level {
      * 
      * @return
      *      Level's maximal width in items.
-     * @see #setMaximalLevelWidth(int)
-     * @see #setMaximalLevelSize(int, int)
+     * @see #setMaximalSize(int, int) 
      */
-    public int getMaximalLevelWidth() {
+    public int getMaximalWidth() {
         
-        return maximalLevelWidth;
+        return maximalSize.getWidth();
     }
     
     /**
@@ -597,22 +574,21 @@ public class Level {
      * 
      * @return 
      *      Level's maximal height in items.
-     * @see #setMaximalLevelHeight(int)
-     * @see #setMaximalLevelSize(int, int)
+     * @see #setMaximalSize(int, int)
      */
-    public int getMaximalLevelHeight() {
+    public int getMaximalHeight() {
         
-        return maximalLevelHeight;
+        return maximalSize.getHeight();
     }
     
     /**
      * Completes level's initialization.
      * 
      * This method checks whether level's initial source {@link #levelInitial}
-     * is valid, consists of only one worker and equal count of cells and boxes.
+     * is valid, consists of only one worker and equal count of goals and boxes.
      * After that it adds additional empty horizontal and vertical lines to
-     * center the level in a box of ({@link #getMaximalLevelWidth()},
-     * {@link #getMaximalLevelHeight()}) size.
+     * center the level in a box of ({@link #getMaximalWidth()},
+     * {@link #getMaximalHeight()}) size.
      * 
      * @return
      *      {@code true} if level has been successfully initialized, {@code false otherwise}.
@@ -621,9 +597,9 @@ public class Level {
 
         levelState = LevelState.EMPTY;
         
-        cellsCount = 0;
+        goalsCount = 0;
         boxesCount = 0;
-        boxesInCellsCount = 0;
+        boxesOnGoalsCount = 0;
         int workersCount = 0;
         workerX = 0;
         workerY = 0;
@@ -634,7 +610,7 @@ public class Level {
         if (levelInitial == null || levelInitial.isEmpty())
             return false;
         
-        if (levelInitial.size() > maximalLevelHeight) {
+        if (levelInitial.size() > maximalSize.getHeight()) {
         
             levelState = LevelState.OUT_OF_BOUNDS;
             return false;
@@ -656,27 +632,26 @@ public class Level {
                     workerX = lineCharacterIndex;
                     workerY = lineIndex;
                 }
-                else if (lineCharacter.equals(LEVEL_ITEM_WORKER_IN_CELL)) {
+                else if (lineCharacter.equals(LEVEL_ITEM_WORKER_ON_GOAL)) {
 
                     workersCount++;
-                    cellsCount++;
+                    goalsCount++;
                     workerX = lineCharacterIndex;
                     workerY = lineIndex;
-                    levelInitial.get(lineIndex).set(lineCharacterIndex, LEVEL_ITEM_CELL);
                 }
-                else if (lineCharacter.equals(LEVEL_ITEM_CELL)) {
+                else if (lineCharacter.equals(LEVEL_ITEM_GOAL)) {
 
-                    cellsCount++;
+                    goalsCount++;
                 }
                 else if(lineCharacter.equals(LEVEL_ITEM_BOX)) {
 
                     boxesCount++;
                 }
-                else if (lineCharacter.equals(LEVEL_ITEM_BOX_IN_CELL)) {
+                else if (lineCharacter.equals(LEVEL_ITEM_BOX_ON_GOAL)) {
 
                     boxesCount++;
-                    cellsCount++;
-                    boxesInCellsCount++;
+                    goalsCount++;
+                    boxesOnGoalsCount++;
                 }
             }
 
@@ -684,13 +659,13 @@ public class Level {
         }
 
         // Checking whether level parameters are valid
-        if (maxLineWidth > maximalLevelWidth) {
+        if (maxLineWidth > maximalSize.getWidth()) {
             
             levelState = LevelState.OUT_OF_BOUNDS;
             return false;
         }
         
-        if (boxesCount != cellsCount || workersCount != 1) {
+        if (boxesCount != goalsCount || workersCount != 1) {
          
             levelState = LevelState.CORRUPTED;
             return false;
@@ -701,14 +676,19 @@ public class Level {
         for (ArrayList<Character> levelInitialRow : levelInitial) {
             
             ArrayList<Character> levelRow = new ArrayList<Character>();
-            for (Character levelInitialRowCharacter : levelInitialRow)
-                levelRow.add(new Character(levelInitialRowCharacter));
+            for (Character levelInitialRowCharacter : levelInitialRow) {
+         
+                if (levelInitialRowCharacter.equals(LEVEL_ITEM_WORKER_ON_GOAL))
+                    levelRow.add(new Character(LEVEL_ITEM_GOAL));
+                else
+                    levelRow.add(new Character(levelInitialRowCharacter));
+            }
             level.add(levelRow);
-        }
+        }        
 
         // Level's vertical normalization
-        int leadingEmptyLinesCount = (int)(Math.floor((double)maximalLevelHeight - (double)level.size()) / 2);
-        int trailingEmptyLinesCount = maximalLevelHeight - level.size() - leadingEmptyLinesCount;
+        int leadingEmptyLinesCount = (int)(Math.floor((double)maximalSize.getHeight() - (double)level.size()) / 2);
+        int trailingEmptyLinesCount = maximalSize.getHeight() - level.size() - leadingEmptyLinesCount;
 
         // Shifting worker's vertical location
         workerY += leadingEmptyLinesCount;
@@ -718,7 +698,7 @@ public class Level {
         while (leadingEmptyLineIndex < leadingEmptyLinesCount) {
 
             ArrayList<Character> emptyLine = new ArrayList<Character>();
-            for (int emptyLineCharacterIndex = 0; emptyLineCharacterIndex < maximalLevelWidth; emptyLineCharacterIndex++)
+            for (int emptyLineCharacterIndex = 0; emptyLineCharacterIndex < maximalSize.getWidth(); emptyLineCharacterIndex++)
                 emptyLine.add(LEVEL_ITEM_SPACE);
             level.add(0, emptyLine);
             leadingEmptyLineIndex++;
@@ -729,20 +709,20 @@ public class Level {
         while (trailingEmptyLineIndex < trailingEmptyLinesCount) {
 
             ArrayList<Character> emptyLine = new ArrayList<Character>();
-            for (int emptyLineCharacterIndex = 0; emptyLineCharacterIndex < maximalLevelWidth; emptyLineCharacterIndex++)
+            for (int emptyLineCharacterIndex = 0; emptyLineCharacterIndex < maximalSize.getWidth(); emptyLineCharacterIndex++)
                 emptyLine.add(LEVEL_ITEM_SPACE);
             level.add(emptyLine);
             trailingEmptyLineIndex++;
         }
 
         // Level's horizontal normalization
-        int leadingEmptyCharactersCount = (int)(Math.floor((double)maximalLevelWidth - (double)maxLineWidth) / 2);
+        int leadingEmptyCharactersCount = (int)(Math.floor((double)maximalSize.getWidth() - (double)maxLineWidth) / 2);
 
         // Shifting worker's horizontal location
         workerX += leadingEmptyCharactersCount;
 
         lineIndex = leadingEmptyLinesCount;
-        while (lineIndex < maximalLevelHeight - trailingEmptyLinesCount) {
+        while (lineIndex < maximalSize.getHeight() - trailingEmptyLinesCount) {
 
             ArrayList<Character> line = level.get(lineIndex);
             int emptyCharacterIndex = 0;
@@ -752,7 +732,7 @@ public class Level {
                 emptyCharacterIndex++;
             }
 
-            while (line.size() < maximalLevelWidth)
+            while (line.size() < maximalSize.getWidth())
                 line.add(LEVEL_ITEM_SPACE);
 
             lineIndex++;
@@ -812,9 +792,9 @@ public class Level {
      * Look at {@link #allowedLevelItems} for possible character values.
      * 
      * @param line
-     *      Level's line index within the range [0; {@link #getMaximalLevelHeight()} - 1].
+     *      Level's line index within the range [0; {@link #getMaximalHeight()} - 1].
      * @param column
-     *      Level's column index within the range [0; {@link #getMaximalLevelWidth()} - 1].
+     *      Level's column index within the range [0; {@link #getMaximalWidth()} - 1].
      * @return 
      *      Character of the item.
      * @see #setItemAt(java.lang.Character, int, int)
@@ -843,9 +823,9 @@ public class Level {
      * @param levelItem
      *      Item character to set.
      * @param line
-     *      Level's line index within the range [0; {@link #getMaximalLevelHeight()} - 1].
+     *      Level's line index within the range [0; {@link #getMaximalHeight()} - 1].
      * @param column
-     *      Level's column index within the range [0; {@link #getMaximalLevelWidth()} - 1].
+     *      Level's column index within the range [0; {@link #getMaximalWidth()} - 1].
      * @return
      *      {@code true} if character has been set, {@code false} otherwise.
      * @see #getItemAt(int, int)
@@ -1046,8 +1026,8 @@ public class Level {
 
                     // Restoring previous item at box' current position
                     Character levelItem = getItemAt(boxY, boxX);
-                    if (levelItem.equals(LEVEL_ITEM_BOX_IN_CELL))
-                        setItemAt(LEVEL_ITEM_CELL, boxY, boxX);
+                    if (levelItem.equals(LEVEL_ITEM_BOX_ON_GOAL))
+                        setItemAt(LEVEL_ITEM_GOAL, boxY, boxX);
                     else if (levelItem.equals(LEVEL_ITEM_BOX))
                         setItemAt(LEVEL_ITEM_SPACE, boxY, boxX);
 
@@ -1057,8 +1037,8 @@ public class Level {
 
                     // Retrieving box' destination item
                     levelItem = getItemAt(boxY, boxX);
-                    if (levelItem.equals(LEVEL_ITEM_CELL))
-                        setItemAt(LEVEL_ITEM_BOX_IN_CELL, boxY, boxX);
+                    if (levelItem.equals(LEVEL_ITEM_GOAL))
+                        setItemAt(LEVEL_ITEM_BOX_ON_GOAL, boxY, boxX);
                     else if (levelItem.equals(LEVEL_ITEM_SPACE))
                         setItemAt(LEVEL_ITEM_BOX, boxY, boxX);
 
@@ -1169,7 +1149,7 @@ public class Level {
      */
     public boolean isCompleted() {
 
-        return boxesCount == boxesInCellsCount;
+        return boxesCount == boxesOnGoalsCount;
     }
     
     /**
@@ -1228,7 +1208,7 @@ public class Level {
             moveDirection = Direction.UP;
 
         // Checking whether worker's destination position is a box
-        if (workerDestinationLevelItem.equals(LEVEL_ITEM_BOX) || workerDestinationLevelItem.equals(LEVEL_ITEM_BOX_IN_CELL)) {
+        if (workerDestinationLevelItem.equals(LEVEL_ITEM_BOX) || workerDestinationLevelItem.equals(LEVEL_ITEM_BOX_ON_GOAL)) {
 
             // Looking for possibility to move the box
             int boxDestinationX = workerDestinationX + workerDeltaX;
@@ -1237,25 +1217,25 @@ public class Level {
             // Checking whether the box' destination position is not a wall or another box
             Character boxDestinationLevelItem = getItemAt(boxDestinationY, boxDestinationX);
             if (boxDestinationLevelItem.equals(LEVEL_ITEM_BRICK) || boxDestinationLevelItem.equals(LEVEL_ITEM_BOX)
-                    || boxDestinationLevelItem.equals(LEVEL_ITEM_BOX_IN_CELL))
+                    || boxDestinationLevelItem.equals(LEVEL_ITEM_BOX_ON_GOAL))
                 return new MoveInformation(MoveType.NOTHING, Direction.NONE);
 
             // Removing the box from old location
             if (workerDestinationLevelItem.equals(LEVEL_ITEM_BOX))
                 setItemAt(LEVEL_ITEM_SPACE, workerDestinationY, workerDestinationX);
-            else if (workerDestinationLevelItem.equals(LEVEL_ITEM_BOX_IN_CELL)) {
+            else if (workerDestinationLevelItem.equals(LEVEL_ITEM_BOX_ON_GOAL)) {
 
-                setItemAt(LEVEL_ITEM_CELL, workerDestinationY, workerDestinationX);
-                boxesInCellsCount--;
+                setItemAt(LEVEL_ITEM_GOAL, workerDestinationY, workerDestinationX);
+                boxesOnGoalsCount--;
             }
 
             // Placing the box in new location
             if (boxDestinationLevelItem.equals(LEVEL_ITEM_SPACE))
                 setItemAt(LEVEL_ITEM_BOX, boxDestinationY, boxDestinationX);
-            else if (boxDestinationLevelItem.equals(LEVEL_ITEM_CELL)) {
+            else if (boxDestinationLevelItem.equals(LEVEL_ITEM_GOAL)) {
 
-                setItemAt(LEVEL_ITEM_BOX_IN_CELL, boxDestinationY, boxDestinationX);
-                boxesInCellsCount++;
+                setItemAt(LEVEL_ITEM_BOX_ON_GOAL, boxDestinationY, boxDestinationX);
+                boxesOnGoalsCount++;
             }
 
             workerX = workerDestinationX;

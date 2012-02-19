@@ -1,8 +1,16 @@
 package org.ezze.games.storekeeper;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.ezze.games.storekeeper.Level.LevelSize;
 import org.ezze.games.storekeeper.Level.LevelState;
 import org.ezze.utils.io.XMLHelper;
 import org.w3c.dom.Document;
@@ -151,16 +159,23 @@ public class LevelsSet {
             
             // XML source
             Document xmlLevelsSetDocument = XMLHelper.readXMLDocument(source);
-            loadState = loadFromDOM(xmlLevelsSetDocument);
-            return loadState;
+            loadFromDOM(xmlLevelsSetDocument);
         }
         else if (levelsSetFile.getAbsolutePath().endsWith(".sok")) {
             
             // SOK source
-            // TODO:
+            loadFromSOKFile(source);
         }
         
+        // Checking whether at least one playable level has been successfully retrieved
         loadState = LoadState.ERROR;
+        int playableLevelsCount = getPlayableLevelsCount();
+        int levelsCount = getLevelsCount();
+        if (playableLevelsCount == levelsCount)
+            loadState = LoadState.SUCCESS;
+        else if (playableLevelsCount > 0 && playableLevelsCount < levelsCount)
+            loadState = LoadState.WARNING;
+        
         return loadState;
     }
     
@@ -169,36 +184,28 @@ public class LevelsSet {
      * 
      * @param xmlLevelsSetDocument
      *      Instance of XML document.
-     * @return 
-     *      Set's load result.
      * @see #load(java.lang.String)
      */
-    public LoadState loadFromDOM(Document xmlLevelsSetDocument) {
+    public void loadFromDOM(Document xmlLevelsSetDocument) {
         
         // Retrieving levels set XML file's root element
         Element xmlLevelsSetElement = XMLHelper.getDocumentElement(xmlLevelsSetDocument);
-        if (xmlLevelsSetElement == null) {
-       
-            loadState = LoadState.ERROR;
-            return loadState;
-        }
+        if (xmlLevelsSetElement == null)
+            return;
         
         // Retrieving levels count from XML
         int levelsCount = XMLHelper.getChildrenCount(xmlLevelsSetElement, "level");
-        if (levelsCount == 0) {
-            
-            loadState = LoadState.ERROR;
-            return loadState;
-        }
-        
-        // Retrieving set's name
-        setName(XMLHelper.getElementText(XMLHelper.getChildElement(xmlLevelsSetElement, "name"), null));
+        if (levelsCount == 0)
+            return;
         
         // Determining level's maximal width and height
         int maximalLevelWidth = (Integer)configuration.getOption(Configuration.OPTION_LEVEL_WIDTH,
                 Configuration.DEFAULT_OPTION_LEVEL_WIDTH);
         int maximalLevelHeight = (Integer)configuration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
                 Configuration.DEFAULT_OPTION_LEVEL_HEIGHT);
+        
+        // Retrieving set's name
+        setName(XMLHelper.getElementText(XMLHelper.getChildElement(xmlLevelsSetElement, "name"), null));               
         
         int levelIndex = 0;
         while (levelIndex < levelsCount) {
@@ -220,24 +227,102 @@ public class LevelsSet {
                     levelLineIndex++;
                 }
 
-                HashMap<String, Object> levelInfo = new HashMap<String, Object>();
-                levelInfo.put("name", levelName);
-                Level gameLevel = new Level(levelLines, levelInfo, maximalLevelWidth, maximalLevelHeight);
-                addLevel(gameLevel);
+                Level level = createLevelFromLines(levelLines, levelName,
+                        new LevelSize(maximalLevelWidth, maximalLevelHeight));
+                addLevel(level);
             }
             
             levelIndex++;
         }
+    }
+    
+    /**
+     * @param fileName
+     *      SOK-file's name.
+     */
+    public void loadFromSOKFile(String fileName) {
         
-        // Checking whether at least one playable level has been successfully retrieved
-        loadState = LoadState.SUCCESS;
-        int playableLevelsCount = getPlayableLevelsCount();
-        levelsCount = getLevelsCount();
-        if (playableLevelsCount < levelsCount)
-            loadState = LoadState.WARNING;
-        else if (playableLevelsCount == 0)
-            loadState = LoadState.ERROR;       
-        return loadState;
+        try {
+            
+            FileInputStream fileInputStream = new FileInputStream(fileName);
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileInputStream));
+            
+            // Determining level's maximal width and height
+            int maximalLevelWidth = (Integer)configuration.getOption(Configuration.OPTION_LEVEL_WIDTH,
+                    Configuration.DEFAULT_OPTION_LEVEL_WIDTH);
+            int maximalLevelHeight = (Integer)configuration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
+                    Configuration.DEFAULT_OPTION_LEVEL_HEIGHT);
+        
+            ArrayList<String> levelLines = null;
+            String lastNonLevelLine = null;
+            String fileLine = null;
+            Pattern levelLinePattern = Pattern.compile(String.format("^[%s%s%s%s%s%s%s]+$",
+                    Level.LEVEL_ITEM_WORKER_REG, Level.LEVEL_ITEM_WORKER_ON_GOAL_REG,
+                    Level.LEVEL_ITEM_BRICK_REG, Level.LEVEL_ITEM_GOAL_REG,
+                    Level.LEVEL_ITEM_BOX_REG, Level.LEVEL_ITEM_BOX_ON_GOAL_REG,
+                    Level.LEVEL_ITEM_SPACE_REG));
+            
+            while ((fileLine = bufferedReader.readLine()) != null) {
+                
+                // Trimming the line from the right
+                while (fileLine.endsWith(" "))
+                    fileLine = fileLine.substring(0, fileLine.length() -1);
+                               
+                // Checking whether the line describes level's row
+                Matcher levelLineMatcher = levelLinePattern.matcher(fileLine);
+                if (levelLineMatcher.matches()) {
+                    
+                    // We have level's row here
+                    if (levelLines == null)
+                        levelLines = new ArrayList<String>();
+                    levelLines.add(fileLine);
+                }
+                else {
+                    
+                    // We have non-level's line here
+                    if (levelLines != null) {
+                        
+                        // Creating new level from previously read level's rows
+                        Level level = createLevelFromLines(levelLines, lastNonLevelLine,
+                                new LevelSize(maximalLevelWidth, maximalLevelHeight));
+                        addLevel(level);
+                        levelLines = null;
+                    }
+                    
+                    // Remembering last non-level line - it's will be used as the name of next level
+                    if (!fileLine.isEmpty())
+                        lastNonLevelLine = fileLine;
+                }
+            }
+            
+            if (levelLines != null) {
+                
+                Level level = createLevelFromLines(levelLines, lastNonLevelLine,
+                        new LevelSize(maximalLevelWidth, maximalLevelHeight));
+                addLevel(level);
+                levelLines = null;
+            }
+            
+            bufferedReader.close();
+            fileInputStream.close();
+        }
+        catch (FileNotFoundException ex) {
+            
+        }
+        catch (IOException ex) {
+            
+        }
+    }
+    
+    protected static Level createLevelFromLines(ArrayList<String> levelLines, String levelName, LevelSize maximalLevelSize) {
+        
+        if (levelLines == null || levelLines.isEmpty())
+            return null;
+        
+        HashMap<String, Object> levelInfo = new HashMap<String, Object>();
+        if (levelName != null && !levelName.isEmpty())
+            levelInfo.put("name", levelName);
+        return new Level(levelLines, levelInfo, maximalLevelSize);
     }
     
     /**
@@ -278,7 +363,7 @@ public class LevelsSet {
             Level gameLevel = getLevelByIndex(gameLevelIndex);
             
             // Changing level's maximal size before reinitialization
-            gameLevel.setMaximalLevelSize(levelWidth, levelHeight);
+            gameLevel.setMaximalSize(levelWidth, levelHeight);
             
             // Attempting to reinitialize the level
             gameLevel.initialize();
@@ -599,4 +684,6 @@ public class LevelsSet {
         if (currentLevelIndex < 0)
             currentLevelIndex = 0;
     }
+    
+    
 }

@@ -81,12 +81,6 @@ public class DesktopOptionsDialog extends JDialog {
     protected JComboBox spriteSizeComboBox = null;
     
     /**
-     * Shows whether game window's rebuild is required after
-     * options' changes have been applied.
-     */
-    protected boolean isGameWindowRebuildRequired = false;
-    
-    /**
      * Combobox' option class used to associate its value with a key.
      */
     protected class ComboBoxOption {
@@ -243,7 +237,8 @@ public class DesktopOptionsDialog extends JDialog {
         contentPane.add(gameplayGroupPanel);
         contentLayout.putConstraint(SpringLayout.WEST, gameplayGroupPanel, PADDING_HORIZONTAL, SpringLayout.WEST, contentPane);
         contentLayout.putConstraint(SpringLayout.NORTH, gameplayGroupPanel, PADDING_VERTICAL, SpringLayout.NORTH, contentPane);
-        
+
+        /*
         // Creating interface group
         JPanel interfaceGroupPanel = new JPanel();
         SpringLayout interfaceGroupLayout = new SpringLayout();
@@ -336,6 +331,7 @@ public class DesktopOptionsDialog extends JDialog {
         contentLayout.putConstraint(SpringLayout.WEST, interfaceGroupPanel, 0, SpringLayout.WEST, gameplayGroupPanel);
         contentLayout.putConstraint(SpringLayout.NORTH, interfaceGroupPanel, GROUP_GAP, SpringLayout.SOUTH, gameplayGroupPanel);
         contentLayout.putConstraint(SpringLayout.EAST, interfaceGroupPanel, 0, SpringLayout.EAST, gameplayGroupPanel);
+         */
         
         // Creating buttons panel
         JPanel buttonsPanel = new JPanel();
@@ -375,9 +371,9 @@ public class DesktopOptionsDialog extends JDialog {
         
         // Adding buttons panel to content pane
         contentPane.add(buttonsPanel);
-        contentLayout.putConstraint(SpringLayout.WEST, buttonsPanel, 0, SpringLayout.WEST, interfaceGroupPanel);
-        contentLayout.putConstraint(SpringLayout.NORTH, buttonsPanel, GROUP_GAP, SpringLayout.SOUTH, interfaceGroupPanel);
-        contentLayout.putConstraint(SpringLayout.EAST, buttonsPanel, 0, SpringLayout.EAST, interfaceGroupPanel);
+        contentLayout.putConstraint(SpringLayout.WEST, buttonsPanel, 0, SpringLayout.WEST, gameplayGroupPanel);
+        contentLayout.putConstraint(SpringLayout.NORTH, buttonsPanel, GROUP_GAP, SpringLayout.SOUTH, gameplayGroupPanel);
+        contentLayout.putConstraint(SpringLayout.EAST, buttonsPanel, 0, SpringLayout.EAST, gameplayGroupPanel);
 
         // Adjusting dialog's size
         contentLayout.putConstraint(SpringLayout.EAST, contentPane, PADDING_HORIZONTAL, SpringLayout.EAST, buttonsPanel);
@@ -394,20 +390,6 @@ public class DesktopOptionsDialog extends JDialog {
     }
     
     /**
-     * Checks whether game window's rebuild is required after
-     * changes have been applied.
-     * 
-     * @return
-     *      {@code true} if game window's rebuild is required, {@code false} otherwise.
-     * @see #isGameWindowRebuildRequired
-     * @see #applyChanges()
-     */
-    public boolean isGameWindowRebuildRequired() {
-        
-        return isGameWindowRebuildRequired;
-    }
-    
-    /**
      * Applies changes made by user in the dialog.
      * 
      * @return
@@ -420,12 +402,6 @@ public class DesktopOptionsDialog extends JDialog {
         Configuration gameConfiguration = desktopGame.getGameInstance().getGameConfiguration();
         Integer currentGameCycleTime = (Integer)gameConfiguration.getOption(Configuration.OPTION_GAME_CYCLE_TIME,
                 Configuration.DEFAULT_OPTION_GAME_CYCLE_TIME);
-        Integer currentLevelWidth = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_WIDTH,
-                Configuration.DEFAULT_OPTION_LEVEL_WIDTH);
-        Integer currentLevelHeight = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
-                Configuration.DEFAULT_OPTION_LEVEL_HEIGHT);
-        String currentSpriteSize = (String)gameConfiguration.getOption(Configuration.OPTION_SPRITE_SIZE,
-                Configuration.DEFAULT_OPTION_SPRITE_SIZE);
         
         ArrayList<String> errors = new ArrayList<String>();
         
@@ -436,51 +412,6 @@ public class DesktopOptionsDialog extends JDialog {
                 gameCycleTime > Configuration.MAX_OPTION_GAME_CYCLE_TIME) {
             
             errors.add("Game speed is incorrect.");
-        }
-        
-        // Validating level width
-        Integer levelWidth = null;
-        try {
-            
-            levelWidth = Integer.parseInt(levelWidthTextField.getText());
-            if (levelWidth < Configuration.MIN_OPTION_LEVEL_WIDTH || levelWidth > Configuration.MAX_OPTION_LEVEL_WIDTH) {
-                
-                errors.add(String.format("Level width must be a decimal number no less than %d and no more than %d.",
-                        Configuration.MIN_OPTION_LEVEL_WIDTH, Configuration.MAX_OPTION_LEVEL_WIDTH));
-                levelWidth = null;
-            }
-        }
-        catch (NumberFormatException ex) {
-            
-            errors.add("Level width must be a decimal number.");
-        }
-        
-        // Validating level height
-        Integer levelHeight = null;
-        try {
-            
-            levelHeight = Integer.parseInt(levelHeightTextField.getText());
-            if (levelHeight < Configuration.MIN_OPTION_LEVEL_HEIGHT || levelHeight > Configuration.MAX_OPTION_LEVEL_HEIGHT) {
-                
-                errors.add(String.format("Level height must be a decimal number no less than %d and no more than %d.",
-                        Configuration.MIN_OPTION_LEVEL_HEIGHT, Configuration.MAX_OPTION_LEVEL_HEIGHT));
-                levelHeight = null;
-            }
-        }
-        catch (NumberFormatException ex) {
-            
-            errors.add("Level height must be a decimal number.");
-        }
-        
-        // Validating sprite size
-        String spriteSize = null;
-        try {
-            
-            spriteSize = ((ComboBoxOption)spriteSizeComboBox.getSelectedItem()).getKey();
-        }
-        catch (NullPointerException ex) {
-            
-            errors.add("Sprite size is not selected.");
         }
         
         if (!errors.isEmpty()) {
@@ -498,18 +429,12 @@ public class DesktopOptionsDialog extends JDialog {
         }
         
         // Checking whether changes have been made
-        boolean areChangesMade = !currentGameCycleTime.equals(gameCycleTime)
-                || !currentLevelWidth.equals(levelWidth)
-                || !currentLevelHeight.equals(levelHeight)
-                || !currentSpriteSize.equals(spriteSize);
+        boolean areChangesMade = !currentGameCycleTime.equals(gameCycleTime);
         
         if (areChangesMade) {
             
             // Applying the changes
             gameConfiguration.setOption(Configuration.OPTION_GAME_CYCLE_TIME, gameCycleTime);
-            gameConfiguration.setOption(Configuration.OPTION_LEVEL_WIDTH, levelWidth);
-            gameConfiguration.setOption(Configuration.OPTION_LEVEL_HEIGHT, levelHeight);
-            gameConfiguration.setOption(Configuration.OPTION_SPRITE_SIZE, spriteSize);
             
             // Trying to save the changes
             if (!gameConfiguration.save()) {
@@ -517,10 +442,6 @@ public class DesktopOptionsDialog extends JDialog {
                 JOptionPane.showMessageDialog(this,
                         "Unable to save the changes to configuration file.", "Warning", JOptionPane.WARNING_MESSAGE);
             }
-            
-            isGameWindowRebuildRequired = !currentLevelWidth.equals(levelWidth)
-                    || !currentLevelHeight.equals(levelHeight)
-                    || !currentSpriteSize.equals(spriteSize);
         }
 
         return true;

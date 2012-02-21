@@ -14,10 +14,10 @@ import java.awt.font.TextAttribute;
 import java.io.InputStream;
 import java.text.AttributedString;
 import javax.swing.JPanel;
+import org.ezze.games.storekeeper.Level.LevelSize;
 import org.ezze.games.storekeeper.Level.MoveInformation;
 import org.ezze.games.storekeeper.Level.MoveType;
 import org.ezze.games.storekeeper.Level.WorkerDirection;
-import org.ezze.games.storekeeper.LevelsSet.LoadState;
 import org.ezze.utils.io.XMLHelper;
 import org.w3c.dom.Document;
 
@@ -374,37 +374,16 @@ public class Game extends JPanel implements Runnable {
      * @return 
      *      Set's load result.
      */
-    public LoadState loadDefaultLevelsSet() {
+    public boolean loadDefaultLevelsSet() {
         
         String resourcePathToLevelsSet = String.format("/%s/resources/levels.xml",
                 Game.class.getPackage().getName().replace('.', '/'));
         InputStream levelsSetInputStream = Game.class.getResourceAsStream(resourcePathToLevelsSet);
         if (levelsSetInputStream == null)
-            return LoadState.ERROR;
+            return false;
         
         Document xmlLevelsSetDocument = XMLHelper.readXMLDocument(levelsSetInputStream);
-        LevelsSet loadedLevelsSet = new LevelsSet(gameConfiguration);
-        loadedLevelsSet.loadFromDOM(xmlLevelsSetDocument);
-        
-        LoadState loadState = LoadState.ERROR;
-        int playableLevelsCount = loadedLevelsSet.getPlayableLevelsCount();
-        int levelsCount = loadedLevelsSet.getLevelsCount();
-        if (playableLevelsCount == levelsCount)
-            loadState = LoadState.SUCCESS;
-        else if (playableLevelsCount > 0 && playableLevelsCount < levelsCount)
-            loadState = LoadState.WARNING;
-        
-        if (loadState != LoadState.ERROR) {
-         
-            // Stopping the game if it's running
-            stop(true);
-            
-            // Setting a reference to loaded levels' set
-            levelsSet = loadedLevelsSet;
-            isDefaultLevelsSetLoaded = true;
-        }
-        
-        return loadState;
+        return loadLevelsSet(xmlLevelsSetDocument);
     }
     
     /**
@@ -415,11 +394,11 @@ public class Game extends JPanel implements Runnable {
      * @return 
      *      Set's load result.
      */
-    public LoadState loadLevelsSet(String source) {
+    public boolean loadLevelsSet(Object source) {
         
         LevelsSet loadedLevelsSet = new LevelsSet(gameConfiguration, source);
-        LoadState loadState = loadedLevelsSet.getLoadState();
-        if (loadState != LoadState.NOT_LOADED && loadState != LoadState.ERROR) {
+        boolean isLoaded = loadedLevelsSet.isInitialized();
+        if (isLoaded) {
             
             // Stopping the game if it's running
             stop(true);
@@ -429,7 +408,7 @@ public class Game extends JPanel implements Runnable {
             isDefaultLevelsSetLoaded = false;
         }
         
-        return loadState;
+        return isLoaded;
     }
     
     /**
@@ -473,7 +452,7 @@ public class Game extends JPanel implements Runnable {
         
         // Retrieving a reference to desired game level
         Level gameLevel = levelsSet.getLevelByIndex(gameLevelIndex);
-        if (!gameLevel.initialize()) {
+        if (!gameLevel.initialize(gameLevel.getMaximalSize())) {
          
             repaint();
             return false;
@@ -864,16 +843,15 @@ public class Game extends JPanel implements Runnable {
         else if ((gameState == GameState.PLAY || gameState == GameState.COMPLETED) && gameLevel != null) {
             
             // Retrieving level's maximal size
-            int maximalLevelWidth = gameLevel.getMaximalWidth();
-            int maximalLevelHeight = gameLevel.getMaximalHeight();
+            LevelSize maximalLevelSize = gameLevel.getMaximalSize();
             
             // Retrieving sprites' dimension
             Dimension spriteDimension = gameGraphics.getSpriteDimension();
             
             // Drawing game level's current state
-            for (int lineIndex = 0; lineIndex < maximalLevelHeight; lineIndex++) {
+            for (int lineIndex = 0; lineIndex < maximalLevelSize.getHeight(); lineIndex++) {
 
-                for (int columnIndex = 0; columnIndex < maximalLevelWidth; columnIndex++) {
+                for (int columnIndex = 0; columnIndex < maximalLevelSize.getWidth(); columnIndex++) {
 
                     Character levelItem = gameLevel.getItemAt(lineIndex, columnIndex);
                     Image levelItemSprite = null;

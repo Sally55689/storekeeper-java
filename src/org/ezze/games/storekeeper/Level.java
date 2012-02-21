@@ -423,6 +423,11 @@ public class Level {
     protected HashMap<String, Object> levelInfo = null;
     
     /**
+     * Keeps level's real size (width and height in level items).
+     */
+    protected LevelSize size = null;
+    
+    /**
      * Restricts level's width (horizontal items' count) and height (vertical items' count).
      */
     protected LevelSize maximalSize = new LevelSize(DEFAULT_LEVEL_WIDTH, DEFAULT_LEVEL_HEIGHT);
@@ -483,37 +488,23 @@ public class Level {
      */
     public Level(ArrayList<String> levelLines, HashMap<String, Object> levelInfo) {
         
-        this(levelLines, levelInfo, new LevelSize(DEFAULT_LEVEL_WIDTH, DEFAULT_LEVEL_HEIGHT));
-    }
-    
-    /**
-     * Level's advanced constructor.
-     * 
-     * This one creates a level restricted by specified level's maximal size.
-     * 
-     * @param levelLines
-     *      Lines to initialize a level from.
-     * @param levelInfo
-     *      Level's information.
-     * @param maximalSize
-     *      Level's maximal size.
-     * @see #Level(java.util.ArrayList, java.util.HashMap)
-     */
-    public Level(ArrayList<String> levelLines, HashMap<String, Object> levelInfo, LevelSize maximalSize) {
-        
         // Checking whether level lines are specified
         if (levelLines == null || levelLines.size() < 1)
             return;
         
-        // Trying to set level's maximal size
-        if (!setMaximalSize(maximalSize.getWidth(), maximalSize.getHeight()))
-            return;
-        
         levelInitial = new ArrayList<ArrayList<Character>>();
         int levelLineIndex = 0;
+        
+        int levelWidth = 0;
+        int levelHeight = levelLines.size();
+        
         while (levelLineIndex < levelLines.size()) {
             
             String levelLine = levelLines.get(levelLineIndex);
+            
+            if (levelWidth < levelLine.length())
+                levelWidth = levelLine.length();
+                
             ArrayList<Character> levelRow = new ArrayList<Character>();
             for (int levelLineCharacterIndex = 0; levelLineCharacterIndex < levelLine.length(); levelLineCharacterIndex++) {
                 
@@ -530,7 +521,41 @@ public class Level {
         
         this.levelInfo = levelInfo;
         
-        initialize();
+        // Defining level's size
+        size = new LevelSize(levelWidth, levelHeight);
+    }
+    
+    /**
+     * Retrieves level's size.
+     * 
+     * @return
+     *      Level's size.
+     */
+    public LevelSize getSize() {
+        
+        return new LevelSize(size.getWidth(), size.getHeight());
+    }
+    
+    /**
+     * Retrieves level's width.
+     * 
+     * @return
+     *      Level's width.
+     */
+    public int getWidth() {
+        
+        return size.getWidth();
+    }
+    
+    /**
+     * Retrieves level's height.
+     * 
+     * @return
+     *      Level's height.
+     */
+    public int getHeight() {
+        
+        return size.getHeight();
     }
     
     /**
@@ -557,6 +582,11 @@ public class Level {
         return true;
     }
     
+    public LevelSize getMaximalSize() {
+        
+        return maximalSize;
+    }
+    
     /**
      * Retrieves currently set level's maximal width in items.
      * 
@@ -581,6 +611,11 @@ public class Level {
         return maximalSize.getHeight();
     }
     
+    public final boolean initialize() {
+        
+        return initialize(null);
+    }
+    
     /**
      * Completes level's initialization.
      * 
@@ -593,7 +628,7 @@ public class Level {
      * @return
      *      {@code true} if level has been successfully initialized, {@code false otherwise}.
      */
-    synchronized public final boolean initialize() {
+    synchronized public final boolean initialize(LevelSize maximalSize) {
 
         levelState = LevelState.EMPTY;
         
@@ -607,10 +642,12 @@ public class Level {
         pushesCount = 0;
         movesHistory = new ArrayList<MoveInformation>();
         
+        this.maximalSize = maximalSize == null ? new LevelSize(DEFAULT_LEVEL_WIDTH, DEFAULT_LEVEL_HEIGHT) : maximalSize;
+        
         if (levelInitial == null || levelInitial.isEmpty())
             return false;
         
-        if (levelInitial.size() > maximalSize.getHeight()) {
+        if (levelInitial.size() > this.maximalSize.getHeight()) {
         
             levelState = LevelState.OUT_OF_BOUNDS;
             return false;
@@ -659,7 +696,7 @@ public class Level {
         }
 
         // Checking whether level parameters are valid
-        if (maxLineWidth > maximalSize.getWidth()) {
+        if (maxLineWidth > this.maximalSize.getWidth()) {
             
             levelState = LevelState.OUT_OF_BOUNDS;
             return false;
@@ -687,8 +724,8 @@ public class Level {
         }        
 
         // Level's vertical normalization
-        int leadingEmptyLinesCount = (int)(Math.floor((double)maximalSize.getHeight() - (double)level.size()) / 2);
-        int trailingEmptyLinesCount = maximalSize.getHeight() - level.size() - leadingEmptyLinesCount;
+        int leadingEmptyLinesCount = (int)(Math.floor((double)this.maximalSize.getHeight() - (double)level.size()) / 2);
+        int trailingEmptyLinesCount = this.maximalSize.getHeight() - level.size() - leadingEmptyLinesCount;
 
         // Shifting worker's vertical location
         workerY += leadingEmptyLinesCount;
@@ -698,7 +735,7 @@ public class Level {
         while (leadingEmptyLineIndex < leadingEmptyLinesCount) {
 
             ArrayList<Character> emptyLine = new ArrayList<Character>();
-            for (int emptyLineCharacterIndex = 0; emptyLineCharacterIndex < maximalSize.getWidth(); emptyLineCharacterIndex++)
+            for (int emptyLineCharacterIndex = 0; emptyLineCharacterIndex < this.maximalSize.getWidth(); emptyLineCharacterIndex++)
                 emptyLine.add(LEVEL_ITEM_SPACE);
             level.add(0, emptyLine);
             leadingEmptyLineIndex++;
@@ -709,20 +746,20 @@ public class Level {
         while (trailingEmptyLineIndex < trailingEmptyLinesCount) {
 
             ArrayList<Character> emptyLine = new ArrayList<Character>();
-            for (int emptyLineCharacterIndex = 0; emptyLineCharacterIndex < maximalSize.getWidth(); emptyLineCharacterIndex++)
+            for (int emptyLineCharacterIndex = 0; emptyLineCharacterIndex < this.maximalSize.getWidth(); emptyLineCharacterIndex++)
                 emptyLine.add(LEVEL_ITEM_SPACE);
             level.add(emptyLine);
             trailingEmptyLineIndex++;
         }
 
         // Level's horizontal normalization
-        int leadingEmptyCharactersCount = (int)(Math.floor((double)maximalSize.getWidth() - (double)maxLineWidth) / 2);
+        int leadingEmptyCharactersCount = (int)(Math.floor((double)this.maximalSize.getWidth() - (double)maxLineWidth) / 2);
 
         // Shifting worker's horizontal location
         workerX += leadingEmptyCharactersCount;
 
         lineIndex = leadingEmptyLinesCount;
-        while (lineIndex < maximalSize.getHeight() - trailingEmptyLinesCount) {
+        while (lineIndex < this.maximalSize.getHeight() - trailingEmptyLinesCount) {
 
             ArrayList<Character> line = level.get(lineIndex);
             int emptyCharacterIndex = 0;
@@ -732,7 +769,7 @@ public class Level {
                 emptyCharacterIndex++;
             }
 
-            while (line.size() < maximalSize.getWidth())
+            while (line.size() < this.maximalSize.getWidth())
                 line.add(LEVEL_ITEM_SPACE);
 
             lineIndex++;

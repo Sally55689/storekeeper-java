@@ -11,13 +11,14 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import javax.swing.JFrame;
 import org.ezze.games.storekeeper.Level.Direction;
+import org.ezze.games.storekeeper.Level.LevelSize;
 import org.ezze.games.storekeeper.Level.WorkerDirection;
 
 /**
  * Abstract class required to implement game's visual representation.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.3
+ * @version 0.0.4
  */
 abstract public class GameGraphics {
 
@@ -162,17 +163,15 @@ abstract public class GameGraphics {
      * Determines maximal possible sprite size for specified level's
      * width and height and current screen's resolution.
      * 
-     * @param levelWidth
-     *      Level's maximal width.
-     * @param levelHeight
-     *      Levels' maximal height.
+     * @param levelSize
+     *      Level's maximal size.
      * @return 
      *      Maximal possible sprite size or {@code null} if convenient
      *      size cannot be determined.
      * @see #setSpriteSize(org.ezze.games.storekeeper.GameGraphics.SpriteSize)
      * @see #getSpriteSize()
      */
-    public SpriteSize determineOptimalSpriteSize(int levelWidth, int levelHeight) {
+    public SpriteSize determineOptimalSpriteSize(LevelSize levelSize) {
         
         // Checking screen resolution
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
@@ -183,8 +182,8 @@ abstract public class GameGraphics {
         while (spriteSizeIndex < spriteSizes.length) {
             
             Dimension dimension = getSpriteDimension(spriteSizes[spriteSizeIndex]);
-            if (screenDimension.width - dialogInsets.left - dialogInsets.right - levelWidth * dimension.width > 0
-                    && screenDimension.height - dialogInsets.top - dialogInsets.bottom - levelHeight * dimension.height > 0) {
+            if (screenDimension.width - dialogInsets.left - dialogInsets.right - levelSize.getWidth() * dimension.width > 0
+                    && screenDimension.height - dialogInsets.top - dialogInsets.bottom - levelSize.getHeight() * dimension.height > 0) {
                 
                 return spriteSizes[spriteSizeIndex];
             }

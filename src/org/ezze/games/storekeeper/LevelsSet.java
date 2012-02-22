@@ -225,6 +225,7 @@ public class LevelsSet {
                         Level level = createLevelFromLines(levelLines, lastNonLevelLine);
                         addLevel(level);
                         levelLines = null;
+                        lastNonLevelLine = null;
                     }
                     
                     // Remembering last non-level line - it's will be used as the name of next level
@@ -238,6 +239,7 @@ public class LevelsSet {
                 Level level = createLevelFromLines(levelLines, lastNonLevelLine);
                 addLevel(level);
                 levelLines = null;
+                lastNonLevelLine = null;
             }
             
             bufferedReader.close();

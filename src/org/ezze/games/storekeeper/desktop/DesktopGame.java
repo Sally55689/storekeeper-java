@@ -382,7 +382,7 @@ public final class DesktopGame extends JFrame {
                         if (gameState == GameState.PLAY || gameState == GameState.COMPLETED) {
                             
                             if (gameState == GameState.PLAY)
-                                timeLabel.setText(game.getTimeString());
+                                timeLabel.setText(String.format("Time: %s", game.getTimeString()));
                             
                             String movesCountString = String.format("Moves Count: %05d", level.getMovesCount());
                             movesCountLabel.setText(movesCountString);
@@ -702,7 +702,6 @@ public final class DesktopGame extends JFrame {
         SpringLayout statusBarLayout = new SpringLayout();
         statusBar = new JPanel(statusBarLayout);
         statusBar.setBackground(desktopGameGraphics.getBackground());
-        statusBar.setForeground(Color.WHITE);
 
         Color labelForeground = new Color(240, 240, 240);
         Font labelFont = new Font(Font.MONOSPACED, Font.BOLD, 12);

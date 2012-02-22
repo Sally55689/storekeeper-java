@@ -1215,7 +1215,7 @@ public class Game extends JPanel implements Runnable {
 
             // Repainting the play field
             repaint();
-
+            
             if (isAnimationInProgress) {
 
                 if (workerAnimDeltaX != 0) {

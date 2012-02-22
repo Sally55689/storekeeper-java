@@ -27,13 +27,14 @@ import org.w3c.dom.Element;
  */
 public class LevelsSet {
     
+    /**
+     * Shows whether levels' set is initialized.
+     * 
+     * Set is initialized if at least one level has been loaded
+     * (no matter if this level is playable or not).
+     */
     protected boolean isInitialized = false;
     
-    /**
-     * A reference to game's configuration.
-     */
-    protected Configuration configuration = null;
-
     /**
      * Set's name.
      */
@@ -53,28 +54,20 @@ public class LevelsSet {
     
     /**
      * Constructs empty levels' set.
-     * 
-     * @param configuration
-     *      A reference to game's configuration.
-     * @see #LevelsSet(org.ezze.games.storekeeper.Configuration, java.lang.String)
-     */
-    public LevelsSet(Configuration configuration) {
+     */ 
+    public LevelsSet() {
         
-        this(configuration, null);
+        this(null);
     }
     
     /**
-     * Constructs levels' set from specified source file.
+     * Constructs levels' set from specified source file or DOM document.
      * 
-     * @param configuration
-     *      A reference to game's configuration.
      * @param source 
      *      Set's source file's name.
-     * @see #LevelsSet(org.ezze.games.storekeeper.Configuration)
      */
-    public LevelsSet(Configuration configuration, Object source) {
+    public LevelsSet(Object source) {
         
-        this.configuration = configuration;
         load(source);
     }
     
@@ -95,7 +88,7 @@ public class LevelsSet {
         
         isInitialized = false;
         
-        if (configuration == null || source == null)
+        if (source == null)
             return false;
         
         if (source instanceof String) {
@@ -122,6 +115,7 @@ public class LevelsSet {
             loadFromDOM((Document)source);
         }
         
+        // Determining maximal possible size of set's level
         LevelSize maximalLevelSize = getMaximalLevelSize();
         
         // Initializing levels

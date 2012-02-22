@@ -13,24 +13,14 @@ import java.util.HashMap;
 public class Level {
     
     /**
-     * Default maximal count of level items per line.
-     */
-    public static final int DEFAULT_LEVEL_WIDTH = 20;
-    
-    /**
-     * Default maximal count of level items per column.
-     */
-    public static final int DEFAULT_LEVEL_HEIGHT = 20;
-    
-    /**
      * Minimal value of maximal count of level items per line.
      */
-    public static final int MINIMAL_LEVEL_WIDTH = 20;
+    public static final int MINIMAL_LEVEL_WIDTH = 19;
     
     /**
      * Minimal value of maximal count of level items per column.
      */
-    public static final int MINIMAL_LEVEL_HEIGHT = 20;
+    public static final int MINIMAL_LEVEL_HEIGHT = 16;
     
     /**
      * Maximal value of maximal count of level items per line.
@@ -41,6 +31,16 @@ public class Level {
      * Maximal value of maximal count of level items per column.
      */
     public static final int MAXIMAL_LEVEL_HEIGHT = 35;
+    
+    /**
+     * Default maximal count of level items per line.
+     */
+    public static final int DEFAULT_LEVEL_WIDTH = MINIMAL_LEVEL_WIDTH;
+    
+    /**
+     * Default maximal count of level items per column.
+     */
+    public static final int DEFAULT_LEVEL_HEIGHT = MINIMAL_LEVEL_HEIGHT;
     
     /**
      * Character used to represent worker's item.
@@ -399,10 +399,6 @@ public class Level {
         }
     }
     
-    /**
-     * Shows whether the level is initialized.
-     */
-    //protected boolean isInitialized = false;
     protected LevelState levelState = LevelState.EMPTY;
     
     /**
@@ -645,13 +641,7 @@ public class Level {
         this.maximalSize = maximalSize == null ? new LevelSize(DEFAULT_LEVEL_WIDTH, DEFAULT_LEVEL_HEIGHT) : maximalSize;
         
         if (levelInitial == null || levelInitial.isEmpty())
-            return false;
-        
-        if (levelInitial.size() > this.maximalSize.getHeight()) {
-        
-            levelState = LevelState.OUT_OF_BOUNDS;
-            return false;
-        }
+            return false;        
         
         int maxLineWidth = 0;
         int lineIndex = 0;
@@ -693,18 +683,19 @@ public class Level {
             }
 
             lineIndex++;
-        }
-
-        // Checking whether level parameters are valid
-        if (maxLineWidth > this.maximalSize.getWidth()) {
-            
-            levelState = LevelState.OUT_OF_BOUNDS;
-            return false;
-        }
+        }        
         
+        // Checking whether level is valid
         if (boxesCount != goalsCount || workersCount != 1) {
          
             levelState = LevelState.CORRUPTED;
+            return false;
+        }
+        
+        // Checking whether level fits maximal level's size
+        if (maxLineWidth > this.maximalSize.getWidth() || levelInitial.size() > this.maximalSize.getHeight()) {
+            
+            levelState = LevelState.OUT_OF_BOUNDS;
             return false;
         }
         

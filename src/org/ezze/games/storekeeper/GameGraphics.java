@@ -171,7 +171,7 @@ abstract public class GameGraphics {
      * @see #setSpriteSize(org.ezze.games.storekeeper.GameGraphics.SpriteSize)
      * @see #getSpriteSize()
      */
-    public SpriteSize determineOptimalSpriteSize(LevelSize levelSize) {
+    public SpriteSize determineOptimalSpriteSize(LevelSize levelSize, int minimalFreeWidth, int minimalFreeHeight) {
         
         // Checking screen resolution
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
@@ -182,8 +182,10 @@ abstract public class GameGraphics {
         while (spriteSizeIndex < spriteSizes.length) {
             
             Dimension dimension = getSpriteDimension(spriteSizes[spriteSizeIndex]);
-            if (screenDimension.width - dialogInsets.left - dialogInsets.right - levelSize.getWidth() * dimension.width > 0
-                    && screenDimension.height - dialogInsets.top - dialogInsets.bottom - levelSize.getHeight() * dimension.height > 0) {
+            if ((screenDimension.width - dialogInsets.left - dialogInsets.right -
+                    levelSize.getWidth() * dimension.width > minimalFreeWidth) &&
+                    (screenDimension.height - dialogInsets.top - dialogInsets.bottom -
+                    levelSize.getHeight() * dimension.height > minimalFreeHeight)) {
                 
                 return spriteSizes[spriteSizeIndex];
             }

@@ -2,44 +2,19 @@ package org.ezze.games.storekeeper.desktop;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
-import javax.swing.UnsupportedLookAndFeelException;
-import org.ezze.utils.application.ApplicationPath;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.net.URL;
 import java.util.Properties;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JSeparator;
-import javax.swing.KeyStroke;
-import javax.swing.Spring;
-import javax.swing.SpringLayout;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import org.ezze.games.storekeeper.Game;
-import org.ezze.games.storekeeper.Configuration;
 import org.ezze.games.storekeeper.Game.GameState;
-import org.ezze.games.storekeeper.GameGraphics;
 import org.ezze.games.storekeeper.GameGraphics.SpriteSize;
-import org.ezze.games.storekeeper.Level;
 import org.ezze.games.storekeeper.Level.LevelSize;
-import org.ezze.games.storekeeper.LevelCompletionListener;
-import org.ezze.games.storekeeper.LevelsSet;
+import org.ezze.games.storekeeper.*;
+import org.ezze.utils.application.ApplicationPath;
 import org.ezze.utils.io.CompoundFileFilter;
 import org.ezze.utils.ui.FileBrowser;
 import org.ezze.utils.ui.aboutbox.AboutBox;
@@ -49,7 +24,7 @@ import org.ezze.utils.ui.aboutbox.AboutBoxInformation;
  * Desktop version of the game.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.6
+ * @version 0.0.7
  */
 public final class DesktopGame extends JFrame {
     
@@ -193,6 +168,11 @@ public final class DesktopGame extends JFrame {
     protected JLabel pushesCountLabel = null;
     
     /**
+     * Keeps a name of recently browsed directory with levels' sets.
+     */
+    protected String recentLevelsSetDirectory = null;
+    
+    /**
      * Storekeeper game's desktop implementation main class.
      * 
      * This class is used as main one to build the desktop version of the game.
@@ -307,8 +287,8 @@ public final class DesktopGame extends JFrame {
             @Override
             public void levelCompleted(Level gameLevel) {
                 
-                // Informing the user that the level has been successfully completed
-                JOptionPane.showMessageDialog(null, "Level has been successfully completed!", "Congratulations", JOptionPane.INFORMATION_MESSAGE);
+                // Informing the user that the level has been completed successfully
+                JOptionPane.showMessageDialog(null, "Level has been completed successfully!", "Congratulations", JOptionPane.INFORMATION_MESSAGE);
             }
         });
         game.setDisplayLevelInfo(false);
@@ -747,7 +727,7 @@ public final class DesktopGame extends JFrame {
         timeLabel.setFont(labelFont);
         
         levelInfoLabel = new JLabel(" ");
-        levelInfoLabel.setForeground(new Color(255, 180, 60));
+        levelInfoLabel.setForeground(new Color(255, 90, 30));
         levelInfoLabel.setFont(labelFont);
         
         movesCountLabel = new JLabel(" ");
@@ -838,8 +818,8 @@ public final class DesktopGame extends JFrame {
         levelsSetsFilter.add(new FileNameExtensionFilter("Sokoban levels files (*.sok)", "sok"));
         levelsSetsFilter.add(new FileNameExtensionFilter("All supported levels files (*.xml, *.sok)", "xml", "sok"));
         levelsSetsFilter.setDefaultFileFilterIndex(levelsSetsFilter.getFileFilters().size() - 1);
-        File selectedFile = FileBrowser.browseFile(ApplicationPath.getApplicationPath(DesktopGame.class),
-                "Please, select levels set file...", levelsSetsFilter);
+        String initialDirectory = recentLevelsSetDirectory == null ? ApplicationPath.getApplicationPath(DesktopGame.class) : recentLevelsSetDirectory;
+        File selectedFile = FileBrowser.browseFile(initialDirectory, "Please, select levels set file...", levelsSetsFilter);
 
         // Checking whether levels' set file has been selected
         if (selectedFile == null) {
@@ -855,6 +835,9 @@ public final class DesktopGame extends JFrame {
             updateMenuItems();
             return;
         }
+        
+        // Remembering recent levels' set directory
+        recentLevelsSetDirectory = selectedFile.getParentFile().getAbsolutePath();
         
         GameState currentGameState = game.getGameState();
 

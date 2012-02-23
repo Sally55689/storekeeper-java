@@ -1,16 +1,6 @@
 package org.ezze.games.storekeeper;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.font.TextAttribute;
 import java.io.InputStream;
 import java.text.AttributedString;
@@ -27,7 +17,7 @@ import org.w3c.dom.Document;
  * animation and user actions' handling.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.7
+ * @version 0.0.8
  */
 public class Game extends JPanel implements Runnable {
     
@@ -754,6 +744,7 @@ public class Game extends JPanel implements Runnable {
         int newMovesCount = gameLevel.takeBack(takeBackMovesCount);
         if (oldMovesCount != newMovesCount)
             firePropertyChange(MOVES_COUNT, oldMovesCount, newMovesCount);
+        repaint();
         return newMovesCount;
     }
     
@@ -807,6 +798,7 @@ public class Game extends JPanel implements Runnable {
         int newMovesCount = gameLevel.repeatMoves(repeatMovesCount);
         if (oldMovesCount != newMovesCount)
             firePropertyChange(MOVES_COUNT, oldMovesCount, newMovesCount);
+        repaint();
         return newMovesCount;
     }
     
@@ -1313,9 +1305,11 @@ public class Game extends JPanel implements Runnable {
 
             // Repainting the play field
             Dimension spriteSize = getGameGraphics().getSpriteDimension();
-            int repaintX = spriteSize.width * (gameLevel.getWorkerX() - 1);
-            int repaintY = spriteSize.height * (gameLevel.getWorkerY() - 1);
-            Rectangle rectangle = new Rectangle(repaintX, repaintY, spriteSize.width * 3, spriteSize.height * 3);
+            int repaintRectangleWidth = Math.abs(workerAnimDeltaX) > 0 ? spriteSize.width * 5: spriteSize.width * 3;
+            int repaintRectangleHeight = Math.abs(workerAnimDeltaY) > 0 ? spriteSize.height * 5 : spriteSize.height * 3;
+            int repaintX = spriteSize.width * (gameLevel.getWorkerX() - (Math.abs(workerAnimDeltaX) > 0 ? 2 : 1));
+            int repaintY = spriteSize.height * (gameLevel.getWorkerY() - (Math.abs(workerAnimDeltaY) > 0 ? 2 : 1));
+            Rectangle rectangle = new Rectangle(repaintX, repaintY, repaintRectangleWidth, repaintRectangleHeight);
             repaint(rectangle);
             
             // Repainting level information

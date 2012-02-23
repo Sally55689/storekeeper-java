@@ -1,11 +1,6 @@
 package org.ezze.games.storekeeper;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -23,7 +18,7 @@ import org.w3c.dom.Element;
  * Look at {@link LevelState} for possible level's states.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.4
+ * @version 0.0.5
  */
 public class LevelsSet {
     
@@ -182,6 +177,8 @@ public class LevelsSet {
     }
     
     /**
+     * Loads levels from specified SOK file.
+     * 
      * @param fileName
      *      SOK-file's name.
      */
@@ -192,54 +189,161 @@ public class LevelsSet {
             FileInputStream fileInputStream = new FileInputStream(fileName);
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileInputStream));
         
-            ArrayList<String> levelLines = null;
-            String lastNonLevelLine = null;
-            String fileLine = null;
             Pattern levelLinePattern = Pattern.compile(String.format("^[%s%s%s%s%s%s%s]+$",
                     Level.LEVEL_ITEM_WORKER_REG, Level.LEVEL_ITEM_WORKER_ON_GOAL_REG,
                     Level.LEVEL_ITEM_BRICK_REG, Level.LEVEL_ITEM_GOAL_REG,
                     Level.LEVEL_ITEM_BOX_REG, Level.LEVEL_ITEM_BOX_ON_GOAL_REG,
                     Level.LEVEL_ITEM_SPACE_REG));
             
+            String fileLine = null;
+            ArrayList<String> fileLines = new ArrayList<String>();
+            ArrayList<int[]> levelsBoundingIndexes = new ArrayList<int[]>();
+            boolean doesLastLineDescribesLevel = false;
+            int levelStartIndex = -1;
+            int lineIndex = -1;
             while ((fileLine = bufferedReader.readLine()) != null) {
                 
                 // Trimming the line from the right
                 while (fileLine.endsWith(" "))
-                    fileLine = fileLine.substring(0, fileLine.length() -1);
-                               
+                    fileLine = fileLine.substring(0, fileLine.length() - 1);
+                
+                lineIndex++;
+                
                 // Checking whether the line describes level's row
                 Matcher levelLineMatcher = levelLinePattern.matcher(fileLine);
-                if (levelLineMatcher.matches()) {
+                if (!fileLine.isEmpty() && levelLineMatcher.matches()) {
                     
                     // We have level's row here
-                    if (levelLines == null)
-                        levelLines = new ArrayList<String>();
-                    levelLines.add(fileLine);
+                    if (!doesLastLineDescribesLevel) {
+                        
+                        levelStartIndex = lineIndex;
+                    }
+                    
+                    doesLastLineDescribesLevel = true;
                 }
                 else {
                     
-                    // We have non-level's line here
-                    if (levelLines != null) {
+                    if (doesLastLineDescribesLevel) {
                         
-                        // Creating new level from previously read level's rows
-                        Level level = createLevelFromLines(levelLines, lastNonLevelLine);
-                        addLevel(level);
-                        levelLines = null;
-                        lastNonLevelLine = null;
+                        int[] levelIndexes = new int[] {
+                            
+                            levelStartIndex,
+                            lineIndex - 1
+                        };
+                        
+                        levelsBoundingIndexes.add(levelIndexes);
                     }
                     
-                    // Remembering last non-level line - it's will be used as the name of next level
-                    if (!fileLine.isEmpty())
-                        lastNonLevelLine = fileLine;
+                    doesLastLineDescribesLevel = false;
                 }
+                
+                fileLines.add(fileLine);
             }
             
-            if (levelLines != null) {
+            if (doesLastLineDescribesLevel) {
                 
-                Level level = createLevelFromLines(levelLines, lastNonLevelLine);
-                addLevel(level);
-                levelLines = null;
-                lastNonLevelLine = null;
+                int[] levelIndexes = new int[] {
+                    
+                    levelStartIndex,
+                    lineIndex - 1
+                };
+                
+                levelsBoundingIndexes.add(levelIndexes);
+            }
+            
+            Pattern infoPattern = Pattern.compile("^([A-Za-z ]+):(.+)$");
+            
+            // Checking whether at least one level was found
+            if (levelsBoundingIndexes.size() > 0) {
+                
+                // Creating levels
+                int levelIndex = 0;
+                while (levelIndex < levelsBoundingIndexes.size()) {
+
+                    int[] levelBoundingIndexes = levelsBoundingIndexes.get(levelIndex);
+                    int currentLevelStartIndex = levelBoundingIndexes[0];
+                    int currentLevelEndIndex = levelBoundingIndexes[1];
+                    
+                    ArrayList<String> levelLines = new ArrayList<String>();
+                    for (int levelLineIndex = currentLevelStartIndex; levelLineIndex <= currentLevelEndIndex; levelLineIndex++) {
+                        
+                        String levelLine = fileLines.get(levelLineIndex);
+                        levelLines.add(levelLine);
+                    }
+                    
+                    int levelInfoLastLineIndex = -1;
+                    if (levelIndex + 1 < levelsBoundingIndexes.size()) {
+                        
+                        levelInfoLastLineIndex = levelsBoundingIndexes.get(levelIndex + 1)[0] - 1;
+                    }
+                    else {
+                        
+                        levelInfoLastLineIndex = fileLines.size() - 1;
+                    }
+
+                    // Gathering level's information
+                    HashMap<String, Object> levelInfo = new HashMap<String, Object>();
+                    
+                    int levelInfoIndex = levelInfoLastLineIndex;
+                    boolean ignoreFirstNonEmptyLine = true;
+                    while (levelInfoIndex > currentLevelEndIndex) {
+
+                        String levelInfoLine = fileLines.get(levelInfoIndex);
+                        if (!levelInfoLine.isEmpty()) {
+
+                            if (ignoreFirstNonEmptyLine) {
+
+                                ignoreFirstNonEmptyLine = false;
+                            }
+                            else {
+
+                                // Analyzing information line
+                                Matcher infoMatcher = infoPattern.matcher(levelInfoLine);
+                                if (infoMatcher.matches()) {
+
+                                    String infoName = infoMatcher.group(1).trim().toLowerCase();
+                                    String infoValue = infoMatcher.group(2).trim();
+
+                                    if (infoName.equals("title"))
+                                        levelInfo.put("name", infoValue);
+                                    else if (infoName.equals("author"))
+                                        levelInfo.put("author", infoValue);
+                                }
+                            }
+                        }
+
+                        levelInfoIndex--;
+                    }
+                    
+                    // Checking whether level's name is found
+                    if (!levelInfo.containsKey("name")) {
+                        
+                        // Trying to find level's name just before level lines
+                        int levelInfoFirstLineIndex = 0;
+                        if (levelIndex - 1 >= 0) {
+                            
+                            levelInfoFirstLineIndex = levelsBoundingIndexes.get(levelIndex - 1)[1] + 1;
+                        }
+                        
+                        levelInfoIndex = currentLevelStartIndex - 1;
+                        while (levelInfoIndex >= levelInfoFirstLineIndex) {
+                            
+                            String levelInfoLine = fileLines.get(levelInfoIndex);
+                            if (!levelInfoLine.isEmpty() && !infoPattern.matcher(levelInfoLine).matches()) {
+                                
+                                levelInfo.put("name", levelInfoLine.trim());
+                                break;
+                            }
+                            
+                            levelInfoIndex--;
+                        }
+                    }
+                    
+                    Level level = new Level(levelLines, levelInfo);
+                    addLevel(level);
+                    
+                    levelIndex++;
+                }
             }
             
             bufferedReader.close();

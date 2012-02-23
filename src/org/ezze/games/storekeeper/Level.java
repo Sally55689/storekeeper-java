@@ -8,7 +8,7 @@ import java.util.HashMap;
  * This class stores an inner representation of storekeeper's level.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.6
+ * @version 0.0.7
  */
 public class Level {
     
@@ -783,6 +783,8 @@ public class Level {
          
                 if (levelInitialRowCharacter.equals(LEVEL_ITEM_WORKER_ON_GOAL))
                     levelRow.add(new Character(LEVEL_ITEM_GOAL));
+                else if (levelInitialRowCharacter.equals(LEVEL_ITEM_WORKER))
+                    levelRow.add(new Character(LEVEL_ITEM_SPACE));
                 else
                     levelRow.add(new Character(levelInitialRowCharacter));
             }
@@ -1129,10 +1131,15 @@ public class Level {
 
                     // Restoring previous item at box' current position
                     Character levelItem = getItemAt(boxY, boxX);
-                    if (levelItem.equals(LEVEL_ITEM_BOX_ON_GOAL))
+                    if (levelItem.equals(LEVEL_ITEM_BOX_ON_GOAL)) {
+                        
                         setItemAt(LEVEL_ITEM_GOAL, boxY, boxX);
-                    else if (levelItem.equals(LEVEL_ITEM_BOX))
+                        boxesOnGoalsCount--;
+                    }
+                    else if (levelItem.equals(LEVEL_ITEM_BOX)) {
+                        
                         setItemAt(LEVEL_ITEM_SPACE, boxY, boxX);
+                    }
 
                     // Retrieving box' previous coordinates (it's where the worker right now)
                     boxX = workerX;
@@ -1140,10 +1147,15 @@ public class Level {
 
                     // Retrieving box' destination item
                     levelItem = getItemAt(boxY, boxX);
-                    if (levelItem.equals(LEVEL_ITEM_GOAL))
+                    if (levelItem.equals(LEVEL_ITEM_GOAL)) {
+                        
                         setItemAt(LEVEL_ITEM_BOX_ON_GOAL, boxY, boxX);
-                    else if (levelItem.equals(LEVEL_ITEM_SPACE))
+                        boxesOnGoalsCount++;
+                    }
+                    else if (levelItem.equals(LEVEL_ITEM_SPACE)) {
+                        
                         setItemAt(LEVEL_ITEM_BOX, boxY, boxX);
+                    }
 
                     // Decreasing pushes count
                     pushesCount--;
@@ -1319,8 +1331,7 @@ public class Level {
 
             // Checking whether the box' destination position is not a wall or another box
             Character boxDestinationLevelItem = getItemAt(boxDestinationY, boxDestinationX);
-            if (boxDestinationLevelItem.equals(LEVEL_ITEM_BRICK) || boxDestinationLevelItem.equals(LEVEL_ITEM_BOX)
-                    || boxDestinationLevelItem.equals(LEVEL_ITEM_BOX_ON_GOAL))
+            if (!boxDestinationLevelItem.equals(LEVEL_ITEM_SPACE) && !boxDestinationLevelItem.equals(LEVEL_ITEM_GOAL))
                 return new MoveInformation(MoveType.NOTHING, Direction.NONE);
 
             // Removing the box from old location

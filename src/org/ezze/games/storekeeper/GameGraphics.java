@@ -18,7 +18,7 @@ import org.ezze.games.storekeeper.Level.WorkerDirection;
  * Abstract class required to implement game's visual representation.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.4
+ * @version 0.0.5
  */
 abstract public class GameGraphics {
 
@@ -96,9 +96,12 @@ abstract public class GameGraphics {
     /**
      * Stores instance's sprite size {@link SpriteSize}.
      */
-    private SpriteSize spriteSize = SpriteSize.LARGE;
+    protected SpriteSize spriteSize = SpriteSize.LARGE;
     
-    EnumMap<SpriteSize, HashMap<String, ArrayList<Image>>> spriteImages =
+    /**
+     * A hash to keep game's sprites of different resolution.
+     */
+    protected EnumMap<SpriteSize, HashMap<String, ArrayList<Image>>> spriteImages =
             new EnumMap<SpriteSize, HashMap<String, ArrayList<Image>>>(SpriteSize.class);
     
     /**
@@ -121,7 +124,7 @@ abstract public class GameGraphics {
      * In some cases you may want to change sprite size by calling
      * {@link #setSpriteSize(org.ezze.games.storekeeper.GameGraphics.SpriteSize)}.
      * Maximal possible sprite size for specified level's width and height and
-     * current screen's resolution can be determined by {@link #determineOptimalSpriteSize(int, int)}.
+     * current screen's resolution can be determined by {@link #determineOptimalSpriteSize(org.ezze.games.storekeeper.Level.LevelSize, int, int)}
      * 
      * @param spriteSize
      *      Desired sprite size {@link SpriteSize}
@@ -136,7 +139,7 @@ abstract public class GameGraphics {
      * 
      * @param spriteSize
      *      Desired sprite's size.
-     * @see #determineOptimalSpriteSize(int, int)
+     * @see #determineOptimalSpriteSize(org.ezze.games.storekeeper.Level.LevelSize, int, int)
      * @see #getSpriteSize()
      */
     public final void setSpriteSize(SpriteSize spriteSize) {
@@ -152,7 +155,7 @@ abstract public class GameGraphics {
      * @see #getSpriteDimension()
      * @see #getSpriteDimension(org.ezze.games.storekeeper.GameGraphics.SpriteSize)
      * @see #setSpriteSize(org.ezze.games.storekeeper.GameGraphics.SpriteSize)
-     * @see #determineOptimalSpriteSize(int, int)
+     * @see #determineOptimalSpriteSize(org.ezze.games.storekeeper.Level.LevelSize, int, int)
      */
     public SpriteSize getSpriteSize() {
         
@@ -163,8 +166,17 @@ abstract public class GameGraphics {
      * Determines maximal possible sprite size for specified level's
      * width and height and current screen's resolution.
      * 
+     * It's supposed that game's window consists of play field, title and
+     * border insets only. If you have any components that extend the window
+     * in any direction you can pass {@code minimalFreeWidth} and {@code minimalFreeHeight}
+     * to compensate their dimensions.
+     * 
      * @param levelSize
      *      Level's maximal size.
+     * @param minimalFreeWidth
+     *      Additional width of a screen in pixels that must be left free.
+     * @param minimalFreeHeight
+     *      Additional height of a screen in pixels that must be left free.
      * @return 
      *      Maximal possible sprite size or {@code null} if convenient
      *      size cannot be determined.
@@ -376,11 +388,24 @@ abstract public class GameGraphics {
     /**
      * Retrieves worker's action sprites' count for specified direction.
      * 
+     * @param direction
+     *      Worker's direction instance.
      * @return
      *      Worker's action sprites' count.
      */
     abstract public int getActionSpritesCount(WorkerDirection direction);
     
+    /**
+     * Retrieves worker's action sprite according to specified direction
+     * and animation phase's index.
+     * 
+     * @param direction
+     *      Worker's direction.
+     * @param spriteIndex
+     *      Animation phase's index.
+     * @return
+     *      Moving worker's image.
+     */
     public Image getActionSprite(WorkerDirection direction, int spriteIndex) {
         
         int actionSpritesCount = getActionSpritesCount(direction);

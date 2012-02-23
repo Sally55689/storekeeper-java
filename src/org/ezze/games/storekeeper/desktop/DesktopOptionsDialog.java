@@ -30,7 +30,7 @@ import org.ezze.games.storekeeper.Configuration;
  * Options dialog for desktop game.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.2
+ * @version 0.0.3
  */
 public class DesktopOptionsDialog extends JDialog {
     
@@ -394,7 +394,6 @@ public class DesktopOptionsDialog extends JDialog {
      * 
      * @return
      *      {@code true} if changes have been successfully applied, {@code false} otherwise.
-     * @see #isGameWindowRebuildRequired()
      */
     protected boolean applyChanges() {
 
@@ -447,6 +446,9 @@ public class DesktopOptionsDialog extends JDialog {
         return true;
     }
     
+    /**
+     * Forces dialog's window listeners to produce their window closing actions.
+     */
     protected void closeDialog() {
         
         WindowListener[] windowListeners = getWindowListeners();
@@ -457,6 +459,9 @@ public class DesktopOptionsDialog extends JDialog {
         }
     }
     
+    /**
+     * Close the dialog.
+     */
     protected void onCloseDialog() {
         
         dispose();

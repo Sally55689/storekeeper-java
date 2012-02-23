@@ -31,10 +31,29 @@ import org.w3c.dom.Document;
  */
 public class Game extends JPanel implements Runnable {
     
+    /**
+     * Levels' set property.
+     */
     public static final String LEVELS_SET = "levels_set";
+    
+    /**
+     * Level index property.
+     */
     public static final String LEVEL_INDEX = "level_index";
+    
+    /**
+     * Game state property.
+     */
     public static final String GAME_STATE = "game_state";
+    
+    /**
+     * Moves count property.
+     */
     public static final String MOVES_COUNT = "moves_count";
+    
+    /**
+     * Time property.
+     */
     public static final String TIME = "time";
     
     /**
@@ -75,6 +94,9 @@ public class Game extends JPanel implements Runnable {
         COMPLETED
     }
     
+    /**
+     * An instance of game's configuration.
+     */
     protected Configuration gameConfiguration = null;
     
     /**
@@ -352,12 +374,21 @@ public class Game extends JPanel implements Runnable {
      * @return 
      *      Game's state
      * @see GameState
+     * @see #setGameState(org.ezze.games.storekeeper.Game.GameState)
      */
     public GameState getGameState() {
         
         return gameState;
     }
     
+    /**
+     * Sets specified game's state and fires {@link #GAME_STATE}
+     * property's change.
+     * 
+     * @param gameState
+     *      Game's state to set.
+     * @see #getGameState()
+     */
     protected final void setGameState(GameState gameState) {
         
         if (gameState == null)
@@ -408,6 +439,14 @@ public class Game extends JPanel implements Runnable {
         return loadLevelsSet(xmlLevelsSetDocument, true);
     }
     
+    /**
+     * Loads levels' set from specified source.
+     * 
+     * @param source
+     *      Source of levels' set. This one can be a file name or DOM document's instance.
+     * @return 
+     *      {@code true} if levels' set has been loaded, {@code false} otherwise.
+     */
     public boolean loadLevelsSet(Object source) {
         
         return loadLevelsSet(source, false);
@@ -416,8 +455,13 @@ public class Game extends JPanel implements Runnable {
     /**
      * Loads levels' set from specified source.
      * 
+     * If levels' set will be loaded, then {@link #LEVELS_SET} property' change
+     * will be fired.
+     * 
      * @param source
      *      Source file's name or DOM document.
+     * @param isDefaultLevelsSet
+     *      Shows whether levels' set specified by {@code source} is the default one.
      * @return 
      *      {@code true} if levels' set has been loaded, {@code false} otherwise.
      */
@@ -667,6 +711,8 @@ public class Game extends JPanel implements Runnable {
      *      A number of performed moves after the take-back or {@code -1}
      *      if the take-back cannot be performed for some reasons.
      * @see #takeBack(int)
+     * @see #repeatMove()
+     * @see #repeatMoves(int)
      * @see Level#takeBack()
      * @see Level#takeBack(int)
      */
@@ -684,6 +730,8 @@ public class Game extends JPanel implements Runnable {
      *      A number of performed moves after the take-back or {@code -1}
      *      if the take-back cannot be performed for some reasons.
      * @see #takeBack()
+     * @see #repeatMove()
+     * @see #repeatMoves(int)
      * @see Level#takeBack()
      * @see Level#takeBack(int)
      */
@@ -709,11 +757,37 @@ public class Game extends JPanel implements Runnable {
         return newMovesCount;
     }
     
+    /**
+     * Repeats worker's recently taken back move.
+     * 
+     * @return 
+     *      Overall count of performed moves after the repeat or {@code -1}
+     *      if the repeat cannot be performed for some reasons.
+     * @see #repeatMoves(int)
+     * @see #takeBack()
+     * @see #takeBack(int)
+     * @see Level#repeatMove()
+     * @see Level#repeatMoves(int)
+     */
     public int repeatMove() {
         
         return repeatMoves(1);
     }
     
+    /**
+     * Repeats worker's recently taken back moves.
+     * 
+     * @param repeatMovesCount
+     *      Moves' count to repeat.
+     * @return 
+     *      Overall count of performed moves after the repeat or {@code -1}
+     *      if the repeat cannot be performed for some reasons.
+     * @see #repeatMove()
+     * @see #takeBack()
+     * @see #takeBack(int)
+     * @see Level#repeatMove()
+     * @see Level#repeatMoves(int)
+     */
     public int repeatMoves(int repeatMovesCount) {
         
         // Checking whether game is in play state
@@ -850,16 +924,39 @@ public class Game extends JPanel implements Runnable {
         forceWorkerToStopVerticalMovement();
     }
     
+    /**
+     * Sets whether level information is to be painted on the play field.
+     * 
+     * @param displayLevelInfo 
+     *      Must be {@code true} to paint level information, {@code false} otherwise.
+     * @see #displayLevelInfo
+     */
     public void setDisplayLevelInfo(boolean displayLevelInfo) {
         
         this.displayLevelInfo = displayLevelInfo;
     }
     
+    /**
+     * Retrieves current level's elapsed time in milliseconds.
+     * 
+     * @return 
+     *      Elapsed time.
+     * @see #levelTime
+     * @see #getTimeString()
+     */
     public int getTimeInSeconds() {
         
         return levelTime;
     }
     
+    /**
+     * Retrieves a string representation of current level's elapsed time.
+     * 
+     * @return 
+     *      String representation of elapsed time.
+     * @see #levelTime
+     * @see #getTimeInSeconds()
+     */
     public String getTimeString() {
         
         int fixedLevelTime = levelTime;

@@ -49,10 +49,14 @@ import org.ezze.utils.ui.aboutbox.AboutBoxInformation;
  * Desktop version of the game.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.5
+ * @version 0.0.6
  */
 public final class DesktopGame extends JFrame {
     
+    /**
+     * Used as free vertical space in
+     * {@link DesktopGameGraphics#determineOptimalSpriteSize(org.ezze.games.storekeeper.Level.LevelSize, int, int)}.
+     */
     protected static final int VERTICAL_PADDING = 50;
     
     /**
@@ -68,12 +72,15 @@ public final class DesktopGame extends JFrame {
      */
     protected Game game = null;
     
+    /**
+     * An instance of game's graphics.
+     */
     protected DesktopGameGraphics desktopGameGraphics = null;
     
     /**
      * Menu bar instance.
      */
-    JMenuBar menuBar = null;
+    protected JMenuBar menuBar = null;
     
     /**
      * File menu instance.
@@ -160,11 +167,30 @@ public final class DesktopGame extends JFrame {
      */
     protected JMenuItem menuItemAbout = null;
     
+    /**
+     * An instance of status bar.
+     */
     protected JPanel statusBar = null;
-    protected JLabel levelInfoLabel = null;
-    protected JLabel movesCountLabel = null;
-    protected JLabel pushesCountLabel = null;
+    
+    /**
+     * An instance of label to show level's elapsed time.
+     */
     protected JLabel timeLabel = null;
+    
+    /**
+     * An instance of level's informational label.
+     */
+    protected JLabel levelInfoLabel = null;
+    
+    /**
+     * An instance of label to show moves' count performed by the worker.
+     */
+    protected JLabel movesCountLabel = null;
+    
+    /**
+     * An instance of label to show pushes' count performed by the worker.
+     */
+    protected JLabel pushesCountLabel = null;
     
     /**
      * Storekeeper game's desktop implementation main class.
@@ -442,6 +468,14 @@ public final class DesktopGame extends JFrame {
         });
     }
     
+    /**
+     * Creates game's menu bar.
+     * 
+     * @param applicationProperties
+     *      A reference to application's properties.
+     * @param windowIconURL 
+     *      URL of window's icon.
+     */
     protected void createMenuBar(final Properties applicationProperties, final URL windowIconURL) {
         
         // Creating menu bar
@@ -697,6 +731,9 @@ public final class DesktopGame extends JFrame {
         menuBar.add(menuHelp);
     }
     
+    /**
+     * Creates game's status bar.
+     */
     protected void createStatusBar() {
         
         SpringLayout statusBarLayout = new SpringLayout();
@@ -706,19 +743,19 @@ public final class DesktopGame extends JFrame {
         Font labelFont = new Font(Font.MONOSPACED, Font.BOLD, 12);
         
         timeLabel = new JLabel(" ");
-        timeLabel.setForeground(new Color(120, 255, 190));
+        timeLabel.setForeground(new Color(50, 230, 0));
         timeLabel.setFont(labelFont);
         
         levelInfoLabel = new JLabel(" ");
-        levelInfoLabel.setForeground(new Color(240, 240, 240));
+        levelInfoLabel.setForeground(new Color(255, 180, 60));
         levelInfoLabel.setFont(labelFont);
         
         movesCountLabel = new JLabel(" ");
-        movesCountLabel.setForeground(new Color(240, 255, 170));
+        movesCountLabel.setForeground(new Color(235, 210, 0));
         movesCountLabel.setFont(labelFont);
         
         pushesCountLabel = new JLabel(" ");
-        pushesCountLabel.setForeground(new Color(240, 255, 170));
+        pushesCountLabel.setForeground(new Color(235, 210, 0));
         pushesCountLabel.setFont(labelFont);
         
         statusBar.add(timeLabel);
@@ -752,6 +789,9 @@ public final class DesktopGame extends JFrame {
         return game;
     }
     
+    /**
+     * Loads default levels' set.
+     */
     protected void loadDefaultLevelsSet() {
         
         GameState currentGameState = game.getGameState();
@@ -784,6 +824,9 @@ public final class DesktopGame extends JFrame {
         setVisible(true);
     }
     
+    /**
+     * Provides a dialog to select levels' set to load and loads selected levels' set.
+     */
     protected void loadLevelsSet() {
     
         if (game == null)
@@ -844,6 +887,13 @@ public final class DesktopGame extends JFrame {
         setVisible(true);
     }
     
+    /**
+     * Analyzes loaded levels' set and rebuilds game's window on success.
+     * 
+     * @return 
+     *      {@code true} if levels' set is playable, {@code false} otherwise.
+     * @see #rebuildGameWindow()
+     */
     protected boolean analyzeLoadedLevelsSet() {
         
         // Determining a size of loaded levels' field

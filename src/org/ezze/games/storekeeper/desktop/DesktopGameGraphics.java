@@ -19,7 +19,7 @@ import org.ezze.games.storekeeper.Level.WorkerDirection;
  * Represents default game graphics implementation.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.3
+ * @version 0.0.4
  */
 public class DesktopGameGraphics extends GameGraphics {
     
@@ -104,6 +104,14 @@ public class DesktopGameGraphics extends GameGraphics {
         }
     }
     
+    /**
+     * Creates an image instance compatible with current graphics configuration.
+     * 
+     * @param image
+     *      Source image.
+     * @return 
+     *      Compatible image.
+     */
     protected BufferedImage toCompatibleImage(BufferedImage image) {
         
         // Obtain the current system graphical settings

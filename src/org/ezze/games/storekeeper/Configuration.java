@@ -13,7 +13,7 @@ import org.w3c.dom.Element;
  * from the game.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.3
+ * @version 0.0.4
  */
 public class Configuration {
     
@@ -154,6 +154,16 @@ public class Configuration {
         return defaultValue;
     }
     
+    /**
+     * Parses boolean value from provided object.
+     * 
+     * @param optionValue
+     *      Object to parse.
+     * @param defaultValue
+     *      Default value to return if option value cannot be parsed.
+     * @return
+     *      Boolean value.
+     */
     public static Boolean parseBooleanOption(Object optionValue, Boolean defaultValue) {
         
         if (optionValue == null)

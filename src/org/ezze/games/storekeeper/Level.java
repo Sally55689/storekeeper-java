@@ -46,7 +46,10 @@ public class Level {
      * Character used to represent worker's item.
      */
     public static final Character LEVEL_ITEM_WORKER = '@';
-    
+
+    /**
+     * Regular representation of worker character.
+     */
     public static final String LEVEL_ITEM_WORKER_REG = "@";
     
     /**
@@ -54,6 +57,9 @@ public class Level {
      */
     public static final Character LEVEL_ITEM_WORKER_ON_GOAL = '+';
     
+    /**
+     * Regular representation of worker on goal character.
+     */
     public static final String LEVEL_ITEM_WORKER_ON_GOAL_REG = "\\+";
     
     /**
@@ -61,6 +67,9 @@ public class Level {
      */
     public static final Character LEVEL_ITEM_BRICK = '#';
     
+    /**
+     * Regular representation of brick character.
+     */
     public static final String LEVEL_ITEM_BRICK_REG = "#";
     
     /**
@@ -68,6 +77,9 @@ public class Level {
      */
     public static final Character LEVEL_ITEM_GOAL = '.';
     
+    /**
+     * Regular representation of goal character.
+     */
     public static final String LEVEL_ITEM_GOAL_REG = "\\.";
     
     /**
@@ -75,6 +87,9 @@ public class Level {
      */
     public static final Character LEVEL_ITEM_BOX = '$';
     
+    /**
+     * Regular representation of box character.
+     */
     public static final String LEVEL_ITEM_BOX_REG = "\\$";
     
     /**
@@ -82,6 +97,9 @@ public class Level {
      */
     public static final Character LEVEL_ITEM_BOX_ON_GOAL = '*';
     
+    /**
+     * Regular representation of box on goal character.
+     */
     public static final String LEVEL_ITEM_BOX_ON_GOAL_REG = "\\*";
     
     /**
@@ -89,6 +107,9 @@ public class Level {
      */
     public static final Character LEVEL_ITEM_SPACE = ' ';
     
+    /**
+     * Regular representation of space character.
+     */
     public static final String LEVEL_ITEM_SPACE_REG = " ";
     
     /**
@@ -377,28 +398,68 @@ public class Level {
         }
     }
     
+    /**
+     * A instance to represent level's size (actual or maximal).
+     */
     public static class LevelSize {
         
+        /**
+         * Level's width (items per row).
+         */
         protected int width = 0;
+        
+        /**
+         * Level's height (items per column).
+         */
         protected int height = 0;
         
+        /**
+         * Level size instance's constructor.
+         * 
+         * @param width
+         *      Level's width in items per row.
+         * @param height
+         *      Level's height in items per column.
+         */
         public LevelSize(int width, int height) {
             
             this.width = width;
             this.height = height;
         }
         
+        /**
+         * Retrieves level's width in items per row.
+         * 
+         * @return 
+         *      Level's width.
+         */
         public int getWidth() {
             
             return width;
         }
         
+        /**
+         * Retrieves level's height in items per column.
+         * 
+         * @return 
+         *      Level's height.
+         */
         public int getHeight() {
             
             return height;
         }
+        
+        /** {@inheritDoc} */
+        @Override
+        public String toString() {
+            
+            return String.format("%d rows x %d columns", getHeight(), getWidth());
+        }
     }
     
+    /**
+     * Keeps level's current state.
+     */
     protected LevelState levelState = LevelState.EMPTY;
     
     /**
@@ -408,8 +469,7 @@ public class Level {
     
     /**
      * Stores level's current state with empty lines and columns appended
-     * to make level's size equal to {@link #maximalLevelWidth} and
-     * {@link #maximalLevelHeight}.
+     * to make level's size equal to {@link #maximalSize}.
      */
     protected ArrayList<ArrayList<Character>> level = null;
     
@@ -480,7 +540,7 @@ public class Level {
      *      Lines to initialize a level from.
      * @param levelInfo 
      *      Level's information.
-     * @see #Level(java.util.ArrayList, java.util.HashMap, int, int)
+     * @see #Level(java.util.ArrayList, java.util.HashMap)
      */
     public Level(ArrayList<String> levelLines, HashMap<String, Object> levelInfo) {
         
@@ -578,6 +638,12 @@ public class Level {
         return true;
     }
     
+    /**
+     * Retrieves currently set level's maximal size.
+     * 
+     * @return 
+     *      Level's maximal size.
+     */
     public LevelSize getMaximalSize() {
         
         return maximalSize;
@@ -607,6 +673,13 @@ public class Level {
         return maximalSize.getHeight();
     }
     
+    /**
+     * Initializes a level using default maximal level's size.
+     * 
+     * @return
+     *      {@code true} if level has been initialized successfully, {@code false otherwise}.
+     * @see #initialize(org.ezze.games.storekeeper.Level.LevelSize)
+     */
     public final boolean initialize() {
         
         return initialize(null);
@@ -618,11 +691,13 @@ public class Level {
      * This method checks whether level's initial source {@link #levelInitial}
      * is valid, consists of only one worker and equal count of goals and boxes.
      * After that it adds additional empty horizontal and vertical lines to
-     * center the level in a box of ({@link #getMaximalWidth()},
-     * {@link #getMaximalHeight()}) size.
+     * center the level in a box of {@link #getMaximalSize()} size.
      * 
+     * @param maximalSize
+     *      Specifies level's bounds.
      * @return
-     *      {@code true} if level has been successfully initialized, {@code false otherwise}.
+     *      {@code true} if level has been initialized successfully, {@code false otherwise}.
+     * @see #initialize()
      */
     synchronized public final boolean initialize(LevelSize maximalSize) {
 

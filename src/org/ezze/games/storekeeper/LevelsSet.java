@@ -136,7 +136,7 @@ public class LevelsSet {
      * 
      * @param xmlLevelsSetDocument
      *      Instance of XML document.
-     * @see #load(java.lang.String)
+     * @see #load(java.lang.Object)
      */
     public void loadFromDOM(Document xmlLevelsSetDocument) {
         
@@ -253,6 +253,16 @@ public class LevelsSet {
         }
     }
     
+    /**
+     * Creates level's instance from provided lines (rows).
+     * 
+     * @param levelLines
+     *      Level's rows.
+     * @param levelName
+     *      Level's name (can be {@code null}).
+     * @return
+     *      Created level's instance.
+     */
     protected static Level createLevelFromLines(ArrayList<String> levelLines, String levelName) {
         
         if (levelLines == null || levelLines.isEmpty())
@@ -265,6 +275,14 @@ public class LevelsSet {
         return level;
     }
     
+    /**
+     * Reinitializes all currently loaded levels with default level's bounds
+     * {@link Level#DEFAULT_LEVEL_WIDTH} and {@link Level#DEFAULT_LEVEL_HEIGHT}.
+     * 
+     * @see #reinitialize(org.ezze.games.storekeeper.Level.LevelSize)
+     * @see Level#initialize()
+     * @see Level#initialize(org.ezze.games.storekeeper.Level.LevelSize)
+     */
     public void reinitialize() {
         
         reinitialize(null);
@@ -274,10 +292,13 @@ public class LevelsSet {
      * Reinitializes all currently loaded levels.
      * 
      * This method must be used every time level's maximal size (width and height)
-     * has been changed. New level's maximal size can be small enough to prevent
-     * some of loaded levels to fit it.
+     * has been changed.
      * 
+     * @param maximalLevelSize
+     *      Level's maximal size describing game's accessable play field.
+     * @see #reinitialize()
      * @see Level#initialize()
+     * @see Level#initialize(org.ezze.games.storekeeper.Level.LevelSize)
      */
     public void reinitialize(LevelSize maximalLevelSize) {
         
@@ -600,6 +621,16 @@ public class LevelsSet {
             currentLevelIndex = 0;
     }
     
+    /**
+     * Retrieves set's maximal level's size (play field's bounding area).
+     * 
+     * This one is a size of an abstract level that has a width
+     * equal to the largest width of set's levels and has a height
+     * equal to the largest height of set's levels.
+     * 
+     * @return 
+     *      Set's maximal level's size (play field's bounding area).
+     */
     public LevelSize getMaximalLevelSize() {
         
         int maximalWidth = Level.MINIMAL_LEVEL_WIDTH;

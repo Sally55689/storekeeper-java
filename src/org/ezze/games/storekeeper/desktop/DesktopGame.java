@@ -703,23 +703,22 @@ public final class DesktopGame extends JFrame {
         statusBar = new JPanel(statusBarLayout);
         statusBar.setBackground(desktopGameGraphics.getBackground());
 
-        Color labelForeground = new Color(240, 240, 240);
         Font labelFont = new Font(Font.MONOSPACED, Font.BOLD, 12);
         
         timeLabel = new JLabel(" ");
-        timeLabel.setForeground(labelForeground);
+        timeLabel.setForeground(new Color(120, 255, 190));
         timeLabel.setFont(labelFont);
         
         levelInfoLabel = new JLabel(" ");
-        levelInfoLabel.setForeground(labelForeground);
+        levelInfoLabel.setForeground(new Color(240, 240, 240));
         levelInfoLabel.setFont(labelFont);
         
         movesCountLabel = new JLabel(" ");
-        movesCountLabel.setForeground(labelForeground);
+        movesCountLabel.setForeground(new Color(240, 255, 170));
         movesCountLabel.setFont(labelFont);
         
         pushesCountLabel = new JLabel(" ");
-        pushesCountLabel.setForeground(labelForeground);
+        pushesCountLabel.setForeground(new Color(240, 255, 170));
         pushesCountLabel.setFont(labelFont);
         
         statusBar.add(timeLabel);
@@ -734,12 +733,12 @@ public final class DesktopGame extends JFrame {
         statusBarLayout.putConstraint(SpringLayout.EAST, movesCountLabel, -10, SpringLayout.EAST, statusBar);
         
         statusBarLayout.putConstraint(SpringLayout.WEST, levelInfoLabel, 0, SpringLayout.WEST, timeLabel);
-        statusBarLayout.putConstraint(SpringLayout.NORTH, levelInfoLabel, 4, SpringLayout.SOUTH, timeLabel);
+        statusBarLayout.putConstraint(SpringLayout.NORTH, levelInfoLabel, 1, SpringLayout.SOUTH, timeLabel);
         
         statusBarLayout.putConstraint(SpringLayout.NORTH, pushesCountLabel, 0, SpringLayout.NORTH, levelInfoLabel);
         statusBarLayout.putConstraint(SpringLayout.EAST, pushesCountLabel, 0, SpringLayout.EAST, movesCountLabel);
         
-        statusBarLayout.putConstraint(SpringLayout.SOUTH, statusBar, 4, SpringLayout.SOUTH, levelInfoLabel);
+        statusBarLayout.putConstraint(SpringLayout.SOUTH, statusBar, 2, SpringLayout.SOUTH, levelInfoLabel);
     }
     
     /**

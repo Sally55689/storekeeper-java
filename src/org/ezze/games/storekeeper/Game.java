@@ -8,6 +8,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.font.TextAttribute;
@@ -1214,8 +1215,23 @@ public class Game extends JPanel implements Runnable {
             }
 
             // Repainting the play field
-            repaint();
+            Dimension spriteSize = getGameGraphics().getSpriteDimension();
+            int repaintX = spriteSize.width * (gameLevel.getWorkerX() - 1);
+            int repaintY = spriteSize.height * (gameLevel.getWorkerY() - 1);
+            Rectangle rectangle = new Rectangle(repaintX, repaintY, spriteSize.width * 3, spriteSize.height * 3);
+            repaint(rectangle);
             
+            // Repainting level information
+            if (displayLevelInfo) {
+                
+                Rectangle topRectangle = new Rectangle(0, 0,
+                        spriteSize.width * gameLevel.getMaximalWidth(), spriteSize.height);
+                repaint(topRectangle);
+                Rectangle bottomRectangle = new Rectangle(0, spriteSize.height * (gameLevel.getSize().getHeight() - 1),
+                        spriteSize.width * gameLevel.getMaximalWidth(), spriteSize.height);
+                repaint(bottomRectangle);
+            }
+                    
             if (isAnimationInProgress) {
 
                 if (workerAnimDeltaX != 0) {

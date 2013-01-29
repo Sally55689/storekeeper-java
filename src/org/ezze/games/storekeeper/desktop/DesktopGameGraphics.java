@@ -7,12 +7,14 @@ import java.net.URL;
 import javax.swing.ImageIcon;
 import org.ezze.games.storekeeper.Game;
 import org.ezze.games.storekeeper.GameGraphics;
+import org.ezze.games.storekeeper.Level.Direction;
+import org.ezze.games.storekeeper.Level.WorkerDirection;
 
 /**
  * Represents default game graphics implementation.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.2
+ * @version 0.0.3
  */
 public class DesktopGameGraphics extends GameGraphics {
     
@@ -41,9 +43,18 @@ public class DesktopGameGraphics extends GameGraphics {
     }
     
     @Override
-    public final int getActionSpritesCount() {
+    public final int getActionSpritesCount(WorkerDirection direction) {
         
         return 9;
+    }
+    
+    @Override
+    public Image getActionSprite(WorkerDirection direction, int spriteIndex) {
+        
+        Direction horizontalDirection = direction.getHorizontal();
+        Direction verticalDirection = direction.getVertical();
+        WorkerDirection displayDirection = new WorkerDirection(horizontalDirection, verticalDirection, false);
+        return super.getActionSprite(displayDirection, spriteIndex);
     }
     
     @Override

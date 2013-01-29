@@ -10,12 +10,14 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import javax.swing.JFrame;
+import org.ezze.games.storekeeper.Level.Direction;
+import org.ezze.games.storekeeper.Level.WorkerDirection;
 
 /**
  * Abstract class required to implement game's visual representation.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.2
+ * @version 0.0.3
  */
 abstract public class GameGraphics {
 
@@ -38,6 +40,16 @@ abstract public class GameGraphics {
      * String identifier for right-oriented worker sprite.
      */
     public final static String SPRITE_ID_WORKER_RIGHT = "worker_right";
+    
+    /**
+     * String identifier for up-oriented worker sprite.
+     */
+    public final static String SPRITE_ID_WORKER_UP = "worker_up";
+    
+    /**
+     * String identifier for down-oriented worker sprite.
+     */
+    public final static String SPRITE_ID_WORKER_DOWN = "worker_down";
     
     /**
      * String identifier for brick sprite.
@@ -256,6 +268,8 @@ abstract public class GameGraphics {
      *      <li>{@link #IMAGE_ID_INTRODUCTION} for introduction image;</li>
      *      <li>{@link #SPRITE_ID_WORKER_LEFT} for left-oriented worker sprite;</li>
      *      <li>{@link #SPRITE_ID_WORKER_RIGHT} for right-oriented worker sprite;</li>
+     *      <li>{@link #SPRITE_ID_WORKER_UP} for up-oriented worker sprite;</li>
+     *      <li>{@link #SPRITE_ID_WORKER_DOWN} for down-oriented worker sprite;</li> 
      *      <li>{@link #SPRITE_ID_BRICK} for brick sprite;</li>
      *      <li>{@link #SPRITE_ID_CELL} for cell sprite;</li>
      *      <li>{@link #SPRITE_ID_BOX} for box sprite;</li>
@@ -357,47 +371,32 @@ abstract public class GameGraphics {
         
         return getSprite(spriteSize, IMAGE_ID_INTRODUCTION);
     }
-    
+
     /**
-     * Retrieves worker's action sprites' count.
-     * 
-     * This count also includes worker's static position.
+     * Retrieves worker's action sprites' count for specified direction.
      * 
      * @return
      *      Worker's action sprites' count.
      */
-    abstract public int getActionSpritesCount();
+    abstract public int getActionSpritesCount(WorkerDirection direction);
     
-    /**
-     * Retrieves animation sprite of the worker looking to the left.
-     * 
-     * @param spriteIndex
-     *      Animation sprite's index in the range [0; {@link #getActionSpritesCount()} - 1]
-     * @return 
-     *      Worker's animation sprite
-     */
-    public Image getLeftActionSprite(int spriteIndex) {
+    public Image getActionSprite(WorkerDirection direction, int spriteIndex) {
         
-        if (spriteIndex < 0 || spriteIndex >= getActionSpritesCount())
+        int actionSpritesCount = getActionSpritesCount(direction);
+        if (spriteIndex < 0 || spriteIndex >= actionSpritesCount)
             return getSprite(spriteSize, SPRITE_ID_EMPTY);
         
-        return getSprite(spriteSize, SPRITE_ID_WORKER_LEFT, spriteIndex);
-    }
-    
-    /**
-     * Retrieves animation sprite of the worker looking to the right.
-     * 
-     * @param spriteIndex
-     *      Animation sprite's index in the range [0; {@link #getActionSpritesCount()} - 1]
-     * @return 
-     *      Worker's animation sprite
-     */
-    public Image getRightActionSprite(int spriteIndex) {
-      
-        if (spriteIndex < 0 || spriteIndex >= getActionSpritesCount())
-            return getSprite(spriteSize, SPRITE_ID_EMPTY);
+        String spriteID = null;
+        if (direction.get() == Direction.LEFT)
+            spriteID = SPRITE_ID_WORKER_LEFT;
+        else if (direction.get() == Direction.RIGHT)
+            spriteID = SPRITE_ID_WORKER_RIGHT;
+        else if (direction.get() == Direction.UP)
+            spriteID = SPRITE_ID_WORKER_UP;
+        else if (direction.get() == Direction.DOWN)
+            spriteID = SPRITE_ID_WORKER_DOWN;
         
-        return getSprite(spriteSize, SPRITE_ID_WORKER_RIGHT, spriteIndex);
+        return getSprite(spriteSize, spriteID, spriteIndex);
     }
     
     /**

@@ -1,6 +1,6 @@
 STOREKEEPER
 
-  Version: 0.0.2
+  Version: 0.0.3
   Author: Dmitriy Pushkov (ezze@ezze.org)
   Graphics: Marc Russell (http://www.spicypixel.net), Dmitriy Pushkov
   Web-site: http://www.ezze.org
@@ -25,6 +25,9 @@ DESCRIPTION
       per item, small - 16x16 pixels and optimal that determines the best size
       to fit currently set screen resolution).
 
+  Version 0.0.3 changes:
+    - take back and repeat move actions have been added.
+
 
 HOW TO RUN
   
@@ -41,7 +44,7 @@ HOW TO BUILD
   One may use "build.xml" in the root of this repository to build the project
   with Ant (the original jar was built with Ant 1.8.2). This one implements
   the following targets:
-    - clean (removes "build" directory);
+    - clean (removes "build" and "jar" directories);
     - compile (compiles source code from "src" directory in "build/classes"
       directory using library "lib" directory as a classpath);
     - jar (creates single jar executable "jar/storekeeper.jar",

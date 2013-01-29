@@ -16,7 +16,7 @@ import org.w3c.dom.Element;
  * @author Dmitriy Pushkov
  * @version 0.0.1
  */
-public class GameConfiguration {
+public class Configuration {
     
     public static final String CONFIGURATION_XML_TAG_ROOT = "configuration";
     public static final String CONFIGURATION_XML_TAG_GAMEPLAY = "gameplay";
@@ -34,15 +34,15 @@ public class GameConfiguration {
     
     public static final String OPTION_LEVEL_WIDTH = String.format("%s.%s",
             CONFIGURATION_XML_TAG_INTERFACE, CONFIGURATION_XML_TAG_LEVEL_WIDTH);
-    public static final Integer DEFAULT_OPTION_LEVEL_WIDTH = GameLevel.DEFAULT_LEVEL_WIDTH;
-    public static final Integer MIN_OPTION_LEVEL_WIDTH = new Integer(GameLevel.MINIMAL_LEVEL_WIDTH);
-    public static final Integer MAX_OPTION_LEVEL_WIDTH = new Integer(GameLevel.MAXIMAL_LEVEL_WIDTH);
+    public static final Integer DEFAULT_OPTION_LEVEL_WIDTH = Level.DEFAULT_LEVEL_WIDTH;
+    public static final Integer MIN_OPTION_LEVEL_WIDTH = new Integer(Level.MINIMAL_LEVEL_WIDTH);
+    public static final Integer MAX_OPTION_LEVEL_WIDTH = new Integer(Level.MAXIMAL_LEVEL_WIDTH);
     
     public static final String OPTION_LEVEL_HEIGHT = String.format("%s.%s",
             CONFIGURATION_XML_TAG_INTERFACE, CONFIGURATION_XML_TAG_LEVEL_HEIGHT);
-    public static final Integer DEFAULT_OPTION_LEVEL_HEIGHT = GameLevel.DEFAULT_LEVEL_HEIGHT;
-    public static final Integer MIN_OPTION_LEVEL_HEIGHT = new Integer(GameLevel.MINIMAL_LEVEL_HEIGHT);
-    public static final Integer MAX_OPTION_LEVEL_HEIGHT = new Integer(GameLevel.MAXIMAL_LEVEL_HEIGHT);
+    public static final Integer DEFAULT_OPTION_LEVEL_HEIGHT = Level.DEFAULT_LEVEL_HEIGHT;
+    public static final Integer MIN_OPTION_LEVEL_HEIGHT = new Integer(Level.MINIMAL_LEVEL_HEIGHT);
+    public static final Integer MAX_OPTION_LEVEL_HEIGHT = new Integer(Level.MAXIMAL_LEVEL_HEIGHT);
     
     public static final String OPTION_SPRITE_SIZE = String.format("%s.%s",
             CONFIGURATION_XML_TAG_INTERFACE, CONFIGURATION_XML_TAG_SPRITE_SIZE);
@@ -82,7 +82,7 @@ public class GameConfiguration {
      * @param configurationFileName 
      *      A path to configuration XML file name.
      */
-    public GameConfiguration(String configurationFileName) {
+    public Configuration(String configurationFileName) {
         
         // Creating options list instance
         optionsList = new HashMap<String, Object>();

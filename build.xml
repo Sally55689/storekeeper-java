@@ -27,6 +27,7 @@
     
     <target name="clean">
         <delete dir="${build.dir}" />
+        <delete dir="${jar.dir}" />
     </target>
         
     <target name="compile">
@@ -71,7 +72,6 @@
             <jvmarg value="-Xrunjdwp:transport=dt_socket,address=${jpda.address}" />
         </java>
     </target>
-
     
     <target name="javadoc">
         <delete dir="${javadoc.dir}" />

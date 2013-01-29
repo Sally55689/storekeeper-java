@@ -9,5 +9,56 @@ STOREKEEPER
 DESCRIPTION
 
   This is a Java implementation of classic Sokoban game.
+  Initial version (0.0.1) of the game has the following features:
+    - desktop run (tested on Linux Kubuntu 11.10 and Windows XP);
+    - 50 classic Sokoban levels by default;
+    - opportunity to load own levels' set in Storekeeper XML format;
+    - support of levels of a size no more than 20x20 items;
+    - two game field's resolution modes: 32x32 per item by default and 16x16
+      per item for small screen resolution.
 
+
+HOW TO RUN
+  
+  In order to run the game one should install JRE6 (Java Runtime Environemt 6)
+  and then execute "build/jar/storekeeper.jar" from the repository. No
+  external libraries are required for this distributable jar.
+
+
+HOW TO BUILD
+
+  You are always welcome to contribute adding new features or providing your
+  own graphic interfaces for the game and to build the project by yourself.
+  
+  One may use "build.xml" in the root of this repository to build the project
+  with Ant (the original jar was built with Ant 1.8.2). This one implements
+  the following targets:
+    - clean (removes "build" directory);
+    - compile (compiles source code from "src" directory in "build/classes"
+      directory using library "lib" directory as a classpath);
+    - jar (creates single jar executable "build/jar/storekeeper.jar",
+      "lib/ezze-utils.jar" is also required to zip the jar);
+    - run (starts "build/jar/storekeeper.jar");
+    - javadoc (generates project's javadoc in "javadoc" directory; note that
+      source code of "ezze-utils" library is required to generate a full
+      reference similar to the one in "javadoc" library of the repository).
+      
+  Please note that JDK6 (Java Development Kit 6) and external library
+  "lib/ezze-utils.jar" from the repository are required for the build.
+  
+  I tried to comment the code as good as possible so you can find more
+  information right in source code or in "javadoc" directory.
+  
+
+ADDITIONAL INFORMATION
+
+  This game is my first open source project and my first experience to share
+  my work with other people. I hope that you will be interested in this game
+  and its further development. Please feel free to contact me and help to
+  improve it by any way you want.
+  
+  I also want to say special thanks to http://www.spicypixel.net and Marc
+  Russell for awesome "worker" sprites I was able to use in my game for free.
+  Here is the link to this amazing stuff:
+  http://www.spicypixel.net/2008/01/10/gfxlib-fuzed-a-free-developer-graphic-library/
   

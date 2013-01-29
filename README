@@ -1,6 +1,6 @@
 STOREKEEPER
 
-  Version: 0.0.1
+  Version: 0.0.2
   Author: Dmitriy Pushkov (ezze@ezze.org)
   Graphics: Marc Russell (http://www.spicypixel.net), Dmitriy Pushkov
   Web-site: http://www.ezze.org
@@ -17,12 +17,20 @@ DESCRIPTION
     - two game field's resolution modes: 32x32 per item by default and 16x16
       per item for small screen resolution.
 
+  Version 0.0.2 changes:
+    - options dialog has been added with the following options: game speed;
+      level's maximal size (width and height) which allows to load levels' sets
+      with levels of size up to 40 items per row and 35 items per column;
+      level's sprite size (large - 32x32 pixels per item, medium - 24x24 pixels
+      per item, small - 16x16 pixels and optimal that determines the best size
+      to fit currently set screen resolution).
+
 
 HOW TO RUN
   
   In order to run the game one should install JRE6 (Java Runtime Environemt 6)
-  and then execute "build/jar/storekeeper.jar" from the repository. No
-  external libraries are required for this distributable jar.
+  and then execute "jar/storekeeper.jar" from the repository. No external libraries
+  are required for this distributable jar.
 
 
 HOW TO BUILD
@@ -36,12 +44,13 @@ HOW TO BUILD
     - clean (removes "build" directory);
     - compile (compiles source code from "src" directory in "build/classes"
       directory using library "lib" directory as a classpath);
-    - jar (creates single jar executable "build/jar/storekeeper.jar",
+    - jar (creates single jar executable "jar/storekeeper.jar",
       "lib/ezze-utils.jar" is also required to zip the jar);
-    - run (starts "build/jar/storekeeper.jar");
+    - run (starts "jar/storekeeper.jar");
+    - debug (debugs a project using NetBeans debugger);
     - javadoc (generates project's javadoc in "javadoc" directory; note that
       source code of "ezze-utils" library is required to generate a full
-      reference similar to the one in "javadoc" library of the repository).
+      reference).
       
   Please note that JDK6 (Java Development Kit 6) and external library
   "lib/ezze-utils.jar" from the repository are required for the build.

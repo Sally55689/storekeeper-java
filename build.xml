@@ -3,21 +3,27 @@
     
     <description>Builds Storekeeper game</description>
 
-    <property name="main-class" value="org.ezze.games.storekeeper.Desktop" />
+    <property name="main-class" value="org.ezze.games.storekeeper.desktop.DesktopGame" />
     <property name="src.dir" value="src" />
     <property name="lib.dir" value="lib" />
     <property name="build.dir" value="build" />
     <property name="classes.dir" value="${build.dir}/classes" />
-    <property name="jar.dir" value="${build.dir}/jar" />
+    <property name="jar.dir" value="jar" />
     <property name="javadoc.dir" value="javadoc" />
     
-    <path id="classpath">
+    <path id="libpath">
         <fileset dir="${lib.dir}" includes="**/*.jar" />
     </path>
     
     <patternset id="resources">
         <include name="org/ezze/games/storekeeper/resources/**" />
     </patternset>
+    
+    <path id="resourcespath">
+        <fileset dir="${src.dir}">
+            <patternset refid="resources" />
+        </fileset>
+    </path>
     
     <target name="clean">
         <delete dir="${build.dir}" />
@@ -26,15 +32,15 @@
     <target name="compile">
         <mkdir dir="${build.dir}" />
         <mkdir dir="${classes.dir}" />
-        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" includeantruntime="false" />
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="libpath" includeantruntime="false" debug="true" debuglevel="lines,vars,source" />
+        <copy todir="${classes.dir}">
+            <path refid="resourcespath" />
+        </copy>
     </target>
     
     <target name="jar" depends="compile">
         <mkdir dir="${jar.dir}" />
         <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
-            <fileset dir="${src.dir}">
-                <patternset refid="resources" />
-            </fileset>
             <zipgroupfileset dir="${lib.dir}" includes="*.jar" />
             <manifest>
                 <attribute name="Main-Class" value="${main-class}" />
@@ -45,6 +51,27 @@
     <target name="run" depends="jar">
         <java jar="${jar.dir}/${ant.project.name}.jar" fork="true" />
     </target>
+    
+    <target name="debug" depends="compile">
+        <nbjpdastart addressproperty="jpda.address" name="${ant.project.name}" transport="dt_socket">
+            <classpath>
+                <pathelement location="${classes.dir}" />
+                <path refid="libpath" />
+            </classpath>
+        </nbjpdastart>
+        <java fork="true" classname="${main-class}">
+            <sysproperty key="java.library.path" path="${dist.dir}" />
+            <classpath>
+                <pathelement location="${classes.dir}" />
+                <path refid="libpath" />
+            </classpath>
+            <jvmarg value="-Xdebug" />
+            <jvmarg value="-Xnoagent" />
+            <jvmarg value="-Djava.compiler=none" />
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,address=${jpda.address}" />
+        </java>
+    </target>
+
     
     <target name="javadoc">
         <delete dir="${javadoc.dir}" />

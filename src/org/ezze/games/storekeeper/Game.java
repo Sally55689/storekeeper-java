@@ -27,33 +27,34 @@ import org.w3c.dom.Element;
  * animation and user actions' handling.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class Game extends JPanel implements Runnable {
 
     /**
-     * Level load result enumeration.
+     * Level methods' result enumeration.
      * 
-     * Used as a result of methods loading levels' sets.
+     * Used as a result of methods loading and reinitializng levels' sets.
      * 
      * @see #loadDefaultLevelsSet()
      * @see #loadLevelsSet(java.lang.String)
+     * @see #reinitializeLevels()
      */
-    public enum LevelLoadResult {
+    public enum LevelResult {
         
         /**
-         * Shows that levels' set has been successfully loaded.
+         * Shows that levels' set has been successfully loaded or reinitialized.
          */
         SUCCESS,
         
         /**
-         * Shows that at least one level of a set is not valid
-         * and therefore is not loaded.
+         * Shows that at least one level of a set is not valid and
+         * therefore is not loaded or reinitialized.
          */
         WARNING,
         
         /**
-         * Shows that levels' set couldn't be loaded.
+         * Shows that levels' set couldn't be loaded or reinitialized.
          */
         ERROR
     }
@@ -112,27 +113,23 @@ public class Game extends JPanel implements Runnable {
         RIGHT
     }
     
+    private GameConfiguration gameConfiguration = null;
+    
     /**
      * A reference to an interface implementing game graphics,
      * particularly providing references to sprites' images.
      * 
      * This one must be passed as instance constructor's argument.
      * 
-     * @see #Game(org.ezze.games.storekeeper.GameGraphics)
-     * @see #Game(org.ezze.games.storekeeper.GameGraphics, org.ezze.games.storekeeper.GameLevelCompletionListener)
+     * @see #Game(org.ezze.games.storekeeper.GameConfiguration, org.ezze.games.storekeeper.GameGraphics)
+     * @see #Game(org.ezze.games.storekeeper.GameConfiguration, org.ezze.games.storekeeper.GameGraphics, org.ezze.games.storekeeper.GameLevelCompletionListener)
      */
     private GameGraphics gameGraphics = null;
     
     /**
-     * Game's font, will be automatically determined during
-     * the first game loop implemented by {@link #run()} method.
-     */
-    private Font gameFont = null;
-    
-    /**
      * An instance of interface providing actions to do after level will have been completed.
      * 
-     * @see #Game(org.ezze.games.storekeeper.GameGraphics, org.ezze.games.storekeeper.GameLevelCompletionListener)
+     * @see #Game(org.ezze.games.storekeeper.GameConfiguration, org.ezze.games.storekeeper.GameGraphics, org.ezze.games.storekeeper.GameLevelCompletionListener)
      */
     private GameLevelCompletionListener gameLevelCompletionListener = null;
     
@@ -323,30 +320,38 @@ public class Game extends JPanel implements Runnable {
     /**
      * Game's simple constructor.
      * 
+     * @param gameConfiguration
+     *      A reference to game configuration.
      * @param gameGraphics 
-     *      A reference to game graphics implementation
-     * @see #Game(org.ezze.games.storekeeper.GameGraphics, org.ezze.games.storekeeper.GameLevelCompletionListener)
+     *      A reference to game graphics implementation.
+     * @see #Game(org.ezze.games.storekeeper.GameConfiguration, org.ezze.games.storekeeper.GameGraphics, org.ezze.games.storekeeper.GameLevelCompletionListener)
      * @see GameGraphics
      */
-    public Game(GameGraphics gameGraphics) {
+    public Game(GameConfiguration gameConfiguration, GameGraphics gameGraphics) {
         
-        this(gameGraphics, null);
+        this(gameConfiguration, gameGraphics, null);
     }
     
     /**
      * Game's advanced constructor.
      * 
+     * @param gameConfiguration
+     *      A reference to game configuration.
      * @param gameGraphics
-     *      A reference to game graphics implementation
+     *      A reference to game graphics implementation.
      * @param gameLevelCompletionListener 
-     *      A reference to game level's completion listener
-     * @see #Game(org.ezze.games.storekeeper.GameGraphics)
+     *      A reference to game level's completion listener.
+     * @see #Game(org.ezze.games.storekeeper.GameConfiguration, org.ezze.games.storekeeper.GameGraphics)
      * @see GameGraphics
      * @see GameLevelCompletionListener
      */
-    public Game(GameGraphics gameGraphics, GameLevelCompletionListener gameLevelCompletionListener) {
+    public Game(GameConfiguration gameConfiguration, GameGraphics gameGraphics,
+            GameLevelCompletionListener gameLevelCompletionListener) {
         
         super();
+        
+        // Storing a reference to game configuration instance
+        this.gameConfiguration = gameConfiguration;
         
         // Storing a reference to graphics implementation
         this.gameGraphics = gameGraphics;
@@ -369,9 +374,21 @@ public class Game extends JPanel implements Runnable {
         // Setting field's background color
         setBackground(gameGraphics.getBackground());
     }
+   
+    /**
+     * Retrieves a reference to game configuration instance.
+     * 
+     * @return
+     *      Game configuration instance
+     * @see #gameConfiguration
+     */
+    public GameConfiguration getGameConfiguration() {
+        
+        return gameConfiguration;
+    }
     
     /**
-     * Retrieves the reference to game graphics implementation.
+     * Retrieves a reference to game graphics implementation.
      * 
      * @return 
      *      Class implementing {@link GameGraphics} interface
@@ -420,21 +437,21 @@ public class Game extends JPanel implements Runnable {
      * Loads default levels set.
      * 
      * @return 
-     *      Level's load result {@link LevelLoadResult}
+     *      Level's load result {@link Result}
      * @see #loadLevelsSet(java.lang.String) 
      * @see #readLevelsSetFromXML(org.w3c.dom.Document, boolean) 
      */
-    public LevelLoadResult loadDefaultLevelsSet() {
+    public LevelResult loadDefaultLevelsSet() {
         
         String resourcePathToLevelsSet = String.format("/%s/resources/levels.xml",
                 Game.class.getPackage().getName().replace('.', '/'));
         InputStream levelsSetInputStream = Game.class.getResourceAsStream(resourcePathToLevelsSet);
         if (levelsSetInputStream == null)
-            return LevelLoadResult.ERROR;
+            return LevelResult.ERROR;
         
         Document xmlLevelsSetDocument = XMLParser.readXMLDocument(levelsSetInputStream);
-        LevelLoadResult loadResult = readLevelsSetFromXML(xmlLevelsSetDocument, true);
-        if (loadResult != LevelLoadResult.ERROR)
+        LevelResult loadResult = readLevelsSetFromXML(xmlLevelsSetDocument, true);
+        if (loadResult != LevelResult.ERROR)
             isDefaultLevelsSetLoaded = true;
         return loadResult;
     }
@@ -445,22 +462,22 @@ public class Game extends JPanel implements Runnable {
      * @param levelsSetFileName
      *      Set's XML file's name
      * @return
-     *      Level's load result {@link LevelLoadResult}
+     *      Level's load result {@link Result}
      * @see #loadDefaultLevelsSet() 
      * @see #readLevelsSetFromXML(org.w3c.dom.Document, boolean) 
      */
-    public LevelLoadResult loadLevelsSet(String levelsSetFileName) {
+    public LevelResult loadLevelsSet(String levelsSetFileName) {
         
         if (levelsSetFileName == null)
-            return LevelLoadResult.ERROR;
+            return LevelResult.ERROR;
         
         File levelsSetFile = new File(levelsSetFileName);
         if (!levelsSetFile.exists() || !levelsSetFile.isFile())
-            return LevelLoadResult.ERROR;
+            return LevelResult.ERROR;
         
         Document xmlLevelsSetDocument = XMLParser.readXMLDocument(levelsSetFileName);
-        LevelLoadResult loadResult = readLevelsSetFromXML(xmlLevelsSetDocument, false);
-        if (loadResult != LevelLoadResult.ERROR)
+        LevelResult loadResult = readLevelsSetFromXML(xmlLevelsSetDocument, false);
+        if (loadResult != LevelResult.ERROR)
             isDefaultLevelsSetLoaded = false;
         return loadResult;
     }
@@ -479,21 +496,21 @@ public class Game extends JPanel implements Runnable {
      * @param isDefault
      *      Shows whether XML document is of default levels' set
      * @return 
-     *      Level's load result {@link LevelLoadResult}
+     *      Level's load result {@link Result}
      * @see #loadDefaultLevelsSet()
      * @see #loadLevelsSet(java.lang.String)
      */
-    private LevelLoadResult readLevelsSetFromXML(Document xmlLevelsSetDocument, boolean isDefault) {
+    private LevelResult readLevelsSetFromXML(Document xmlLevelsSetDocument, boolean isDefault) {
         
         // Retrieving levels set XML file's root element
         Element xmlLevelsSetElement = XMLParser.getDocumentElement(xmlLevelsSetDocument);
         if (xmlLevelsSetElement == null)
-            return LevelLoadResult.ERROR;
+            return LevelResult.ERROR;
         
         // Retrieving levels count from XML
         int levelsCount = XMLParser.getChildrenCount(xmlLevelsSetElement, "level");
         if (levelsCount == 0)
-            return LevelLoadResult.ERROR;
+            return LevelResult.ERROR;
         
         // Stopping the game
         stop(true);
@@ -506,6 +523,12 @@ public class Game extends JPanel implements Runnable {
         
         // This flag will show whether at least one level of the set can't be initialized
         boolean areSomeLevelsNotInitialized = false;
+        
+        // Defining level's maximal width and height
+        int maximalLevelWidth = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_WIDTH,
+                GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH);
+        int maximalLevelHeight = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_HEIGHT,
+                GameConfiguration.DEFAULT_OPTION_LEVEL_HEIGHT);
         
         int levelIndex = 0;
         while (levelIndex < levelsCount) {
@@ -539,7 +562,7 @@ public class Game extends JPanel implements Runnable {
                     HashMap<String, Object> levelInfo = new HashMap<String, Object>();
                     levelInfo.put("id", new Integer(levelID));
                     levelInfo.put("name", levelName);
-                    GameLevel gameLevel = new GameLevel(levelLines, levelInfo);
+                    GameLevel gameLevel = new GameLevel(levelLines, levelInfo, maximalLevelWidth, maximalLevelHeight);
                     if (gameLevel.isInitialized()) {
 
                         gameLevels.add(gameLevel);
@@ -558,16 +581,81 @@ public class Game extends JPanel implements Runnable {
         currentGameLevelIndex = 0;
         
         // Checking whether at least one level has been successfully retrieved
-        LevelLoadResult readResult = gameLevels.isEmpty() ? LevelLoadResult.ERROR :
-                (areSomeLevelsNotInitialized ? LevelLoadResult.WARNING : LevelLoadResult.SUCCESS);
+        LevelResult readResult = gameLevels.isEmpty() ? LevelResult.ERROR :
+                (areSomeLevelsNotInitialized ? LevelResult.WARNING : LevelResult.SUCCESS);
         
-        if (readResult == LevelLoadResult.ERROR && !isDefault) {
+        if (readResult == LevelResult.ERROR && !isDefault) {
             
             // Loading default levels set on failure
             loadDefaultLevelsSet();
         }
         
         return readResult;
+    }
+    
+    /**
+     * Reinitializes all currently loaded levels.
+     * 
+     * This method must be used every time level's maximal size (width and height)
+     * has been changed. New level's maximal size can be small enough to prevent
+     * some of loaded levels to fit it.
+     * 
+     * @return
+     *      Reinitialization result, must be one of the following values:
+     *      <ul>
+     *      <li>{@link LevelResult#SUCCESS} - all levels have been successfully reinitialized;</li>
+     *      <li>{@link LevelResult#WARNING} - at least one of currently loaded levels was unable
+     *          to be reinitialized;</li>
+     *      <li>{@link LevelResult#ERROR} - all currently loaded levels were unable to be reinitialized.</li>
+     *      </ul>
+     * @see GameLevel#initialize()
+     */
+    public LevelResult reinitializeLevels() {
+        
+        // Stopping the game if it's required
+        stop(true);
+        
+        if (gameLevels == null || gameLevels.isEmpty())
+            return LevelResult.ERROR;
+
+        // Retrieving level's configured width and height
+        int levelWidth = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_WIDTH,
+                GameConfiguration.DEFAULT_OPTION_LEVEL_WIDTH);
+        int levelHeight = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_LEVEL_HEIGHT,
+                GameConfiguration.DEFAULT_OPTION_LEVEL_HEIGHT);
+        
+        int reinitializedLevelsCount = 0;
+        int gameLevelIndex = 0;
+        while (gameLevelIndex < gameLevels.size()) {
+            
+            // Retrieving a reference to current level
+            GameLevel gameLevel = gameLevels.get(gameLevelIndex);
+            
+            // Changing level's maximal size before reinitialization
+            gameLevel.setMaximalLevelSize(levelWidth, levelHeight);
+            
+            // Attempting to reinitialize the level
+            if (gameLevel.initialize()) {
+                
+                reinitializedLevelsCount++;
+            }
+            else {
+                
+                // Changing currently selected level's index if it's required
+                if (gameLevelIndex < currentGameLevelIndex && currentGameLevelIndex > 0)
+                    currentGameLevelIndex--;
+            }
+            
+            gameLevelIndex++;
+        }
+        
+        LevelResult reinitializationResult = LevelResult.SUCCESS;
+        if (reinitializedLevelsCount == 0)
+            reinitializationResult = LevelResult.ERROR;
+        else if (reinitializedLevelsCount < gameLevels.size())
+            reinitializationResult = LevelResult.WARNING;
+        
+        return reinitializationResult;
     }
     
     /**
@@ -721,7 +809,7 @@ public class Game extends JPanel implements Runnable {
             gameLoopThread.interrupt();
             try {
 
-                Thread.sleep(2 * gameGraphics.getGameLoopIterationTime());
+                gameLoopThread.join();
             }
             catch (InterruptedException ex) {
 
@@ -930,20 +1018,18 @@ public class Game extends JPanel implements Runnable {
 
         Graphics2D g2d = (Graphics2D)g;
         
-        if (gameFont == null) {
-         
-            int fontSize = (int)(gameGraphics.getSpriteDimension().width * 12 / 32);
-            if (fontSize < 8)
-                fontSize = 8;
-            gameFont = new Font("Monospaced", Font.BOLD, fontSize);
-        }
+        int fontSize = (int)((double)gameGraphics.getSpriteDimension().width / 2) + 4;
+        Font gameFont = new Font("Monospaced", Font.BOLD, fontSize);
         
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         FontMetrics fontMetrics = g2d.getFontMetrics(gameFont);
         
-        int statusLineHorizontalOffset = fontMetrics.stringWidth(" ");
-        int statusLineTopOffset = gameGraphics.getSpriteDimension().height * (GameLevel.LEVEL_HEIGHT - 1) +
-                (gameGraphics.getSpriteDimension().height - fontMetrics.stringWidth(" "));
+        // Retrieving a reference to current game level
+        GameLevel gameLevel = gameLevels.get(currentGameLevelIndex);
+
+        // Retrieving level's maximal size
+        int maximalLevelWidth = gameLevel.getMaximalLevelWidth();
+        int maximalLevelHeight = gameLevel.getMaximalLevelHeight();
         
         if (gameState == GameState.INTRODUCTION) {
 
@@ -961,17 +1047,14 @@ public class Game extends JPanel implements Runnable {
             setBackground(gameGraphics.getBackground());
         }
         else if ((gameState == GameState.PLAY || gameState == GameState.COMPLETED) && gameLevels != null && gameLevels.get(currentGameLevelIndex) != null) {
-
-            // Retrieving a reference to current game level
-            GameLevel gameLevel = gameLevels.get(currentGameLevelIndex);
             
             // Retrieving sprites' dimension
             Dimension spriteDimension = gameGraphics.getSpriteDimension();
             
             // Drawing gameLevel's current state
-            for (int lineIndex = 0; lineIndex < GameLevel.LEVEL_HEIGHT; lineIndex++) {
+            for (int lineIndex = 0; lineIndex < maximalLevelHeight; lineIndex++) {
 
-                for (int columnIndex = 0; columnIndex < GameLevel.LEVEL_WIDTH; columnIndex++) {
+                for (int columnIndex = 0; columnIndex < maximalLevelWidth; columnIndex++) {
 
                     Character levelItem = gameLevel.getLevelItemAt(lineIndex, columnIndex);
                     Image levelItemSprite = null;
@@ -1046,8 +1129,12 @@ public class Game extends JPanel implements Runnable {
         
         if (gameState == GameState.INTRODUCTION || gameState == GameState.PLAY || gameState == GameState.COMPLETED) {
             
-            // Retrieving a reference to current game level
-            GameLevel gameLevel = gameLevels.get(currentGameLevelIndex);
+            // Defining information lines' offsets
+            int infoLineHorizontalOffset = fontMetrics.stringWidth(" ");
+            int topInfoLineOffset = gameGraphics.getSpriteDimension().height -
+                    (gameGraphics.getSpriteDimension().height - gameFont.getSize()) / 2;
+            int bottomInfoLineOffset = gameGraphics.getSpriteDimension().height * (gameLevel.getMaximalLevelHeight() - 1)
+                    + topInfoLineOffset - 2;
             
             if (gameLevels != null && !gameLevels.isEmpty()) {
                 
@@ -1063,14 +1150,14 @@ public class Game extends JPanel implements Runnable {
                         levelNameText += String.format(" (%s)", gameLevelsSetName);
                 }
                 else if (gameLevelName != null && !gameLevelName.isEmpty())
-                    levelNameText += String.format(" (\"%s\")",gameLevelName);
+                    levelNameText += String.format(" (\"%s\")", gameLevelName);
                 String levelNameLabel = String.format(" %s%s ", levelNameTitle, levelNameText);
                 AttributedString levelNameString = new AttributedString(levelNameLabel);
                 levelNameString.addAttribute(TextAttribute.FONT, gameFont);
                 levelNameString.addAttribute(TextAttribute.FOREGROUND, new Color(240, 240, 240));
                 levelNameString.addAttribute(TextAttribute.FOREGROUND, new Color(255, 220, 0), 0, levelNameTitle.length());
                 levelNameString.addAttribute(TextAttribute.BACKGROUND, gameGraphics.getBackground());
-                g2d.drawString(levelNameString.getIterator(), statusLineHorizontalOffset, statusLineTopOffset);
+                g2d.drawString(levelNameString.getIterator(), infoLineHorizontalOffset, bottomInfoLineOffset);
             }
             
             if (gameState == GameState.PLAY || gameState == GameState.COMPLETED) {
@@ -1087,12 +1174,12 @@ public class Game extends JPanel implements Runnable {
                 levelTimeString.addAttribute(TextAttribute.FOREGROUND, new Color(240, 240, 240));
                 levelTimeString.addAttribute(TextAttribute.FOREGROUND, new Color(10, 200, 0), 0, levelTimeTitle.length());
                 levelTimeString.addAttribute(TextAttribute.BACKGROUND, gameGraphics.getBackground());
-                int levelTimeStringLeftOffset = gameGraphics.getSpriteDimension().width * GameLevel.LEVEL_WIDTH -
-                        fontMetrics.stringWidth(levelTimeLabel) - statusLineHorizontalOffset;
-                g2d.drawString(levelTimeString.getIterator(), levelTimeStringLeftOffset, statusLineTopOffset);
+                int levelTimeStringLeftOffset = gameGraphics.getSpriteDimension().width * maximalLevelWidth -
+                        fontMetrics.stringWidth(levelTimeLabel) - infoLineHorizontalOffset;
+                g2d.drawString(levelTimeString.getIterator(), levelTimeStringLeftOffset, topInfoLineOffset);
                 
                 // Printing worker's moves count
-                String movesCountTitle = "Moves Count: ";
+                String movesCountTitle = "Moves: ";
                 String movesCountText = String.format("%05d", gameLevel.getMovesCount());
                 String movesCountLabel = String.format(" %s%s ", movesCountTitle, movesCountText);
                 AttributedString movesCountString = new AttributedString(movesCountLabel);
@@ -1100,8 +1187,7 @@ public class Game extends JPanel implements Runnable {
                 movesCountString.addAttribute(TextAttribute.FOREGROUND, new Color(240, 240, 240));
                 movesCountString.addAttribute(TextAttribute.FOREGROUND, new Color(255, 55, 0), 0, movesCountTitle.length());
                 movesCountString.addAttribute(TextAttribute.BACKGROUND, gameGraphics.getBackground());
-                int movesCountStringLeftOffset = levelTimeStringLeftOffset - fontMetrics.stringWidth(String.format("%s   ", movesCountLabel));
-                g2d.drawString(movesCountString.getIterator(), movesCountStringLeftOffset, statusLineTopOffset);
+                g2d.drawString(movesCountString.getIterator(), infoLineHorizontalOffset, topInfoLineOffset);
             }
         }
 
@@ -1121,25 +1207,28 @@ public class Game extends JPanel implements Runnable {
      * <li>{@link #forceWorkerToMoveDown()}</li>
      * </ul>
      * 
-     * The time taken for one game loop's execution is measured
-     * by {@link GameGraphics#getGameLoopIterationTime()} in milliseconds.
+     * The time taken for one game loop's execution is measured in milliseconds.
      */
     @Override
     public void run() {
             
-        long iterationStartTime = 0;
-        long iterationUsefulTime = 0;
-        long iterationSleepTime = 0;
+        long cycleStartTime = 0;
+        long cycleUsefulTime = 0;
+        long cycleSleepTime = 0;
         long levelStartTime = System.currentTimeMillis();
-        levelTime = 0;
+        levelTime = 0;               
         
         // Retrieving a reference to current gameLevel
         GameLevel gameLevel = gameLevels.get(currentGameLevelIndex);
 
         while (gameState == GameState.PLAY && !Thread.interrupted()) {
+            
+            // Retrieving game cycle time
+            Integer gameCycleTime = (Integer)gameConfiguration.getOption(GameConfiguration.OPTION_GAME_CYCLE_TIME,
+                    GameConfiguration.DEFAULT_OPTION_GAME_CYCLE_TIME);
 
             // Remembering a start time of current iteration
-            iterationStartTime = System.currentTimeMillis();
+            cycleStartTime = System.currentTimeMillis();
 
             // Checking whether user has required worker to move
             if (!isAnimationInProgress) {
@@ -1269,18 +1358,18 @@ public class Game extends JPanel implements Runnable {
             }
                 
             // Determining a time required for step calculations
-            iterationUsefulTime = System.currentTimeMillis() - iterationStartTime;
+            cycleUsefulTime = System.currentTimeMillis() - cycleStartTime;
 
             // Determining a time left to complete iteration step
-            iterationSleepTime = gameGraphics.getGameLoopIterationTime() - iterationUsefulTime;
-            if (iterationSleepTime < 0)
-                iterationSleepTime = 0;
+            cycleSleepTime = gameCycleTime - cycleUsefulTime;
+            if (cycleSleepTime < 0)
+                cycleSleepTime = 0;
 
             // Waiting 'till the end of iteration
             try {
 
-                if (iterationSleepTime > 0)
-                    Thread.sleep(iterationSleepTime);
+                if (cycleSleepTime > 0)
+                    Thread.sleep(cycleSleepTime);
             }
             catch (InterruptedException ex) {
 

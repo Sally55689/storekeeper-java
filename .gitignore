@@ -1,4 +1,7 @@
 .*
 !.gitignore
-nbproject
+build
+javadoc
 levels
+nbproject/private
+storekeeperConfig.xml

@@ -1,6 +1,6 @@
 STOREKEEPER
 
-  Version: 0.0.4
+  Version: 0.0.5
   Author: Dmitriy Pushkov (ezze@ezze.org)
   Graphics: Marc Russell (http://www.spicypixel.net), Dmitriy Pushkov
   Web-site: http://www.ezze.org
@@ -35,6 +35,9 @@ DESCRIPTION
     - game's performance has been increased when playing huge levels;
     - a separate status bar was added to display level's information out of
       play field.
+
+  Version 0.0.5 changes:
+    - 41st classic level's bug has been fixed.
 
 
 HOW TO RUN

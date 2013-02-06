@@ -22,7 +22,7 @@ import org.ezze.games.storekeeper.Game;
  * A dialog to walk over moves' stack.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class DesktopMovesHistoryDialog extends JDialog {
 
@@ -106,8 +106,6 @@ public class DesktopMovesHistoryDialog extends JDialog {
                 return;
 
             JSlider slider = (JSlider)sourceObject;
-            if (!slider.getValueIsAdjusting())
-                return;
 
             int movesShift = slider.getValue() - currentMovesCount;
             if (movesShift < 0)

@@ -1,40 +1,21 @@
 package org.ezze.games.storekeeper.desktop;
 
-import javax.swing.UnsupportedLookAndFeelException;
-import org.ezze.utils.application.ApplicationPath;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.net.URL;
 import java.util.Properties;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JSeparator;
-import javax.swing.KeyStroke;
-import javax.swing.Spring;
-import javax.swing.SpringLayout;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.filechooser.FileFilter;
-import org.ezze.games.storekeeper.Game;
-import org.ezze.games.storekeeper.Configuration;
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.ezze.games.storekeeper.Game.GameState;
-import org.ezze.games.storekeeper.GameGraphics;
 import org.ezze.games.storekeeper.GameGraphics.SpriteSize;
-import org.ezze.games.storekeeper.Level;
-import org.ezze.games.storekeeper.Level.LevelState;
-import org.ezze.games.storekeeper.LevelCompletionListener;
-import org.ezze.games.storekeeper.LevelsSet.LoadState;
+import org.ezze.games.storekeeper.Level.LevelSize;
+import org.ezze.games.storekeeper.*;
+import org.ezze.utils.application.ApplicationPath;
+import org.ezze.utils.io.CompoundFileFilter;
 import org.ezze.utils.ui.FileBrowser;
 import org.ezze.utils.ui.aboutbox.AboutBox;
 import org.ezze.utils.ui.aboutbox.AboutBoxInformation;
@@ -43,9 +24,15 @@ import org.ezze.utils.ui.aboutbox.AboutBoxInformation;
  * Desktop version of the game.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.4
+ * @version 0.0.7
  */
-public class DesktopGame extends JFrame {
+public final class DesktopGame extends JFrame {
+    
+    /**
+     * Used as free vertical space in
+     * {@link DesktopGameGraphics#determineOptimalSpriteSize(org.ezze.games.storekeeper.Level.LevelSize, int, int)}.
+     */
+    protected static final int VERTICAL_PADDING = 50;
     
     /**
      * @param args the command line arguments
@@ -58,92 +45,132 @@ public class DesktopGame extends JFrame {
     /**
      * Game instance.
      */
-    private Game game = null;
+    protected Game game = null;
+    
+    /**
+     * An instance of game's graphics.
+     */
+    protected DesktopGameGraphics desktopGameGraphics = null;
+    
+    /**
+     * Menu bar instance.
+     */
+    protected JMenuBar menuBar = null;
     
     /**
      * File menu instance.
      */
-    private JMenu menuFile = null;
+    protected JMenu menuFile = null;
     
     /**
      * File menu item to load levels' set.
      */
-    private JMenuItem menuItemLoadLevelsSet = null;
+    protected JMenuItem menuItemLoadLevelsSet = null;
     
     /**
      * File menu item to load default levels' set.
      */
-    private JMenuItem menuItemLoadDefaultLevelsSet = null;
+    protected JMenuItem menuItemLoadDefaultLevelsSet = null;
     
     /**
      * File menu item to exit the game.
      */
-    private JMenuItem menuItemExit = null;
+    protected JMenuItem menuItemExit = null;
     
     /**
      * Action menu instance.
      */
-    private JMenu menuAction = null;
+    protected JMenu menuAction = null;
     
     /**
      * Action menu item to start the game.
      */
-    private JMenuItem menuItemStartTheGame = null;
+    protected JMenuItem menuItemStartTheGame = null;
     
     /**
      * Action menu item to stop the game.
      */
-    private JMenuItem menuItemStopTheGame = null;
+    protected JMenuItem menuItemStopTheGame = null;
     
     /**
      * Action menu item to restart game's current level.
      */
-    private JMenuItem menuItemRestartLevel = null;
+    protected JMenuItem menuItemRestartLevel = null;
     
     /**
      * Action menu item to jump to game's previous level.
      */
-    private JMenuItem menuItemPreviousLevel = null;
+    protected JMenuItem menuItemPreviousLevel = null;
     
     /**
      * Action menu item to jump to game's next level.
      */
-    private JMenuItem menuItemNextLevel = null;
+    protected JMenuItem menuItemNextLevel = null;
     
     /**
      * Action menu item to repeat a move from the history.
      */
-    private JMenuItem menuItemRepeatMove = null;
+    protected JMenuItem menuItemRepeatMove = null;
     
     /**
      * Action menu item to take game level's position back by one move.
      */
-    private JMenuItem menuItemTakeBack = null;
+    protected JMenuItem menuItemTakeBack = null;
     
     /**
      * Action menu item to show moves history dialog.
      */
-    private JMenuItem menuItemMovesHistory = null;
+    protected JMenuItem menuItemMovesHistory = null;
     
     /**
      * Tools menu instance.
      */
-    private JMenu menuTools = null;
+    protected JMenu menuTools = null;
     
     /**
      * Tools menu item to show options dialog.
      */
-    private JMenuItem menuItemOptions = null;
+    protected JMenuItem menuItemOptions = null;
     
     /**
      * Help menu instance.
      */
-    private JMenu menuHelp = null;
+    protected JMenu menuHelp = null;
     
     /**
      * Help menu item to show about box.
      */
-    private JMenuItem menuItemAbout = null;
+    protected JMenuItem menuItemAbout = null;
+    
+    /**
+     * An instance of status bar.
+     */
+    protected JPanel statusBar = null;
+    
+    /**
+     * An instance of label to show level's elapsed time.
+     */
+    protected JLabel timeLabel = null;
+    
+    /**
+     * An instance of level's informational label.
+     */
+    protected JLabel levelInfoLabel = null;
+    
+    /**
+     * An instance of label to show moves' count performed by the worker.
+     */
+    protected JLabel movesCountLabel = null;
+    
+    /**
+     * An instance of label to show pushes' count performed by the worker.
+     */
+    protected JLabel pushesCountLabel = null;
+    
+    /**
+     * Keeps a name of recently browsed directory with levels' sets.
+     */
+    protected String recentLevelsSetDirectory = null;
     
     /**
      * Storekeeper game's desktop implementation main class.
@@ -213,7 +240,7 @@ public class DesktopGame extends JFrame {
             });
             
             return;
-        }
+        }              
         
         // Setting game window's title
         setTitle("Storekeeper");
@@ -226,45 +253,46 @@ public class DesktopGame extends JFrame {
             setIconImage(new ImageIcon(windowIconURL).getImage());
         
         // Reading game's configuration
-        String configurationFileName = String.format("%s/storekeeperConfig.xml", ApplicationPath.getApplicationPath(DesktopGame.class));
-        Configuration gameConfiguration = new Configuration(configurationFileName);
+        String configurationFileName = String.format("%s/storekeeperConfig.xml",
+                ApplicationPath.getApplicationPath(DesktopGame.class));
+        final Configuration gameConfiguration = new Configuration(configurationFileName);
         
         // Creating game graphics' instance
-        DesktopGameGraphics desktopGameGraphics = new DesktopGameGraphics();
+        desktopGameGraphics = new DesktopGameGraphics();
         
-        // Retrieving maximal width (columns) and height (rows) of game level field (in level items)
-        int maximalLevelWidth = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_WIDTH,
-                Configuration.DEFAULT_OPTION_LEVEL_WIDTH);
-        int maximalLevelHeight = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
-                Configuration.DEFAULT_OPTION_LEVEL_HEIGHT);
+        // Creating menu bar
+        createMenuBar(applicationProperties, windowIconURL);
+        setJMenuBar(menuBar);
         
-        // Retrieving sprite size option and determining
-        String spriteSizeOption = (String)gameConfiguration.getOption(Configuration.OPTION_SPRITE_SIZE,
-                Configuration.DEFAULT_OPTION_SPRITE_SIZE);
+        // Creating status bar
+        createStatusBar();        
         
-        // Determining sprite size
-        SpriteSize spriteSize = null;
-        if (spriteSizeOption.equals(Configuration.OPTION_SPRITE_SIZE_OPTIMAL))
-            spriteSize = desktopGameGraphics.determineOptimalSpriteSize(maximalLevelWidth, maximalLevelHeight);
-        else if (spriteSizeOption.equals(Configuration.OPTION_SPRITE_SIZE_LARGE))
-            spriteSize = SpriteSize.LARGE;
-        else if (spriteSizeOption.equals(Configuration.OPTION_SPRITE_SIZE_MEDIUM))
-            spriteSize = SpriteSize.MEDIUM;
-        else
-            spriteSize = SpriteSize.SMALL;
+        // Determining default sprite's size
+        LevelSize defaultLevelSize = new LevelSize(Level.DEFAULT_LEVEL_WIDTH, Level.DEFAULT_LEVEL_HEIGHT);
+        SpriteSize spriteSize = desktopGameGraphics.determineOptimalSpriteSize(defaultLevelSize,
+                0, menuBar.getPreferredSize().height + statusBar.getPreferredSize().height + VERTICAL_PADDING);
+        if (spriteSize == null) {
+        
+            JOptionPane.showMessageDialog(null, "Your screen resolution is too small to run the game.\n"
+                    + "Please choose another screen resolution if it's possible.", "Screen Resolution Warning",
+                    JOptionPane.WARNING_MESSAGE);
+            closeApplication();
+            return;
+        }
 
         // Creating game instance
-        desktopGameGraphics.setSpriteSize(spriteSize != null ? spriteSize : SpriteSize.SMALL);
+        desktopGameGraphics.setSpriteSize(spriteSize);
         game = new Game(gameConfiguration, desktopGameGraphics, new LevelCompletionListener() {
                 
             @Override
             public void levelCompleted(Level gameLevel) {
                 
-                // Informing the user that the level has been successfully completed
-                JOptionPane.showMessageDialog(null, "Level has been successfully completed!", "Congratulations", JOptionPane.INFORMATION_MESSAGE);
+                // Informing the user that the level has been completed successfully
+                JOptionPane.showMessageDialog(null, "Level has been completed successfully!", "Congratulations", JOptionPane.INFORMATION_MESSAGE);
             }
         });
-        
+        game.setDisplayLevelInfo(false);
+                        
         JPanel contentPane = new JPanel();
         SpringLayout contentLayout = new SpringLayout();
         contentPane.setLayout(contentLayout);
@@ -273,18 +301,165 @@ public class DesktopGame extends JFrame {
         contentLayout.putConstraint(SpringLayout.WEST, game, 0, SpringLayout.WEST, contentPane);
         contentLayout.putConstraint(SpringLayout.NORTH, game, 0, SpringLayout.NORTH, contentPane);
         contentLayout.putConstraint(SpringLayout.EAST, game,
-                game.getGameGraphics().getSpriteDimension().width * maximalLevelWidth, SpringLayout.WEST, game);
+                game.getGameGraphics().getSpriteDimension().width * defaultLevelSize.getWidth(), SpringLayout.WEST, game);
         contentLayout.putConstraint(SpringLayout.SOUTH, game,
-                (game.getGameGraphics().getSpriteDimension().height) * maximalLevelHeight, SpringLayout.NORTH, game);
+                (game.getGameGraphics().getSpriteDimension().height) * defaultLevelSize.getHeight(), SpringLayout.NORTH, game);
         
-        contentLayout.putConstraint(SpringLayout.EAST, contentPane, 0, SpringLayout.EAST, game);
-        contentLayout.putConstraint(SpringLayout.SOUTH, contentPane, 0, SpringLayout.SOUTH, game);
+        contentPane.add(statusBar);
+        contentLayout.putConstraint(SpringLayout.WEST, statusBar, 0, SpringLayout.WEST, game);
+        contentLayout.putConstraint(SpringLayout.NORTH, statusBar, 0, SpringLayout.SOUTH, game);
+        contentLayout.putConstraint(SpringLayout.EAST, statusBar, 0, SpringLayout.EAST, game);
+        
+        contentLayout.putConstraint(SpringLayout.EAST, contentPane, 0, SpringLayout.EAST, statusBar);
+        contentLayout.putConstraint(SpringLayout.SOUTH, contentPane, 0, SpringLayout.SOUTH, statusBar);
                 
         setContentPane(contentPane);
-        setResizable(false);
+        setResizable(false);                               
+        
+        pack();
+        centerTheWindow();
+        
+        // Attaching key listener
+        addKeyListener(new KeyListener() {
+
+            @Override
+            public void keyTyped(KeyEvent e) {
+             
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+             
+                if (game.getGameState() != GameState.PLAY)
+                    return;
+                
+                if (e.getKeyCode() == KeyEvent.VK_LEFT)
+                    game.forceWorkerToMoveLeft();
+                else if (e.getKeyCode() == KeyEvent.VK_RIGHT)
+                    game.forceWorkerToMoveRight();
+                else if (e.getKeyCode() == KeyEvent.VK_UP)
+                    game.forceWorkerToMoveUp();
+                else if (e.getKeyCode() == KeyEvent.VK_DOWN)
+                    game.forceWorkerToMoveDown();
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+             
+                if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT)
+                    game.forceWorkerToStopHorizontalMovement();
+                else if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN)
+                    game.forceWorkerToStopVerticalMovement();
+                updateMenuItems();
+            }
+        });                       
+        
+        // Creating game's properties change listener
+        PropertyChangeListener gamePropertiesChangeListener = new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+
+                if (timeLabel == null || levelInfoLabel == null || movesCountLabel == null || pushesCountLabel == null)
+                    return;
+                
+                SwingUtilities.invokeLater(new Runnable() {
+
+                    @Override
+                    public void run() {
+                    
+                        GameState gameState = game.getGameState();
+                        if (gameState == GameState.STOP) {
+
+                            timeLabel.setText(" ");
+                            levelInfoLabel.setText(" ");
+                            movesCountLabel.setText(" ");
+                            pushesCountLabel.setText(" ");
+                        }
+                        
+                        LevelsSet levelsSet = game.getLevelsSet();
+                        if (levelsSet == null)
+                            return;
+                        
+                        Level level = levelsSet.getCurrentLevel();
+                        if (level == null)
+                            return;
+                        
+                        if (gameState == GameState.PLAY || gameState == GameState.COMPLETED) {
+                            
+                            if (gameState == GameState.PLAY)
+                                timeLabel.setText(String.format("Time: %s", game.getTimeString()));
+                            
+                            String movesCountString = String.format("Moves Count: %05d", level.getMovesCount());
+                            movesCountLabel.setText(movesCountString);
+
+                            String pushesCountString = String.format("Pushes Count: %05d", level.getPushesCount());
+                            pushesCountLabel.setText(pushesCountString);
+                        }
+                        else {
+                            
+                            timeLabel.setText(" ");
+                            movesCountLabel.setText(" ");
+                            pushesCountLabel.setText(" ");
+                        }
+                        
+                        String levelsSetName = levelsSet.getName();
+                        String levelName = level.getName();
+                        int levelNumber = levelsSet.getCurrentLevelIndex() + 1;
+                                
+                        String levelInfoString = String.format("Level %03d", levelNumber);
+                        if (levelsSetName != null && !levelsSetName.isEmpty()) {
+
+                            if (levelName != null && !levelName.isEmpty())
+                                levelInfoString += String.format(" (\"%s\" of %s)", levelName, levelsSetName);
+                            else
+                                levelInfoString += String.format(" (%s)", levelsSetName);
+                        }
+                        else if (levelName != null && !levelName.isEmpty()) {
+                            
+                            levelInfoString += String.format(" (\"%s\")", levelName);
+                        }
+                        
+                        levelInfoLabel.setText(levelInfoString);
+                    }
+                });
+            }
+        };
+        
+        game.addPropertyChangeListener(gamePropertiesChangeListener);
+        
+        // Loading levels' set in Event Dispatch thread to be sure that
+        // game's properties change listener will not handle events
+        // at the same time.
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                
+                // Loading default levels' set
+                loadDefaultLevelsSet();
+
+                // Showing introduction image
+                game.stop(true);
+
+                updateMenuItems();
+                setVisible(true);
+            }
+        });
+    }
+    
+    /**
+     * Creates game's menu bar.
+     * 
+     * @param applicationProperties
+     *      A reference to application's properties.
+     * @param windowIconURL 
+     *      URL of window's icon.
+     */
+    protected void createMenuBar(final Properties applicationProperties, final URL windowIconURL) {
         
         // Creating menu bar
-        JMenuBar menuBar = new JMenuBar();
+        menuBar = new JMenuBar();
         
         // Creating file menu
         menuFile = new JMenu("File");
@@ -329,58 +504,7 @@ public class DesktopGame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 
-                if (game != null) {
-                    
-                    // Browsing for a levels' set files
-                    File selectedFile = FileBrowser.browseFile(ApplicationPath.getApplicationPath(DesktopGame.class),
-                            "Please, select levels set file...", new FileFilter() {
-
-                        @Override
-                        public boolean accept(File file) {
-                            
-                            return file.isDirectory() || (file.isFile() && file.getName().toLowerCase().endsWith(".xml"));
-                        }
-
-                        @Override
-                        public String getDescription() {
-                            
-                            return "Levels set files (*.xml)";
-                        }
-                    });
-                    
-                    // Checking whether levels' set file has been selected
-                    if (selectedFile == null)
-                        return;
-                    
-                    if (!selectedFile.exists() && !selectedFile.isFile()) {
-                        
-                        JOptionPane.showMessageDialog(null, String.format("File \"%s\" doesn't exist.", selectedFile.getAbsolutePath()),
-                                "Open Error", JOptionPane.ERROR_MESSAGE);
-                        updateMenuItems();
-                        return;
-                    }
-                    
-                    String levelsSetFileName = selectedFile.getAbsolutePath();
-                    LoadState loadState = game.loadLevelsSet(levelsSetFileName);
-                    if (loadState == LoadState.ERROR) {
-                        
-                        JOptionPane.showMessageDialog(null, String.format("Unable to parse \"%s\" as levels set file.", levelsSetFileName),
-                                "Open Error", JOptionPane.ERROR_MESSAGE);
-                        updateMenuItems();
-                        return;
-                    }
-                    else if (loadState == LoadState.WARNING) {
-                        
-                        JOptionPane.showMessageDialog(null, String.format("At least one level of set \"%s\" cannot be initialized.", levelsSetFileName),
-                                "Open Warning", JOptionPane.WARNING_MESSAGE);
-                    }
-                    
-                    // Selecting first playable level
-                    game.getLevelsSet().setCurrentLevelByFirstPlayable();
-                    
-                    game.startLevel(game.getLevelsSet().getCurrentLevelIndex());
-                    updateMenuItems();
-                }
+                loadLevelsSet();
             }
         });
         menuItemLoadLevelsSet.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.CTRL_MASK));
@@ -392,14 +516,7 @@ public class DesktopGame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 
-                if (game != null) {
-                    
-                    if (game.loadDefaultLevelsSet() == LoadState.ERROR)
-                        JOptionPane.showMessageDialog(null, "Unable to load default levels set.", "Open Error", JOptionPane.ERROR_MESSAGE);
-                    else
-                        game.startLevel(game.getLevelsSet().getCurrentLevelIndex());
-                    updateMenuItems();
-                }
+                loadDefaultLevelsSet();
             }
         });
         menuItemLoadDefaultLevelsSet.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.CTRL_MASK | ActionEvent.SHIFT_MASK));
@@ -548,8 +665,6 @@ public class DesktopGame extends JFrame {
                 
                 DesktopOptionsDialog desktopOptionsDialog = new DesktopOptionsDialog(DesktopGame.this, DesktopGame.this);
                 desktopOptionsDialog.setVisible(true);
-                if (desktopOptionsDialog.isGameWindowRebuildRequired())
-                    rebuildGameWindow();
             }
         });
         menuItemOptions.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
@@ -594,53 +709,53 @@ public class DesktopGame extends JFrame {
         menuHelp.add(menuItemAbout);
         
         menuBar.add(menuHelp);
+    }
+    
+    /**
+     * Creates game's status bar.
+     */
+    protected void createStatusBar() {
         
-        setJMenuBar(menuBar);
+        SpringLayout statusBarLayout = new SpringLayout();
+        statusBar = new JPanel(statusBarLayout);
+        statusBar.setBackground(desktopGameGraphics.getBackground());
+
+        Font labelFont = new Font(Font.MONOSPACED, Font.BOLD, 12);
         
-        pack();
-        centerTheWindow();
+        timeLabel = new JLabel(" ");
+        timeLabel.setForeground(new Color(50, 230, 0));
+        timeLabel.setFont(labelFont);
         
-        // Attaching key listener
-        addKeyListener(new KeyListener() {
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-             
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-             
-                if (game.getGameState() != GameState.PLAY)
-                    return;
-                
-                if (e.getKeyCode() == KeyEvent.VK_LEFT)
-                    game.forceWorkerToMoveLeft();
-                else if (e.getKeyCode() == KeyEvent.VK_RIGHT)
-                    game.forceWorkerToMoveRight();
-                else if (e.getKeyCode() == KeyEvent.VK_UP)
-                    game.forceWorkerToMoveUp();
-                else if (e.getKeyCode() == KeyEvent.VK_DOWN)
-                    game.forceWorkerToMoveDown();
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-             
-                if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT)
-                    game.forceWorkerToStopHorizontalMovement();
-                else if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN)
-                    game.forceWorkerToStopVerticalMovement();
-                updateMenuItems();
-            }
-        });
-
-        // Loading default levels' set
-        LoadState loadState = game.loadDefaultLevelsSet();
-        showLoadLevelResultMessage(loadState, maximalLevelWidth, maximalLevelHeight);
+        levelInfoLabel = new JLabel(" ");
+        levelInfoLabel.setForeground(new Color(255, 90, 30));
+        levelInfoLabel.setFont(labelFont);
         
-        updateMenuItems();
-        setVisible(true);
+        movesCountLabel = new JLabel(" ");
+        movesCountLabel.setForeground(new Color(235, 210, 0));
+        movesCountLabel.setFont(labelFont);
+        
+        pushesCountLabel = new JLabel(" ");
+        pushesCountLabel.setForeground(new Color(235, 210, 0));
+        pushesCountLabel.setFont(labelFont);
+        
+        statusBar.add(timeLabel);
+        statusBar.add(levelInfoLabel);
+        statusBar.add(movesCountLabel);
+        statusBar.add(pushesCountLabel);
+        
+        statusBarLayout.putConstraint(SpringLayout.WEST, timeLabel, 10, SpringLayout.WEST, statusBar);
+        statusBarLayout.putConstraint(SpringLayout.NORTH, timeLabel, 4, SpringLayout.NORTH, statusBar);
+        
+        statusBarLayout.putConstraint(SpringLayout.NORTH, movesCountLabel, 0, SpringLayout.NORTH, timeLabel);
+        statusBarLayout.putConstraint(SpringLayout.EAST, movesCountLabel, -10, SpringLayout.EAST, statusBar);
+        
+        statusBarLayout.putConstraint(SpringLayout.WEST, levelInfoLabel, 0, SpringLayout.WEST, timeLabel);
+        statusBarLayout.putConstraint(SpringLayout.NORTH, levelInfoLabel, 1, SpringLayout.SOUTH, timeLabel);
+        
+        statusBarLayout.putConstraint(SpringLayout.NORTH, pushesCountLabel, 0, SpringLayout.NORTH, levelInfoLabel);
+        statusBarLayout.putConstraint(SpringLayout.EAST, pushesCountLabel, 0, SpringLayout.EAST, movesCountLabel);
+        
+        statusBarLayout.putConstraint(SpringLayout.SOUTH, statusBar, 2, SpringLayout.SOUTH, levelInfoLabel);
     }
     
     /**
@@ -655,10 +770,169 @@ public class DesktopGame extends JFrame {
     }
     
     /**
+     * Loads default levels' set.
+     */
+    protected void loadDefaultLevelsSet() {
+        
+        GameState currentGameState = game.getGameState();
+        
+        // Loading default levels' set
+        if (!game.loadDefaultLevelsSet()) {
+
+            JOptionPane.showMessageDialog(null, "Unable to load default levels set.",
+                    "Open Error", JOptionPane.ERROR_MESSAGE);
+            updateMenuItems();
+            return;
+        }
+        
+        // Disabling game's window
+        setVisible(false);
+        
+        // Analyzing loaded levels' set (and rebuilding the window)
+        if (analyzeLoadedLevelsSet()) {
+            
+            // Selecting first playable level
+            game.getLevelsSet().setCurrentLevelByFirstPlayable();
+            
+            if (currentGameState == GameState.PLAY)
+                game.startLevel(game.getLevelsSet().getCurrentLevelIndex());
+            else
+                game.stop(true);
+        }
+        
+        // Making game's window visible
+        setVisible(true);
+    }
+    
+    /**
+     * Provides a dialog to select levels' set to load and loads selected levels' set.
+     */
+    protected void loadLevelsSet() {
+    
+        if (game == null)
+            return;
+                    
+        // Browsing for a levels' set files
+        CompoundFileFilter levelsSetsFilter = new CompoundFileFilter();
+        levelsSetsFilter.add(new FileNameExtensionFilter("Storekeeper levels sets (*.xml)", "xml"));
+        levelsSetsFilter.add(new FileNameExtensionFilter("Sokoban levels files (*.sok)", "sok"));
+        levelsSetsFilter.add(new FileNameExtensionFilter("All supported levels files (*.xml, *.sok)", "xml", "sok"));
+        levelsSetsFilter.setDefaultFileFilterIndex(levelsSetsFilter.getFileFilters().size() - 1);
+        String initialDirectory = recentLevelsSetDirectory == null ? ApplicationPath.getApplicationPath(DesktopGame.class) : recentLevelsSetDirectory;
+        File selectedFile = FileBrowser.browseFile(initialDirectory, "Please, select levels set file...", levelsSetsFilter);
+
+        // Checking whether levels' set file has been selected
+        if (selectedFile == null) {
+         
+            updateMenuItems();
+            return;
+        }
+
+        if (!selectedFile.exists() && !selectedFile.isFile()) {
+
+            JOptionPane.showMessageDialog(null, String.format("File \"%s\" doesn't exist.", selectedFile.getAbsolutePath()),
+                    "Open Error", JOptionPane.ERROR_MESSAGE);
+            updateMenuItems();
+            return;
+        }
+        
+        // Remembering recent levels' set directory
+        recentLevelsSetDirectory = selectedFile.getParentFile().getAbsolutePath();
+        
+        GameState currentGameState = game.getGameState();
+
+        // Retrieving a name of selected levels' file.
+        String levelsSetFileName = selectedFile.getAbsolutePath();
+        if (!game.loadLevelsSet(levelsSetFileName)) {
+
+            JOptionPane.showMessageDialog(null, String.format("Unable to load levels' set \"%s\".", levelsSetFileName,
+                    "Open Error", JOptionPane.ERROR_MESSAGE));
+            updateMenuItems();
+            return;
+        }
+        
+        // Disabling game's window
+        setVisible(false);
+        
+        // Analyzing loaded levels' set (and rebuilding the window)
+        if (analyzeLoadedLevelsSet()) {
+            
+            // Selecting first playable level
+            game.getLevelsSet().setCurrentLevelByFirstPlayable();
+            
+            if (currentGameState == GameState.PLAY)
+                game.startLevel(game.getLevelsSet().getCurrentLevelIndex());
+            else
+                game.stop(true);
+        }
+        
+        // Making game's window visible
+        setVisible(true);
+    }
+    
+    /**
+     * Analyzes loaded levels' set and rebuilds game's window on success.
+     * 
+     * @return 
+     *      {@code true} if levels' set is playable, {@code false} otherwise.
+     * @see #rebuildGameWindow()
+     */
+    protected boolean analyzeLoadedLevelsSet() {
+        
+        // Determining a size of loaded levels' field
+        LevelSize maximalLevelSize = game.getLevelsSet().getMaximalLevelSize();
+        
+        int playableLevelsCount = game.getLevelsSet().getPlayableLevelsCount();
+        int levelsCount = game.getLevelsSet().getLevelsCount();
+        if (playableLevelsCount == 0) {
+        
+            if (!game.isDefaultLevelsSetLoaded()) {
+                
+                JOptionPane.showMessageDialog(null, "Loaded levels' set has no any playable levels.\n"
+                        + "Default levels' set will be loaded now.", "Levels' Set Error", JOptionPane.ERROR_MESSAGE);
+                loadDefaultLevelsSet();
+                return false;
+            }
+            else {
+                
+                JOptionPane.showMessageDialog(null, "Default levels' set has no any playable levels.\n",
+                        "Levels' Set Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+        }
+        else if (playableLevelsCount < levelsCount) {
+            
+            JOptionPane.showMessageDialog(null, String.format("Only %d level(s) of %d levels is(are) playable "
+                    + "in loaded levels' set.", playableLevelsCount, levelsCount), "Levels' Set Warning",
+                    JOptionPane.WARNING_MESSAGE);
+        }               
+
+        // Determining sprite's size
+        SpriteSize spriteSize = desktopGameGraphics.determineOptimalSpriteSize(maximalLevelSize,
+                0, menuBar.getPreferredSize().height + statusBar.getPreferredSize().height + VERTICAL_PADDING);
+        if (spriteSize == null) {
+
+            JOptionPane.showMessageDialog(null, "Your screen resolution is too small to play just loaded levels' set.\n"
+                    + "Default levels' set will be loaded now.", "Screen Resolution Warning", JOptionPane.WARNING_MESSAGE);
+
+            loadDefaultLevelsSet();
+            return false;
+        }
+
+        // Applying sprite's size
+        if (!desktopGameGraphics.getSpriteSize().equals(spriteSize))
+            desktopGameGraphics.setSpriteSize(spriteSize);
+
+        // Rebuilding game's window if it's required
+        rebuildGameWindow();
+        return true;
+    }
+    
+    /**
      * Rebuilds game's window according to currently set
      * level's width and height parameters.
      */
-    private void rebuildGameWindow() {
+    protected void rebuildGameWindow() {
         
         // Stopping the game if it's required
         game.stop(false);
@@ -666,88 +940,34 @@ public class DesktopGame extends JFrame {
         // Hiding game's window
         setVisible(false);
         
-        // Retrieving a reference to game configuration instance
-        Configuration gameConfiguration = game.getGameConfiguration();
-        
         // Retrieving a reference to game graphics instance
         GameGraphics gameGraphics = game.getGameGraphics();
+        
+        // Retrieving maximal level size of the set
+        LevelSize maximalLevelSize = game.getLevelsSet().getMaximalLevelSize();
         
         // Retrieving window's content pane and its layout
         JPanel contentPane = (JPanel)getContentPane();
         SpringLayout contentLayout = (SpringLayout)contentPane.getLayout();
-        
-        // Retrieving actual game field's parameters
-        int maximalLevelWidth = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_WIDTH,
-                Configuration.DEFAULT_OPTION_LEVEL_WIDTH);
-        int maximalLevelHeight = (Integer)gameConfiguration.getOption(Configuration.OPTION_LEVEL_HEIGHT,
-                Configuration.DEFAULT_OPTION_LEVEL_HEIGHT);
-        String spriteSizeOption = (String)gameConfiguration.getOption(Configuration.OPTION_SPRITE_SIZE,
-                Configuration.DEFAULT_OPTION_SPRITE_SIZE);
-        
-        // Determining sprite size
-        SpriteSize optimalSpriteSize = gameGraphics.determineOptimalSpriteSize(maximalLevelWidth, maximalLevelHeight);
-        SpriteSize spriteSize = null;
-        if (!spriteSizeOption.equals(Configuration.OPTION_SPRITE_SIZE_OPTIMAL)) {
-            
-            if (spriteSizeOption.equals(Configuration.OPTION_SPRITE_SIZE_LARGE))
-                spriteSize = SpriteSize.LARGE;
-            else if (spriteSizeOption.equals(Configuration.OPTION_SPRITE_SIZE_MEDIUM))
-                spriteSize = SpriteSize.MEDIUM;
-            else
-                spriteSize = SpriteSize.SMALL;  
-            
-            // Checking whether determined size is no more than optimal one
-            SpriteSize[] spriteSizeValues = SpriteSize.values();
-            int optimalSpriteSizeIndex = -1;
-            int selectedSpriteSizeIndex = -1;
-            int spriteSizeIndex = 0;
-            while ((optimalSpriteSizeIndex < 0 || selectedSpriteSizeIndex < 0) && spriteSizeIndex < spriteSizeValues.length) {
-                
-                if (spriteSizeValues[spriteSizeIndex] == optimalSpriteSize)
-                    optimalSpriteSizeIndex = spriteSizeIndex;
-                if (spriteSizeValues[spriteSizeIndex] == spriteSize)
-                    selectedSpriteSizeIndex = spriteSizeIndex;
-                spriteSizeIndex++;
-            }
-            
-            if (selectedSpriteSizeIndex < optimalSpriteSizeIndex) {
-                
-                int spriteSizeConfirmation = JOptionPane.showConfirmDialog(null,
-                        "Selected maximal level's width and height and sprite size cannot provide game's window\n"
-                        + "to be gone in the screen with currently set resolution. Do you want an optimal sprite\n"
-                        + "size to be applied?", "Sprite size confirmation", JOptionPane.YES_NO_OPTION);
-                if (spriteSizeConfirmation == JOptionPane.YES_OPTION) {
-                    
-                    spriteSize = optimalSpriteSize;
-                    gameConfiguration.setOption(Configuration.OPTION_SPRITE_SIZE, Configuration.OPTION_SPRITE_SIZE_OPTIMAL);
-                }
-            }
-        }
-        else {
-            
-            spriteSize = optimalSpriteSize;
-        }
-        
-        // Applying sprite size
-        if (!gameGraphics.getSpriteSize().equals(spriteSize))
-            gameGraphics.setSpriteSize(spriteSize);
      
         // Applying actual game field's constraints
         boolean isWindowSizeChanged = false;
         Spring currentEastSpring = contentLayout.getConstraint(SpringLayout.EAST, game);
         Spring currentSouthSpring = contentLayout.getConstraint(SpringLayout.SOUTH, game);
-        int newGameWidth = gameGraphics.getSpriteDimension().width * maximalLevelWidth;
-        int newGameHeight = gameGraphics.getSpriteDimension().height * maximalLevelHeight;
+        int newGameWidth = gameGraphics.getSpriteDimension().width * maximalLevelSize.getWidth();
+        int newGameHeight = gameGraphics.getSpriteDimension().height * maximalLevelSize.getHeight();
         if (currentEastSpring.getValue() != newGameWidth) {
             
             contentLayout.putConstraint(SpringLayout.EAST, game, newGameWidth, SpringLayout.WEST, game);
-            contentLayout.putConstraint(SpringLayout.EAST, contentPane, 0, SpringLayout.EAST, game);
+            contentLayout.putConstraint(SpringLayout.EAST, statusBar, 0, SpringLayout.EAST, game);
+            contentLayout.putConstraint(SpringLayout.EAST, contentPane, 0, SpringLayout.EAST, statusBar);
             isWindowSizeChanged = true;
         }
         if (currentSouthSpring.getValue() != newGameHeight) {
             
             contentLayout.putConstraint(SpringLayout.SOUTH, game, newGameHeight, SpringLayout.NORTH, game);
-            contentLayout.putConstraint(SpringLayout.SOUTH, contentPane, 0, SpringLayout.SOUTH, game);
+            contentLayout.putConstraint(SpringLayout.NORTH, statusBar, 0, SpringLayout.SOUTH, game);
+            contentLayout.putConstraint(SpringLayout.SOUTH, contentPane, 0, SpringLayout.SOUTH, statusBar);
             isWindowSizeChanged = true;
         }
         
@@ -755,61 +975,15 @@ public class DesktopGame extends JFrame {
             
             pack();
             centerTheWindow();
-        }
-        
-        // Reinitializing the levels 
-        LoadState loadState = game.getLevelsSet().reinitialize();
-        
-        // Selecting first playable level
-        game.getLevelsSet().setCurrentLevelByFirstPlayable();
-        
-        showLoadLevelResultMessage(loadState, maximalLevelWidth, maximalLevelHeight);
+        }               
         
         updateMenuItems();
-        game.stop(true);
-        setVisible(true);
-    }
-    
-    /**
-     * Shows a result message of levels' load or reinitialization result.
-     * 
-     * @param loadState
-     *      Result identifier.
-     * @param maximalLevelWidth
-     *      Level's maximal width.
-     * @param maximalLevelHeight
-     *      Level's maximal height.
-     */
-    private void showLoadLevelResultMessage(LoadState loadState, int maximalLevelWidth, int maximalLevelHeight) {
-        
-        if (loadState == LoadState.ERROR) {
-            
-            JOptionPane.showMessageDialog(null, "Unable to load default levels set.", "Open Error", JOptionPane.ERROR_MESSAGE);
-        }
-        else if (loadState == LoadState.WARNING) {
-            
-            int playableLevelsCount = game.getLevelsSet().getPlayableLevelsCount();
-            int outOfBoundsLevelsCount = game.getLevelsSet().getLevelsCountByState(LevelState.OUT_OF_BOUNDS);
-            int levelsCount = game.getLevelsSet().getLevelsCount();
-            
-            String warningMessage = "";
-            if (playableLevelsCount == 0)
-                warningMessage += String.format("No one of %d levels is playable", levelsCount);
-            else
-                warningMessage += String.format("Only %d of %d levels %s playable", playableLevelsCount,
-                        levelsCount, playableLevelsCount > 1 ? "are" : "is");
-            warningMessage += String.format(" with currently selected level's\n"
-                    + "maximal size (%d rows x %d columns). %d of non-playable levels are out of level's bounds\n"
-                    + "so you can play them if you will increase level's maximal allowed size in options dialog.",
-                    maximalLevelHeight, maximalLevelWidth, outOfBoundsLevelsCount);
-            JOptionPane.showMessageDialog(null, warningMessage, "Open Warning", JOptionPane.WARNING_MESSAGE);
-        }
     }
     
     /**
      * Updates application's menu items' access state.
      */
-    private void updateMenuItems() {
+    protected final void updateMenuItems() {
         
         if (game == null)
             return;
@@ -836,7 +1010,7 @@ public class DesktopGame extends JFrame {
     /**
      * Centers game's window.
      */
-    private void centerTheWindow() {
+    protected void centerTheWindow() {
         
         setLocationRelativeTo(null);
     }
@@ -844,7 +1018,7 @@ public class DesktopGame extends JFrame {
     /**
      * Fires application' close event.
      */
-    private void closeApplication() {
+    protected void closeApplication() {
         
         WindowListener[] windowListeners = getWindowListeners();
         if (windowListeners.length > 0) {
@@ -857,24 +1031,27 @@ public class DesktopGame extends JFrame {
     /**
      * Implements uninitialization actions on application's closing.
      */
-    private void onCloseApplication() {
+    protected void onCloseApplication() {
         
-        if (game != null && game.getGameState() == Game.GameState.PLAY || game.getGameState() == Game.GameState.COMPLETED) {
-         
-            if (game.getLevelsSet().getCurrentLevel() != null &&
-                    game.getLevelsSet().getCurrentLevel().getMovesCount() > 0) {
+        if (game != null) {
             
-                int confirmResult = JOptionPane.showConfirmDialog(null, "Are you sure that you want to exit the game?",
-                        "Exit Confirmation", JOptionPane.YES_NO_OPTION);
-                if (confirmResult != JOptionPane.YES_OPTION)
-                    return;
-            }
+            if (game.getGameState() == Game.GameState.PLAY || game.getGameState() == Game.GameState.COMPLETED) {
+         
+                if (game.getLevelsSet().getCurrentLevel() != null &&
+                        game.getLevelsSet().getCurrentLevel().getMovesCount() > 0) {
 
-            game.stop();
+                    int confirmResult = JOptionPane.showConfirmDialog(null, "Are you sure that you want to exit the game?",
+                            "Exit Confirmation", JOptionPane.YES_NO_OPTION);
+                    if (confirmResult != JOptionPane.YES_OPTION)
+                        return;
+                }
+
+                game.stop();
+            }
+            
+            // Saving game's current settings
+            game.getGameConfiguration().save();
         }
-        
-        // Saving game's current settings
-        game.getGameConfiguration().save();
         
         dispose();
     }

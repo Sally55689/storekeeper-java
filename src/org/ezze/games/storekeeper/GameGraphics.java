@@ -11,13 +11,14 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import javax.swing.JFrame;
 import org.ezze.games.storekeeper.Level.Direction;
+import org.ezze.games.storekeeper.Level.LevelSize;
 import org.ezze.games.storekeeper.Level.WorkerDirection;
 
 /**
  * Abstract class required to implement game's visual representation.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.3
+ * @version 0.0.5
  */
 abstract public class GameGraphics {
 
@@ -57,9 +58,9 @@ abstract public class GameGraphics {
     public final static String SPRITE_ID_BRICK = "brick";
     
     /**
-     * String identifier for cell sprite.
+     * String identifier for goal sprite.
      */
-    public final static String SPRITE_ID_CELL = "cell";
+    public final static String SPRITE_ID_GOAL = "goal";
     
     /**
      * String identifier for box sprite.
@@ -67,9 +68,9 @@ abstract public class GameGraphics {
     public final static String SPRITE_ID_BOX = "box";
     
     /**
-     * String identifier for box in cell sprite.
+     * String identifier for box on goal sprite.
      */
-    public final static String SPRITE_ID_BOX_IN_CELL = "box_in_cell";
+    public final static String SPRITE_ID_BOX_ON_GOAL = "box_on_goal";
 
     /**
      * Sprite size enumeration.
@@ -95,9 +96,12 @@ abstract public class GameGraphics {
     /**
      * Stores instance's sprite size {@link SpriteSize}.
      */
-    private SpriteSize spriteSize = SpriteSize.LARGE;
+    protected SpriteSize spriteSize = SpriteSize.LARGE;
     
-    EnumMap<SpriteSize, HashMap<String, ArrayList<Image>>> spriteImages =
+    /**
+     * A hash to keep game's sprites of different resolution.
+     */
+    protected EnumMap<SpriteSize, HashMap<String, ArrayList<Image>>> spriteImages =
             new EnumMap<SpriteSize, HashMap<String, ArrayList<Image>>>(SpriteSize.class);
     
     /**
@@ -120,7 +124,7 @@ abstract public class GameGraphics {
      * In some cases you may want to change sprite size by calling
      * {@link #setSpriteSize(org.ezze.games.storekeeper.GameGraphics.SpriteSize)}.
      * Maximal possible sprite size for specified level's width and height and
-     * current screen's resolution can be determined by {@link #determineOptimalSpriteSize(int, int)}.
+     * current screen's resolution can be determined by {@link #determineOptimalSpriteSize(org.ezze.games.storekeeper.Level.LevelSize, int, int)}
      * 
      * @param spriteSize
      *      Desired sprite size {@link SpriteSize}
@@ -135,7 +139,7 @@ abstract public class GameGraphics {
      * 
      * @param spriteSize
      *      Desired sprite's size.
-     * @see #determineOptimalSpriteSize(int, int)
+     * @see #determineOptimalSpriteSize(org.ezze.games.storekeeper.Level.LevelSize, int, int)
      * @see #getSpriteSize()
      */
     public final void setSpriteSize(SpriteSize spriteSize) {
@@ -151,7 +155,7 @@ abstract public class GameGraphics {
      * @see #getSpriteDimension()
      * @see #getSpriteDimension(org.ezze.games.storekeeper.GameGraphics.SpriteSize)
      * @see #setSpriteSize(org.ezze.games.storekeeper.GameGraphics.SpriteSize)
-     * @see #determineOptimalSpriteSize(int, int)
+     * @see #determineOptimalSpriteSize(org.ezze.games.storekeeper.Level.LevelSize, int, int)
      */
     public SpriteSize getSpriteSize() {
         
@@ -162,17 +166,24 @@ abstract public class GameGraphics {
      * Determines maximal possible sprite size for specified level's
      * width and height and current screen's resolution.
      * 
-     * @param levelWidth
-     *      Level's maximal width.
-     * @param levelHeight
-     *      Levels' maximal height.
+     * It's supposed that game's window consists of play field, title and
+     * border insets only. If you have any components that extend the window
+     * in any direction you can pass {@code minimalFreeWidth} and {@code minimalFreeHeight}
+     * to compensate their dimensions.
+     * 
+     * @param levelSize
+     *      Level's maximal size.
+     * @param minimalFreeWidth
+     *      Additional width of a screen in pixels that must be left free.
+     * @param minimalFreeHeight
+     *      Additional height of a screen in pixels that must be left free.
      * @return 
      *      Maximal possible sprite size or {@code null} if convenient
      *      size cannot be determined.
      * @see #setSpriteSize(org.ezze.games.storekeeper.GameGraphics.SpriteSize)
      * @see #getSpriteSize()
      */
-    public SpriteSize determineOptimalSpriteSize(int levelWidth, int levelHeight) {
+    public SpriteSize determineOptimalSpriteSize(LevelSize levelSize, int minimalFreeWidth, int minimalFreeHeight) {
         
         // Checking screen resolution
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
@@ -183,8 +194,10 @@ abstract public class GameGraphics {
         while (spriteSizeIndex < spriteSizes.length) {
             
             Dimension dimension = getSpriteDimension(spriteSizes[spriteSizeIndex]);
-            if (screenDimension.width - dialogInsets.left - dialogInsets.right - levelWidth * dimension.width > 0
-                    && screenDimension.height - dialogInsets.top - dialogInsets.bottom - levelHeight * dimension.height > 0) {
+            if ((screenDimension.width - dialogInsets.left - dialogInsets.right -
+                    levelSize.getWidth() * dimension.width > minimalFreeWidth) &&
+                    (screenDimension.height - dialogInsets.top - dialogInsets.bottom -
+                    levelSize.getHeight() * dimension.height > minimalFreeHeight)) {
                 
                 return spriteSizes[spriteSizeIndex];
             }
@@ -271,9 +284,9 @@ abstract public class GameGraphics {
      *      <li>{@link #SPRITE_ID_WORKER_UP} for up-oriented worker sprite;</li>
      *      <li>{@link #SPRITE_ID_WORKER_DOWN} for down-oriented worker sprite;</li> 
      *      <li>{@link #SPRITE_ID_BRICK} for brick sprite;</li>
-     *      <li>{@link #SPRITE_ID_CELL} for cell sprite;</li>
+     *      <li>{@link #SPRITE_ID_GOAL} for goal sprite;</li>
      *      <li>{@link #SPRITE_ID_BOX} for box sprite;</li>
-     *      <li>{@link #SPRITE_ID_BOX_IN_CELL} for box in cell sprite;</li>
+     *      <li>{@link #SPRITE_ID_BOX_ON_GOAL} for box on goal sprite;</li>
      *      <li>{@link #SPRITE_ID_EMPTY} for empty sprite.</li>
      *      </ul>
      * @param animationIndex
@@ -347,9 +360,9 @@ abstract public class GameGraphics {
      *      <li>{@link #SPRITE_ID_WORKER_LEFT} for left-oriented worker sprite;</li>
      *      <li>{@link #SPRITE_ID_WORKER_RIGHT} for right-oriented worker sprite;</li>
      *      <li>{@link #SPRITE_ID_BRICK} for brick sprite;</li>
-     *      <li>{@link #SPRITE_ID_CELL} for cell sprite;</li>
+     *      <li>{@link #SPRITE_ID_GOAL} for goal sprite;</li>
      *      <li>{@link #SPRITE_ID_BOX} for box sprite;</li>
-     *      <li>{@link #SPRITE_ID_BOX_IN_CELL} for box in cell sprite;</li>
+     *      <li>{@link #SPRITE_ID_BOX_ON_GOAL} for box on goal sprite;</li>
      *      <li>{@link #SPRITE_ID_EMPTY} for empty sprite.</li>
      *      </ul>
      * @param animationIndex
@@ -375,11 +388,24 @@ abstract public class GameGraphics {
     /**
      * Retrieves worker's action sprites' count for specified direction.
      * 
+     * @param direction
+     *      Worker's direction instance.
      * @return
      *      Worker's action sprites' count.
      */
     abstract public int getActionSpritesCount(WorkerDirection direction);
     
+    /**
+     * Retrieves worker's action sprite according to specified direction
+     * and animation phase's index.
+     * 
+     * @param direction
+     *      Worker's direction.
+     * @param spriteIndex
+     *      Animation phase's index.
+     * @return
+     *      Moving worker's image.
+     */
     public Image getActionSprite(WorkerDirection direction, int spriteIndex) {
         
         int actionSpritesCount = getActionSpritesCount(direction);
@@ -411,14 +437,14 @@ abstract public class GameGraphics {
     }
     
     /**
-     * Retrieves cell's sprite.
+     * Retrieves goal's sprite.
      * 
      * @return
-     *      Cell's sprite
+     *      Goal's sprite
      */
-    public Image getCellSprite() {
+    public Image getGoalSprite() {
         
-        return getSprite(spriteSize, SPRITE_ID_CELL);
+        return getSprite(spriteSize, SPRITE_ID_GOAL);
     }
     
     /**
@@ -433,13 +459,13 @@ abstract public class GameGraphics {
     }
     
     /**
-     * Retrieves sprite of a box in a cell.
+     * Retrieves sprite of a box on a goal.
      * 
      * @return 
-     *      Box in a cell sprite
+     *      Box on a goal sprite
      */
-    public Image getBoxInCellSprite() {
+    public Image getBoxOnGoalSprite() {
         
-        return getSprite(spriteSize, SPRITE_ID_BOX_IN_CELL);
+        return getSprite(spriteSize, SPRITE_ID_BOX_ON_GOAL);
     }
 }

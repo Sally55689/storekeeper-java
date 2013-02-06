@@ -1,24 +1,15 @@
 package org.ezze.games.storekeeper;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.RenderingHints;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.font.TextAttribute;
 import java.io.InputStream;
 import java.text.AttributedString;
 import javax.swing.JPanel;
+import org.ezze.games.storekeeper.Level.LevelSize;
 import org.ezze.games.storekeeper.Level.MoveInformation;
 import org.ezze.games.storekeeper.Level.MoveType;
 import org.ezze.games.storekeeper.Level.WorkerDirection;
-import org.ezze.games.storekeeper.LevelsSet.LoadState;
-import org.ezze.utils.io.XMLParser;
+import org.ezze.utils.io.XMLHelper;
 import org.w3c.dom.Document;
 
 /**
@@ -26,9 +17,34 @@ import org.w3c.dom.Document;
  * animation and user actions' handling.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.5
+ * @version 0.0.8
  */
 public class Game extends JPanel implements Runnable {
+    
+    /**
+     * Levels' set property.
+     */
+    public static final String LEVELS_SET = "levels_set";
+    
+    /**
+     * Level index property.
+     */
+    public static final String LEVEL_INDEX = "level_index";
+    
+    /**
+     * Game state property.
+     */
+    public static final String GAME_STATE = "game_state";
+    
+    /**
+     * Moves count property.
+     */
+    public static final String MOVES_COUNT = "moves_count";
+    
+    /**
+     * Time property.
+     */
+    public static final String TIME = "time";
     
     /**
      * Game's state, can be equal to one of the following values:
@@ -68,7 +84,10 @@ public class Game extends JPanel implements Runnable {
         COMPLETED
     }
     
-    private Configuration gameConfiguration = null;
+    /**
+     * An instance of game's configuration.
+     */
+    protected Configuration gameConfiguration = null;
     
     /**
      * A reference to an interface implementing game graphics,
@@ -79,65 +98,65 @@ public class Game extends JPanel implements Runnable {
      * @see #Game(org.ezze.games.storekeeper.Configuration, org.ezze.games.storekeeper.GameGraphics)
      * @see #Game(org.ezze.games.storekeeper.Configuration, org.ezze.games.storekeeper.GameGraphics, org.ezze.games.storekeeper.LevelCompletionListener)
      */
-    private GameGraphics gameGraphics = null;
+    protected GameGraphics gameGraphics = null;
     
     /**
      * An instance of interface providing actions to do after level will have been completed.
      * 
      * @see #Game(org.ezze.games.storekeeper.Configuration, org.ezze.games.storekeeper.GameGraphics, org.ezze.games.storekeeper.LevelCompletionListener)
      */
-    private LevelCompletionListener gameLevelCompletionListener = null;
+    protected LevelCompletionListener gameLevelCompletionListener = null;
     
     /**
      * Keeps game's current state.
      * 
      * @see GameState
      */
-    private GameState gameState = null;
+    protected GameState gameState = null;
     
     /**
      * Shows whether default levels set is loaded.
      */
-    private boolean isDefaultLevelsSetLoaded = false;
+    protected boolean isDefaultLevelsSetLoaded = false;
     
     /**
      * Keeps a set of currently loaded levels.
      */
-    private LevelsSet levelsSet = null;
+    protected LevelsSet levelsSet = null;
     
     /**
      * Measures current level's play time in seconds.
      */
-    private int levelTime = 0;
+    protected int levelTime = 0;
     
     /**
      * Represents game's loop, primarily used for {@link GameState#PLAY} state.
      */
-    private Thread gameLoopThread = null;
+    protected Thread gameLoopThread = null;
     
     /**
      * Stores worker's desired horizontal shift forced by user.
      * 
      * Can be equal to -1, 0, 1.
      */
-    private int workerDeltaX = 0;
+    protected int workerDeltaX = 0;
     
     /**
      * Stores worker's desired vertical shift forced by user.
      * 
      * Can be equal to -1, 0, 1.
      */
-    private int workerDeltaY = 0;
+    protected int workerDeltaY = 0;
     
     /**
      * Shows whether worker is idle right now.
      */
-    private boolean isWorkerIdle = true;
+    protected boolean isWorkerIdle = true;
     
     /**
      * Shows whether animation is in progress.
      */
-    private boolean isAnimationInProgress = false;
+    protected boolean isAnimationInProgress = false;
     
     /**
      * Worker's animation phase's index.
@@ -147,7 +166,7 @@ public class Game extends JPanel implements Runnable {
      * of {@link #gameGraphics}. Animation phase with index 0 corresponds to idle worker
      * while another ones represent worker's motion.
      */
-    private int workerAnimPhase = 0;
+    protected int workerAnimPhase = 0;
     
     /**
      * Keeps worker's destination X coordinate of {@link Level} field
@@ -156,7 +175,7 @@ public class Game extends JPanel implements Runnable {
      * This variable is a local copy of the current {@link Level#workerX}.
      * Default value -1 means that worker is idle and no animation is in progress.
      */
-    private int workerAnimDestX = -1;
+    protected int workerAnimDestX = -1;
     
     /**
      * Keeps worker's destination Y coordinate of {@link Level} field
@@ -165,7 +184,7 @@ public class Game extends JPanel implements Runnable {
      * This variable is a local copy of the current {@link Level#workerY}.
      * Default value -1 means that worker is idle and no animation is in progress.
      */
-    private int workerAnimDestY = -1;
+    protected int workerAnimDestY = -1;
     
     /**
      * Keeps worker's current X animation coordinate of {@link Level} field.
@@ -174,7 +193,7 @@ public class Game extends JPanel implements Runnable {
      * while X coordinate {@link Level#workerX} of worker's real position
      * is always integer.
      */
-    private double workerAnimCurrX = 0.0;
+    protected double workerAnimCurrX = 0.0;
     
     /** 
      * Keeps worker's current Y animation coordinate of {@link Level} field.
@@ -183,7 +202,7 @@ public class Game extends JPanel implements Runnable {
      * while Y coordinate {@link Level#workerY} of worker's real position
      * is always integer.
      */
-    private double workerAnimCurrY = 0.0;
+    protected double workerAnimCurrY = 0.0;
     
     /**
      * Worker's X animation shift to be performed during current loop execution.
@@ -194,7 +213,7 @@ public class Game extends JPanel implements Runnable {
      * Animation continues until {@link #workerAnimCurrX} reaches {@link #workerAnimDestX}
      * and {@link #workerAnimCurrY} reaches {@link #workerAnimDestY}.
      */
-    private double workerAnimDeltaX = 0.0;
+    protected double workerAnimDeltaX = 0.0;
     
     /**
      * Worker's Y animation shift to be performed during current loop execution.
@@ -205,7 +224,7 @@ public class Game extends JPanel implements Runnable {
      * Animation continues until {@link #workerAnimCurrX} reaches {@link #workerAnimDestX}
      * and {@link #workerAnimCurrY} reaches {@link #workerAnimDestY}.
      */
-    private double workerAnimDeltaY = 0.0;
+    protected double workerAnimDeltaY = 0.0;
     
     /**
      * Keeps moving box' destination X coordinate of {@link Level} field
@@ -213,7 +232,7 @@ public class Game extends JPanel implements Runnable {
      * 
      * This one is similar to {@link #workerAnimDestX} but relative to moving box.
      */
-    private int boxAnimDestX = -1;
+    protected int boxAnimDestX = -1;
     
     /**
      * Keeps moving box' destination Y coordinate of {@link Level} field
@@ -221,7 +240,7 @@ public class Game extends JPanel implements Runnable {
      * 
      * This one is similar to {@link #workerAnimDestY} but relative to moving box.
      */
-    private int boxAnimDestY = -1;
+    protected int boxAnimDestY = -1;
     
     /**
      * Keeps moving box' current X animation coordinate of {@link Level} field
@@ -229,7 +248,7 @@ public class Game extends JPanel implements Runnable {
      * 
      * This one is similar to {@link #workerAnimCurrX} but relative to moving box.
      */
-    private double boxAnimCurrX = 0.0;
+    protected double boxAnimCurrX = 0.0;
     
     /**
      * Keeps moving box' current Y animation coordinate of {@link Level} field
@@ -237,7 +256,7 @@ public class Game extends JPanel implements Runnable {
      * 
      * This one is similar to {@link #workerAnimCurrY} but relative to moving box.
      */
-    private double boxAnimCurrY = 0.0;
+    protected double boxAnimCurrY = 0.0;
     
     /**
      * Moving box' X shift to be performed during current loop execution.
@@ -245,7 +264,7 @@ public class Game extends JPanel implements Runnable {
      * This one is equal to zero or to {@link #workerAnimDeltaX} due to box' shift
      * can be caused only by similar worker's movement.
      */
-    private double boxAnimDeltaX = 0.0;
+    protected double boxAnimDeltaX = 0.0;
     
     /**
      * Moving box' Y shift to be performed during current loop execution.
@@ -253,7 +272,12 @@ public class Game extends JPanel implements Runnable {
      * This one is equal to zero or to {@link #workerAnimDeltaY} due to box' shift
      * can be caused only by similar worker's movement.
      */
-    private double boxAnimDeltaY = 0.0;
+    protected double boxAnimDeltaY = 0.0;
+    
+    /**
+     * Knows whether level's information is to be shown on game's field.
+     */
+    protected boolean displayLevelInfo = true;
     
     /**
      * Game's simple constructor.
@@ -298,7 +322,7 @@ public class Game extends JPanel implements Runnable {
         this.gameLevelCompletionListener = gameLevelCompletionListener;
         
         // Defining game's initial state
-        gameState = GameState.INTRODUCTION;
+        setGameState(GameState.INTRODUCTION);
         
         // No levels are loaded by default
         levelsSet = new LevelsSet(this.gameConfiguration);
@@ -340,10 +364,29 @@ public class Game extends JPanel implements Runnable {
      * @return 
      *      Game's state
      * @see GameState
+     * @see #setGameState(org.ezze.games.storekeeper.Game.GameState)
      */
     public GameState getGameState() {
         
         return gameState;
+    }
+    
+    /**
+     * Sets specified game's state and fires {@link #GAME_STATE}
+     * property's change.
+     * 
+     * @param gameState
+     *      Game's state to set.
+     * @see #getGameState()
+     */
+    protected final void setGameState(GameState gameState) {
+        
+        if (gameState == null)
+            return;
+
+        GameState oldGameState = this.gameState;
+        this.gameState = gameState;
+        firePropertyChange(GAME_STATE, oldGameState, this.gameState);
     }
     
     /**
@@ -372,55 +415,67 @@ public class Game extends JPanel implements Runnable {
      * Loads default levels' set.
      * 
      * @return 
-     *      Set's load result.
+     *      {@code true} if levels' set has been loaded, {@code false} otherwise.
      */
-    public LoadState loadDefaultLevelsSet() {
+    public boolean loadDefaultLevelsSet() {
         
         String resourcePathToLevelsSet = String.format("/%s/resources/levels.xml",
                 Game.class.getPackage().getName().replace('.', '/'));
         InputStream levelsSetInputStream = Game.class.getResourceAsStream(resourcePathToLevelsSet);
         if (levelsSetInputStream == null)
-            return LoadState.ERROR;
+            return false;
         
-        Document xmlLevelsSetDocument = XMLParser.readXMLDocument(levelsSetInputStream);
-        LevelsSet loadedLevelsSet = new LevelsSet(gameConfiguration);
-        LoadState loadState = loadedLevelsSet.loadFromDOM(xmlLevelsSetDocument);
-        if (loadState != LoadState.ERROR) {
-         
-            // Stopping the game if it's running
-            stop(true);
-            
-            // Setting a reference to loaded levels' set
-            levelsSet = loadedLevelsSet;
-            isDefaultLevelsSetLoaded = true;
-        }
-        
-        return loadState;
+        Document xmlLevelsSetDocument = XMLHelper.readXMLDocument(levelsSetInputStream);
+        return loadLevelsSet(xmlLevelsSetDocument, true);
     }
     
     /**
-     * Loads levels' set from specified source file.
+     * Loads levels' set from specified source.
      * 
      * @param source
-     *      Source file's name.
+     *      Source of levels' set. This one can be a file name or DOM document's instance.
      * @return 
-     *      Set's load result.
+     *      {@code true} if levels' set has been loaded, {@code false} otherwise.
      */
-    public LoadState loadLevelsSet(String source) {
+    public boolean loadLevelsSet(Object source) {
         
-        LevelsSet loadedLevelsSet = new LevelsSet(gameConfiguration, source);
-        LoadState loadState = loadedLevelsSet.getLoadState();
-        if (loadState != LoadState.NOT_LOADED && loadState != LoadState.ERROR) {
+        return loadLevelsSet(source, false);
+    }
+    
+    /**
+     * Loads levels' set from specified source.
+     * 
+     * If levels' set will be loaded, then {@link #LEVELS_SET} property' change
+     * will be fired.
+     * 
+     * @param source
+     *      Source file's name or DOM document.
+     * @param isDefaultLevelsSet
+     *      Shows whether levels' set specified by {@code source} is the default one.
+     * @return 
+     *      {@code true} if levels' set has been loaded, {@code false} otherwise.
+     */
+    public boolean loadLevelsSet(Object source, boolean isDefaultLevelsSet) {
+        
+        // Reading levels from the source
+        LevelsSet loadedLevelsSet = new LevelsSet(source);
+        
+        // We suppose levels' set is loaded when at least one level has been retrieved.
+        boolean isLoaded = loadedLevelsSet.isInitialized();
+        if (isLoaded) {
             
             // Stopping the game if it's running
             stop(true);
             
             // Setting a reference to loaded levels' set
             levelsSet = loadedLevelsSet;
-            isDefaultLevelsSetLoaded = false;
+            isDefaultLevelsSetLoaded = isDefaultLevelsSet;
         }
+    
+        if (isLoaded)
+            firePropertyChange(LEVELS_SET, null, null);
         
-        return loadState;
+        return isLoaded;
     }
     
     /**
@@ -464,7 +519,7 @@ public class Game extends JPanel implements Runnable {
         
         // Retrieving a reference to desired game level
         Level gameLevel = levelsSet.getLevelByIndex(gameLevelIndex);
-        if (!gameLevel.initialize()) {
+        if (!gameLevel.initialize(gameLevel.getMaximalSize())) {
          
             repaint();
             return false;
@@ -495,7 +550,7 @@ public class Game extends JPanel implements Runnable {
         boxAnimDeltaY = 0.0;
         
         // Starting game loop thread
-        gameState = GameState.PLAY;
+        setGameState(GameState.PLAY);
         gameLoopThread = new Thread(this);
         gameLoopThread.start();
         
@@ -551,7 +606,7 @@ public class Game extends JPanel implements Runnable {
      */
     public void stop(boolean switchToIntroduction) {
         
-        gameState = (switchToIntroduction ? GameState.INTRODUCTION : GameState.STOP);
+        setGameState(switchToIntroduction ? GameState.INTRODUCTION : GameState.STOP);
         if (gameLoopThread != null) {
 
             gameLoopThread.interrupt();
@@ -591,7 +646,12 @@ public class Game extends JPanel implements Runnable {
         stop(gameState == GameState.INTRODUCTION);
         
         // Jumping to the previous game level
-        levelsSet.goToPreviousLevel(true);
+        int oldLevelIndex = levelsSet.getCurrentLevelIndex();
+        if (levelsSet.goToPreviousLevel(true)) {
+            
+            int newLevelIndex = levelsSet.getCurrentLevelIndex();
+            firePropertyChange(LEVEL_INDEX, oldLevelIndex, newLevelIndex);
+        }
         
         if (startNewLevel)
             return startLevel(levelsSet.getCurrentLevelIndex());
@@ -621,7 +681,12 @@ public class Game extends JPanel implements Runnable {
         stop(gameState == GameState.INTRODUCTION);
         
         // Jumping to the next game level
-        levelsSet.goToNextLevel(true);
+        int oldLevelIndex = levelsSet.getCurrentLevelIndex();
+        if (levelsSet.goToNextLevel(true)) {
+            
+            int newLevelIndex = levelsSet.getCurrentLevelIndex();
+            firePropertyChange(LEVEL_INDEX, oldLevelIndex, newLevelIndex);
+        }
         
         if (startNewLevel)
             return startLevel(levelsSet.getCurrentLevelIndex());
@@ -636,6 +701,8 @@ public class Game extends JPanel implements Runnable {
      *      A number of performed moves after the take-back or {@code -1}
      *      if the take-back cannot be performed for some reasons.
      * @see #takeBack(int)
+     * @see #repeatMove()
+     * @see #repeatMoves(int)
      * @see Level#takeBack()
      * @see Level#takeBack(int)
      */
@@ -653,6 +720,8 @@ public class Game extends JPanel implements Runnable {
      *      A number of performed moves after the take-back or {@code -1}
      *      if the take-back cannot be performed for some reasons.
      * @see #takeBack()
+     * @see #repeatMove()
+     * @see #repeatMoves(int)
      * @see Level#takeBack()
      * @see Level#takeBack(int)
      */
@@ -671,14 +740,45 @@ public class Game extends JPanel implements Runnable {
         if (!isWorkerIdle)
             return -1;
         
-        return gameLevel.takeBack(takeBackMovesCount);
+        int oldMovesCount = getLevelsSet().getCurrentLevel().getMovesCount();
+        int newMovesCount = gameLevel.takeBack(takeBackMovesCount);
+        if (oldMovesCount != newMovesCount)
+            firePropertyChange(MOVES_COUNT, oldMovesCount, newMovesCount);
+        repaint();
+        return newMovesCount;
     }
     
+    /**
+     * Repeats worker's recently taken back move.
+     * 
+     * @return 
+     *      Overall count of performed moves after the repeat or {@code -1}
+     *      if the repeat cannot be performed for some reasons.
+     * @see #repeatMoves(int)
+     * @see #takeBack()
+     * @see #takeBack(int)
+     * @see Level#repeatMove()
+     * @see Level#repeatMoves(int)
+     */
     public int repeatMove() {
         
         return repeatMoves(1);
     }
     
+    /**
+     * Repeats worker's recently taken back moves.
+     * 
+     * @param repeatMovesCount
+     *      Moves' count to repeat.
+     * @return 
+     *      Overall count of performed moves after the repeat or {@code -1}
+     *      if the repeat cannot be performed for some reasons.
+     * @see #repeatMove()
+     * @see #takeBack()
+     * @see #takeBack(int)
+     * @see Level#repeatMove()
+     * @see Level#repeatMoves(int)
+     */
     public int repeatMoves(int repeatMovesCount) {
         
         // Checking whether game is in play state
@@ -694,7 +794,12 @@ public class Game extends JPanel implements Runnable {
         if (!isWorkerIdle)
             return -1;
         
-        return gameLevel.repeatMoves(repeatMovesCount);
+        int oldMovesCount = getLevelsSet().getCurrentLevel().getMovesCount();
+        int newMovesCount = gameLevel.repeatMoves(repeatMovesCount);
+        if (oldMovesCount != newMovesCount)
+            firePropertyChange(MOVES_COUNT, oldMovesCount, newMovesCount);
+        repaint();
+        return newMovesCount;
     }
     
     /**
@@ -812,6 +917,48 @@ public class Game extends JPanel implements Runnable {
     }
     
     /**
+     * Sets whether level information is to be painted on the play field.
+     * 
+     * @param displayLevelInfo 
+     *      Must be {@code true} to paint level information, {@code false} otherwise.
+     * @see #displayLevelInfo
+     */
+    public void setDisplayLevelInfo(boolean displayLevelInfo) {
+        
+        this.displayLevelInfo = displayLevelInfo;
+    }
+    
+    /**
+     * Retrieves current level's elapsed time in milliseconds.
+     * 
+     * @return 
+     *      Elapsed time.
+     * @see #levelTime
+     * @see #getTimeString()
+     */
+    public int getTimeInSeconds() {
+        
+        return levelTime;
+    }
+    
+    /**
+     * Retrieves a string representation of current level's elapsed time.
+     * 
+     * @return 
+     *      String representation of elapsed time.
+     * @see #levelTime
+     * @see #getTimeInSeconds()
+     */
+    public String getTimeString() {
+        
+        int fixedLevelTime = levelTime;
+        int seconds = fixedLevelTime % 60;
+        int minutes = ((fixedLevelTime - seconds) / 60) % 60;
+        int hours = (fixedLevelTime - seconds - 60 * minutes) / (60 * 60);
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+    }
+    
+    /**
      * {@inheritDoc}
      * 
      * In the case of {@link Game} instance this method paints
@@ -855,23 +1002,22 @@ public class Game extends JPanel implements Runnable {
         else if ((gameState == GameState.PLAY || gameState == GameState.COMPLETED) && gameLevel != null) {
             
             // Retrieving level's maximal size
-            int maximalLevelWidth = gameLevel.getMaximalLevelWidth();
-            int maximalLevelHeight = gameLevel.getMaximalLevelHeight();
+            LevelSize maximalLevelSize = gameLevel.getMaximalSize();
             
             // Retrieving sprites' dimension
             Dimension spriteDimension = gameGraphics.getSpriteDimension();
             
             // Drawing game level's current state
-            for (int lineIndex = 0; lineIndex < maximalLevelHeight; lineIndex++) {
+            for (int lineIndex = 0; lineIndex < maximalLevelSize.getHeight(); lineIndex++) {
 
-                for (int columnIndex = 0; columnIndex < maximalLevelWidth; columnIndex++) {
+                for (int columnIndex = 0; columnIndex < maximalLevelSize.getWidth(); columnIndex++) {
 
                     Character levelItem = gameLevel.getItemAt(lineIndex, columnIndex);
                     Image levelItemSprite = null;
 
-                    if (levelItem.equals(Level.LEVEL_ITEM_CELL)) {
+                    if (levelItem.equals(Level.LEVEL_ITEM_GOAL)) {
 
-                        levelItemSprite = gameGraphics.getCellSprite();
+                        levelItemSprite = gameGraphics.getGoalSprite();
                     }
                     else if (levelItem.equals(Level.LEVEL_ITEM_BOX)) {
 
@@ -880,12 +1026,12 @@ public class Game extends JPanel implements Runnable {
                         else
                             levelItemSprite = gameGraphics.getBoxSprite();
                     }
-                    else if (levelItem.equals(Level.LEVEL_ITEM_BOX_IN_CELL)) {
+                    else if (levelItem.equals(Level.LEVEL_ITEM_BOX_ON_GOAL)) {
 
                         if (!isWorkerIdle && boxAnimDestX == columnIndex && boxAnimDestY == lineIndex)
-                            levelItemSprite = gameGraphics.getCellSprite();
+                            levelItemSprite = gameGraphics.getGoalSprite();
                         else
-                            levelItemSprite = gameGraphics.getBoxInCellSprite();
+                            levelItemSprite = gameGraphics.getBoxOnGoalSprite();
                     }
                     else if(levelItem.equals(Level.LEVEL_ITEM_BRICK)) {
 
@@ -932,15 +1078,15 @@ public class Game extends JPanel implements Runnable {
             }
         }
         
-        if ((gameState == GameState.INTRODUCTION || gameState == GameState.PLAY ||
+        if (displayLevelInfo && (gameState == GameState.INTRODUCTION || gameState == GameState.PLAY ||
                 gameState == GameState.COMPLETED) && gameLevel != null) {
             
             // Defining information lines' offsets
             int infoLineHorizontalOffset = fontMetrics.stringWidth(" ");
             int topInfoLineOffset = gameGraphics.getSpriteDimension().height -
-                    (gameGraphics.getSpriteDimension().height - gameFont.getSize()) / 2;
-            int bottomInfoLineOffset = gameGraphics.getSpriteDimension().height * (gameLevel.getMaximalLevelHeight() - 1)
-                    + topInfoLineOffset - 2;
+                    (gameGraphics.getSpriteDimension().height - gameFont.getSize()) / 2 - 1;
+            int bottomInfoLineOffset = topInfoLineOffset +
+                    gameGraphics.getSpriteDimension().height * (gameLevel.getMaximalHeight() - 1);
             
             // Printing level information
             String levelNameTitle = "Level: ";
@@ -966,7 +1112,7 @@ public class Game extends JPanel implements Runnable {
             if ((gameState == GameState.PLAY || gameState == GameState.COMPLETED) && gameLevel != null) {
                 
                 // Retrieving level's maximal width
-                int maximalLevelWidth = gameLevel.getMaximalLevelWidth();
+                int maximalLevelWidth = gameLevel.getMaximalWidth();
                 
                 // Printing worker's moves count and pushes count
                 String movesCountTitle = "Moves:";
@@ -1028,7 +1174,7 @@ public class Game extends JPanel implements Runnable {
         long cycleUsefulTime = 0;
         long cycleSleepTime = 0;
         long levelStartTime = System.currentTimeMillis();
-        levelTime = 0;               
+        levelTime = 0;
         
         // Retrieving a reference to current gameLevel
         Level gameLevel = levelsSet == null ? null : levelsSet.getCurrentLevel();
@@ -1047,7 +1193,7 @@ public class Game extends JPanel implements Runnable {
 
                 if (gameLevel.isCompleted()) {
 
-                    gameState = GameState.COMPLETED;
+                    setGameState(GameState.COMPLETED);
                 }
                 else {
 
@@ -1062,6 +1208,10 @@ public class Game extends JPanel implements Runnable {
                     if (moveInformation.getType().equals(MoveType.WORKER) ||
                             moveInformation.getType().equals(MoveType.WORKER_AND_BOX)) {
 
+                        // Firing level position property change
+                        int movesCount = gameLevel.getMovesCount();
+                        firePropertyChange(MOVES_COUNT, movesCount - 1, movesCount);
+                        
                         // Setting animation state
                         isAnimationInProgress = true;
                         
@@ -1154,8 +1304,25 @@ public class Game extends JPanel implements Runnable {
             }
 
             // Repainting the play field
-            repaint();
-
+            Dimension spriteSize = getGameGraphics().getSpriteDimension();
+            int repaintRectangleWidth = Math.abs(workerAnimDeltaX) > 0 ? spriteSize.width * 5: spriteSize.width * 3;
+            int repaintRectangleHeight = Math.abs(workerAnimDeltaY) > 0 ? spriteSize.height * 5 : spriteSize.height * 3;
+            int repaintX = spriteSize.width * (gameLevel.getWorkerX() - (Math.abs(workerAnimDeltaX) > 0 ? 2 : 1));
+            int repaintY = spriteSize.height * (gameLevel.getWorkerY() - (Math.abs(workerAnimDeltaY) > 0 ? 2 : 1));
+            Rectangle rectangle = new Rectangle(repaintX, repaintY, repaintRectangleWidth, repaintRectangleHeight);
+            repaint(rectangle);
+            
+            // Repainting level information
+            if (displayLevelInfo) {
+                
+                Rectangle topRectangle = new Rectangle(0, 0,
+                        spriteSize.width * gameLevel.getMaximalWidth(), spriteSize.height);
+                repaint(topRectangle);
+                Rectangle bottomRectangle = new Rectangle(0, spriteSize.height * (gameLevel.getSize().getHeight() - 1),
+                        spriteSize.width * gameLevel.getMaximalWidth(), spriteSize.height);
+                repaint(bottomRectangle);
+            }
+                    
             if (isAnimationInProgress) {
 
                 if (workerAnimDeltaX != 0) {
@@ -1188,8 +1355,12 @@ public class Game extends JPanel implements Runnable {
 
             }
 
-            // Updating moves count and time
-            levelTime = (int)((System.currentTimeMillis() - levelStartTime) / 1000);
+            // Updating time
+            long levelTimeInMilliseconds = System.currentTimeMillis() - levelStartTime;
+            int oldLevelTime = levelTime;
+            levelTime = (int)(levelTimeInMilliseconds / 1000);
+            if (levelTime > oldLevelTime)
+                firePropertyChange(TIME, oldLevelTime, levelTime);
         }
 
         // Checking whether level is completed

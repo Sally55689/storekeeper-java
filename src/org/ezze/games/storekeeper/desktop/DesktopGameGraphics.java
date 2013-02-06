@@ -2,9 +2,14 @@ package org.ezze.games.storekeeper.desktop;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.net.URL;
-import javax.swing.ImageIcon;
+import javax.imageio.ImageIO;
 import org.ezze.games.storekeeper.Game;
 import org.ezze.games.storekeeper.GameGraphics;
 import org.ezze.games.storekeeper.Level.Direction;
@@ -14,7 +19,7 @@ import org.ezze.games.storekeeper.Level.WorkerDirection;
  * Represents default game graphics implementation.
  * 
  * @author Dmitriy Pushkov
- * @version 0.0.3
+ * @version 0.0.4
  */
 public class DesktopGameGraphics extends GameGraphics {
     
@@ -87,10 +92,50 @@ public class DesktopGameGraphics extends GameGraphics {
         if (imageURL == null)
             return null;
         
-        ImageIcon imageIcon = new ImageIcon(imageURL);
-        if (imageIcon == null)
-            return null;
+        try {
+            
+            BufferedImage bufferedImage = ImageIO.read(imageURL);
+            bufferedImage = toCompatibleImage(bufferedImage);
+            return bufferedImage;
+        }
+        catch (IOException ex) {
         
-        return imageIcon.getImage();
+            return null;
+        }
+    }
+    
+    /**
+     * Creates an image instance compatible with current graphics configuration.
+     * 
+     * @param image
+     *      Source image.
+     * @return 
+     *      Compatible image.
+     */
+    protected BufferedImage toCompatibleImage(BufferedImage image) {
+        
+        // Obtain the current system graphical settings
+        GraphicsConfiguration graphicsConfiguration = GraphicsEnvironment.
+                getLocalGraphicsEnvironment().getDefaultScreenDevice().
+                getDefaultConfiguration();
+
+        // If image is already compatible and optimized for current system 
+        // settings, simply return it
+        if (image.getColorModel().equals(graphicsConfiguration.getColorModel()))
+            return image;
+
+        // Image is not optimized, so create a new image that is
+        BufferedImage newImage = graphicsConfiguration.createCompatibleImage(
+                image.getWidth(), image.getHeight(), image.getTransparency());
+
+        // Getting the graphics context of the new image to draw the old image on
+        Graphics2D g2d = (Graphics2D)newImage.getGraphics();
+
+        // Actually drawing the image and dispose of context no longer needed
+        g2d.drawImage(image, 0, 0, null);
+        g2d.dispose();
+
+        // Return the new optimized image
+        return newImage; 
     }
 }

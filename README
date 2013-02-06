@@ -1,6 +1,6 @@
 STOREKEEPER
 
-  Version: 0.0.3
+  Version: 0.0.4
   Author: Dmitriy Pushkov (ezze@ezze.org)
   Graphics: Marc Russell (http://www.spicypixel.net), Dmitriy Pushkov
   Web-site: http://www.ezze.org
@@ -27,6 +27,14 @@ DESCRIPTION
 
   Version 0.0.3 changes:
     - take back and repeat move actions have been added.
+
+  Version 0.0.4 changes:
+    - play field's size determination is automatic now, options "Level Width",
+      "Level Height" and "Sprite Size" have been removed from options dialog;
+    - basic support of *.sok levels' files has been implemented;
+    - game's performance has been increased when playing huge levels;
+    - a separate status bar was added to display level's information out of
+      play field.
 
 
 HOW TO RUN

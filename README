@@ -1,6 +1,6 @@
 STOREKEEPER
 
-  Version: 0.0.5
+  Version: 0.0.6
   Author: Dmitriy Pushkov (ezze@ezze.org)
   Graphics: Marc Russell (http://www.spicypixel.net), Dmitriy Pushkov
   Web-site: http://www.ezze.org
@@ -38,6 +38,10 @@ DESCRIPTION
 
   Version 0.0.5 changes:
     - 41st classic level's bug has been fixed.
+    
+  Version 0.0.6 changes:
+    - an issue connected with saving configuration file to a path with space
+      characters has heen fixed.
 
 
 HOW TO RUN
